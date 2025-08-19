@@ -18,7 +18,7 @@ module ibex_demo_system #(
   parameter int unsigned        ClockFrequency = 50_000_000,
   parameter int unsigned        BaudRate       = 115_200,
   parameter ibex_pkg::regfile_e RegFile        = ibex_pkg::RegFileFPGA,
-  parameter                     SRAMInitFile   = ""
+  parameter                     SRAMInitFile   = "/home/ritu/dev/work/ibex-demo-system/sw/c/build/demo/hello_world/demo.hex"
 ) (
   input  logic clk_sys_i,
   input  logic rst_sys_ni,
@@ -31,12 +31,13 @@ module ibex_demo_system #(
   input  logic                spi_rx_i,
   output logic                spi_tx_o,
   output logic                spi_sck_o,
-
+// verilator lint_off UNUSED
   input  logic        tck_i,    // JTAG test clock pad
   input  logic        tms_i,    // JTAG test mode select pad
   input  logic        trst_ni,  // JTAG test reset pad
   input  logic        td_i,     // JTAG test data input pad
   output logic        td_o      // JTAG test data output pad
+// verilator lint_on UNUSED
 );
   localparam logic [31:0] MEM_SIZE      = 128 * 1024; // 128 KiB
   localparam logic [31:0] MEM_START     = 32'h00100000;
@@ -72,7 +73,7 @@ module ibex_demo_system #(
   parameter logic [31:0] SIM_CTRL_MASK  = ~(SIM_CTRL_SIZE-1);
 
   // Debug functionality is optional.
-  localparam bit DBG = 1;
+  localparam bit DBG = 0;
   localparam int unsigned DbgHwBreakNum = (DBG == 1) ?    2 :    0;
   localparam bit          DbgTriggerEn  = (DBG == 1) ? 1'b1 : 1'b0;
 
@@ -126,12 +127,14 @@ module ibex_demo_system #(
   logic        core_instr_rvalid;
   logic [31:0] core_instr_addr;
   logic [31:0] core_instr_rdata;
+// verilator lint_off UNUSED
   logic        core_instr_sel_dbg;
+// verilator lint_on UNUSED
 
   logic        mem_instr_req;
   logic [31:0] mem_instr_rdata;
   logic        dbg_instr_req;
-
+// verilator lint_off UNUSED
   logic        dbg_device_req;
   logic [31:0] dbg_device_addr;
   logic        dbg_device_we;
@@ -140,6 +143,8 @@ module ibex_demo_system #(
   logic        dbg_device_rvalid;
   logic [31:0] dbg_device_rdata;
 
+// verilator lint_on UNUSED
+   
   // Internally generated resets cause IMPERFECTSCH warnings
   /* verilator lint_off IMPERFECTSCH */
   logic rst_core_n;
@@ -214,11 +219,10 @@ module ibex_demo_system #(
   assign mem_instr_req =
       core_instr_req & ((core_instr_addr & cfg_device_addr_mask[Ram]) == cfg_device_addr_base[Ram]);
 
-  assign dbg_instr_req =
-      core_instr_req & ((core_instr_addr & cfg_device_addr_mask[DbgDev]) == cfg_device_addr_base[DbgDev]);
-
+   
+  assign core_instr_rdata = core_instr_sel_dbg ? dbg_device_rdata : mem_instr_rdata;
   assign core_instr_gnt = mem_instr_req | (dbg_instr_req & ~device_req[DbgDev]);
-
+   
   always @(posedge clk_sys_i or negedge rst_sys_ni) begin
     if (!rst_sys_ni) begin
       core_instr_rvalid  <= 1'b0;
@@ -228,8 +232,6 @@ module ibex_demo_system #(
       core_instr_sel_dbg <= dbg_instr_req;
     end
   end
-
-  assign core_instr_rdata = core_instr_sel_dbg ? dbg_device_rdata : mem_instr_rdata;
 
   assign rst_core_n = rst_sys_ni & ~ndmreset_req;
 
@@ -436,14 +438,20 @@ module ibex_demo_system #(
     .timer_intr_o  (timer_irq)
   );
 
-  assign dbg_device_req        = device_req[DbgDev] | dbg_instr_req;
-  assign dbg_device_we         = device_req[DbgDev] & device_we[DbgDev];
-  assign dbg_device_addr       = device_req[DbgDev] ? device_addr[DbgDev] : core_instr_addr;
-  assign dbg_device_be         = device_be[DbgDev];
-  assign dbg_device_wdata      = device_wdata[DbgDev];
-  assign device_rvalid[DbgDev] = dbg_device_rvalid;
-  assign device_rdata[DbgDev]  = dbg_device_rdata;
-
+  if (DBG) begin : gen_dbg_dev
+     assign dbg_instr_req = core_instr_req & ((core_instr_addr & cfg_device_addr_mask[DbgDev]) == cfg_device_addr_base[DbgDev]);
+     assign dbg_device_req        = device_req[DbgDev] | dbg_instr_req;
+     assign dbg_device_we         = device_req[DbgDev] & device_we[DbgDev];
+     assign dbg_device_addr       = device_req[DbgDev] ? device_addr[DbgDev] : core_instr_addr;
+     assign dbg_device_be         = device_be[DbgDev];
+     assign dbg_device_wdata      = device_wdata[DbgDev];
+     assign device_rvalid[DbgDev] = dbg_device_rvalid;
+     assign device_rdata[DbgDev]  = dbg_device_rdata;
+  end else begin : gen_no_dbg_dev
+     assign dbg_instr_req = 1'b0;
+     assign dbg_device_req = 1'b0;
+  end
+  
   always @(posedge clk_sys_i or negedge rst_sys_ni) begin
     if (!rst_sys_ni) begin
       dbg_device_rvalid <= 1'b0;
@@ -492,6 +500,8 @@ module ibex_demo_system #(
   end else begin : gen_no_dm
     assign dm_debug_req = 1'b0;
     assign ndmreset_req = 1'b0;
+    assign td_o = 1'b0;
+    assign dbg_device_rdata = 'x; 
   end
 
   `ifdef VERILATOR

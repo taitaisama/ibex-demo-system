@@ -65,6 +65,14 @@ filesets:
       - rtl/fpga/top_artys7.sv
     file_type: systemVerilogSource
 
+  files_xilinx_versal:
+    depend:
+      - lowrisc:ibex:rv_timer
+      - lowrisc:ibex:fpga_xilinx_shared
+    files:
+      - rtl/fpga/top_versal.sv
+    file_type: systemVerilogSource
+
   files_sonata:
     depend:
       - lowrisc:ibex:rv_timer
@@ -123,6 +131,11 @@ filesets:
   files_constraints_artys7:
     files:
       - data/pins_artys7.xdc
+    file_type: xdc
+
+  files_constraints_versal:
+    files:
+      - data/pins_versal.xdc
     file_type: xdc
 
   files_constraints_sonata:
@@ -242,6 +255,19 @@ targets:
     tools:
       vivado:
         part: "xc7s25csga324-1"
+    parameters:
+      - SRAMInitFile
+      - PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
+  synth_versal:
+    <<: *default_target
+    default_tool: vivado
+    filesets_append:
+      - files_xilinx_versal
+      - files_constraints_versal
+    toplevel: top_versal
+    tools:
+      vivado:
+        part: "xcve2302-sfva784-1LP-e-S"
     parameters:
       - SRAMInitFile
       - PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
