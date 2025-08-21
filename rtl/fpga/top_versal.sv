@@ -50,5 +50,4 @@ module top_versal #(
     .td_o   ()
   );
 
-
 endmodule

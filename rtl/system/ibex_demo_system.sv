@@ -12,31 +12,36 @@
 // - Debug module.
 // - SPI for driving LCD screen.
 module ibex_demo_system #(
-  parameter int                 GpiWidth       = 8,
-  parameter int                 GpoWidth       = 16,
-  parameter int                 PwmWidth       = 12,
-  parameter int unsigned        ClockFrequency = 50_000_000,
-  parameter int unsigned        BaudRate       = 115_200,
-  parameter ibex_pkg::regfile_e RegFile        = ibex_pkg::RegFileFPGA,
-  parameter                     SRAMInitFile   = "/home/ritu/dev/work/ibex-demo-system/sw/c/build/demo/hello_world/demo.hex"
+  parameter int		 GpiWidth = 8,
+  parameter int		 GpoWidth = 16,
+  parameter int		 PwmWidth = 12,
+  parameter int unsigned ClockFrequency = 50_000_000,
+  parameter int unsigned BaudRate = 115_200,
+  parameter		 ibex_pkg::regfile_e RegFile = ibex_pkg::RegFileFPGA,
+  parameter		 SRAMInitFile = "/home/ritu/dev/work/ibex-demo-system/sw/c/build/demo/hello_world/demo.hex",
+  parameter int		 DS = 16
 ) (
-  input  logic clk_sys_i,
-  input  logic rst_sys_ni,
+  input logic		      clk_sys_i,
+  input logic		      rst_sys_ni,
 
-  input  logic [GpiWidth-1:0] gp_i,
+  input logic [GpiWidth-1:0]  gp_i,
   output logic [GpoWidth-1:0] gp_o,
   output logic [PwmWidth-1:0] pwm_o,
-  input  logic                uart_rx_i,
-  output logic                uart_tx_o,
-  input  logic                spi_rx_i,
-  output logic                spi_tx_o,
-  output logic                spi_sck_o,
+  input logic		      uart_rx_i,
+  output logic		      uart_tx_o,
+  input logic		      spi_rx_i,
+  output logic		      spi_tx_o,
+  output logic		      spi_sck_o,
+
+   logic                ram_req,
+
+  output logic [7:0]	      debug_out[4][DS],
 // verilator lint_off UNUSED
-  input  logic        tck_i,    // JTAG test clock pad
-  input  logic        tms_i,    // JTAG test mode select pad
-  input  logic        trst_ni,  // JTAG test reset pad
-  input  logic        td_i,     // JTAG test data input pad
-  output logic        td_o      // JTAG test data output pad
+  input logic		      tck_i,   // JTAG test clock pad
+  input logic		      tms_i,   // JTAG test mode select pad
+  input logic		      trst_ni, // JTAG test reset pad
+  input logic		      td_i,    // JTAG test data input pad
+  output logic		      td_o     // JTAG test data output pad
 // verilator lint_on UNUSED
 );
   localparam logic [31:0] MEM_SIZE      = 128 * 1024; // 128 KiB
@@ -142,8 +147,54 @@ module ibex_demo_system #(
   logic [31:0] dbg_device_wdata;
   logic        dbg_device_rvalid;
   logic [31:0] dbg_device_rdata;
+  
+  localparam int DEBUG_NUM = 20;
+   
+  logic [31:0] debug_core_instr_addr [DEBUG_NUM-1:0]; 
+  logic [31:0] debug_mem_instr_rdata [DEBUG_NUM-1:0];
+  logic [$clog2(DEBUG_NUM):0] debug_timer_counter;
 
 // verilator lint_on UNUSED
+   
+   always_ff @(posedge clk_sys_i or negedge rst_sys_ni) begin
+      if (!rst_sys_ni) begin
+	 debug_timer_counter <= 0;
+      end else begin
+	 if (debug_timer_counter >= DEBUG_NUM-1) begin
+	    debug_timer_counter <= DEBUG_NUM-1;
+	 end else begin
+	    debug_timer_counter <= debug_timer_counter + 1;
+	 end
+      end
+   end
+
+   always_ff @(posedge clk_sys_i) begin
+      debug_core_instr_addr[debug_timer_counter] <= core_instr_addr;
+      debug_mem_instr_rdata[debug_timer_counter] <= mem_instr_rdata;
+   end
+
+   genvar i, j;
+   generate
+      for (i = 0; i < DS; i+=2) begin
+	 for (j = 0; j < 4; j ++) begin
+	    assign debug_out[j][i] = debug_core_instr_addr[i/2][j*8+7:j*8];
+	    assign debug_out[j][i+1] = debug_mem_instr_rdata[i/2][j*8+7:j*8];
+	 end
+      end
+   endgenerate
+
+   // assign debug_out[0] = debug_core_instr_addr[5] == 32'h00100084;
+   // assign debug_out[1] = debug_mem_instr_rdata[5] == 32'h0040006f;
+   // assign debug_out[2] = debug_core_instr_addr[6] == 32'h00100084;
+   // assign debug_out[3] = debug_mem_instr_rdata[6] == 32'h10500073;
+   
+  //  genvar i;
+  // generate
+  //   for (i = 0; i < DEBUG_NUM; i++) begin
+  //       (* MARK_DEBUG="true" *) wire [31:0] dbg_core_addr = debug_core_instr_addr[i];
+  //       (* MARK_DEBUG="true" *) wire [31:0] dbg_mem_rdata = debug_mem_instr_rdata[i];
+  //   end
+  // endgenerate
    
   // Internally generated resets cause IMPERFECTSCH warnings
   /* verilator lint_off IMPERFECTSCH */
