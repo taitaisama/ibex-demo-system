@@ -20,23 +20,40 @@ module ibex_demo_system #(
   parameter ibex_pkg::regfile_e RegFile        = ibex_pkg::RegFileFPGA,
   parameter                     SRAMInitFile   = "/home/ritu/dev/work/ibex-demo-system/sw/c/build/demo/hello_world/demo.hex"
 ) (
-  input  logic clk_sys_i,
-  input  logic rst_sys_ni,
+  input logic		      clk_sys_i,
+  input logic		      rst_sys_ni,
 
-  input  logic [GpiWidth-1:0] gp_i,
+  input logic [GpiWidth-1:0]  gp_i,
   output logic [GpoWidth-1:0] gp_o,
   output logic [PwmWidth-1:0] pwm_o,
-  input  logic                uart_rx_i,
-  output logic                uart_tx_o,
-  input  logic                spi_rx_i,
-  output logic                spi_tx_o,
-  output logic                spi_sck_o,
+  input logic		      uart_rx_i,
+  output logic		      uart_tx_o,
+  input logic		      spi_rx_i,
+  output logic		      spi_tx_o,
+  output logic		      spi_sck_o,
+
+  output logic		      ibex_ram_a_req_o,
+  output logic [3:0]	      ibex_ram_a_we_o,
+  output logic [3:0]	      ibex_ram_a_be_o,
+  output logic [31:0]	      ibex_ram_a_addr_o,
+  output logic [31:0]	      ibex_ram_a_wdata_o,
+  input logic		      ibex_ram_a_rvalid_i,
+  input logic [31:0]	      ibex_ram_a_rdata_i,
+			      
+  output logic		      ibex_ram_b_req_o,
+  output logic [3:0]	      ibex_ram_b_we_o,
+  output logic [3:0]	      ibex_ram_b_be_o,
+  output logic [31:0]	      ibex_ram_b_addr_o,
+  output logic [31:0]	      ibex_ram_b_wdata_o,
+  input logic		      ibex_ram_b_rvalid_i,
+  input logic [31:0]	      ibex_ram_b_rdata_i,
+
 // verilator lint_off UNUSED
-  input  logic        tck_i,    // JTAG test clock pad
-  input  logic        tms_i,    // JTAG test mode select pad
-  input  logic        trst_ni,  // JTAG test reset pad
-  input  logic        td_i,     // JTAG test data input pad
-  output logic        td_o      // JTAG test data output pad
+  input logic		      tck_i,   // JTAG test clock pad
+  input logic		      tms_i,   // JTAG test mode select pad
+  input logic		      trst_ni, // JTAG test reset pad
+  input logic		      td_i,    // JTAG test data input pad
+  output logic		      td_o     // JTAG test data output pad
 // verilator lint_on UNUSED
 );
   localparam logic [31:0] MEM_SIZE      = 128 * 1024; // 128 KiB
@@ -216,6 +233,24 @@ module ibex_demo_system #(
     .cfg_device_addr_mask
   );
 
+
+   always_comb begin
+      ibex_ram_a_req_o = device_req[Ram];
+      ibex_ram_a_we_o = device_we[Ram];
+      ibex_ram_a_be_o = device_be[Ram];
+      ibex_ram_a_addr_o = device_addr[Ram];
+      ibex_ram_a_wdata_o = device_wdata[Ram];
+      device_rvalid[Ram] = ibex_ram_a_rvalid_i;
+      device_rdata[Ram] = ibex_ram_a_rdata_i;
+      
+      ibex_ram_b_req_o = mem_instr_req;
+      ibex_ram_b_we_o = 1'b0;
+      ibex_ram_b_be_o = 4'b0;
+      ibex_ram_b_addr_o = core_instr_addr;
+      ibex_ram_b_wdata_o = 32'b0;
+      mem_instr_rdata = ibex_ram_b_rdata_i;
+   end
+
   assign mem_instr_req =
       core_instr_req & ((core_instr_addr & cfg_device_addr_mask[Ram]) == cfg_device_addr_base[Ram]);
 
@@ -296,30 +331,6 @@ module ibex_demo_system #(
     .alert_major_internal_o(),
     .alert_major_bus_o     (),
     .core_sleep_o          ()
-  );
-
-  ram_2p #(
-      .Depth       ( MEM_SIZE / 4 ),
-      .MemInitFile ( SRAMInitFile )
-  ) u_ram (
-    .clk_i (clk_sys_i),
-    .rst_ni(rst_sys_ni),
-
-    .a_req_i   (device_req[Ram]),
-    .a_we_i    (device_we[Ram]),
-    .a_be_i    (device_be[Ram]),
-    .a_addr_i  (device_addr[Ram]),
-    .a_wdata_i (device_wdata[Ram]),
-    .a_rvalid_o(device_rvalid[Ram]),
-    .a_rdata_o (device_rdata[Ram]),
-
-    .b_req_i   (mem_instr_req),
-    .b_we_i    (1'b0),
-    .b_be_i    (4'b0),
-    .b_addr_i  (core_instr_addr),
-    .b_wdata_i (32'b0),
-    .b_rvalid_o(),
-    .b_rdata_o (mem_instr_rdata)
   );
 
   gpio #(

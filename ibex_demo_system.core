@@ -71,6 +71,7 @@ filesets:
       - lowrisc:ibex:fpga_xilinx_shared
     files:
       - rtl/fpga/top_versal.sv
+      - tcl/versal_ps.tcl: {file_type: tclSource}
     file_type: systemVerilogSource
 
   files_sonata:
