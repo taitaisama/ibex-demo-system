@@ -29,7 +29,7 @@ module top_versal #(
 );
 
    logic sys_clk;
-   logic sys_rstn;
+   logic axi_rstn, sys_rstn;
 
    logic        ibex_ram_a_req;
    logic [3:0]  ibex_ram_a_we;
@@ -42,7 +42,7 @@ module top_versal #(
    logic        ibex_ram_b_req;
    logic [3:0]  ibex_ram_b_we;
    logic [3:0]  ibex_ram_b_be;
-   logic [31:0] ibex_ram_b_bddr;
+   logic [31:0] ibex_ram_b_addr;
    logic [31:0] ibex_ram_b_wdata;
    logic        ibex_ram_b_rvalid;
    logic [31:0] ibex_ram_b_rdata;
@@ -63,7 +63,7 @@ module top_versal #(
    logic        ram_a_rvalid;
    logic [31:0] ram_a_rdata;
 
-   logic        ps_ctrl;
+   logic        ps_ctrl, ps_ctrl_d;
 
    always_comb begin
       ram_a_req = ps_ctrl ? ps_bram_a_en : ibex_ram_a_req;
@@ -75,6 +75,12 @@ module top_versal #(
       ibex_ram_a_rdata = ram_a_rdata;
       ps_bram_a_rdata = ram_a_rdata;
    end   
+   
+   always_ff @(posedge sys_clk) begin
+      ps_ctrl_d <= ps_ctrl;
+   end
+   
+   assign sys_rstn = axi_rstn && !(ps_ctrl_d && !ps_ctrl);
 
    localparam logic [31:0] MEM_SIZE      = 128 * 1024; // 128 KiB   
 
@@ -83,7 +89,7 @@ module top_versal #(
     .MemInitFile ( SRAMInitFile )
   ) u_ram (
    .clk_i (sys_clk),
-   .rst_ni(sys_rstn),
+   .rst_ni(axi_rstn),
 
    .a_req_i   (ram_a_req),
    .a_we_i    (ram_a_we),
@@ -172,7 +178,7 @@ module top_versal #(
     .PS_BRAM_we (ps_bram_a_we),
     .PS_REQ_tri_o (ps_ctrl),
     .axi_clk (sys_clk),
-    .axi_rstn (sys_rstn),
+    .axi_rstn (axi_rstn),
     .sys_clk_n (sys_clk_n),
     .sys_clk_p (sys_clk_p)
    );
