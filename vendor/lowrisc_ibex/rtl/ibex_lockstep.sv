@@ -8,6 +8,10 @@
 // LockstepOffset cycles.
 
 // SEC_CM: LOGIC.SHADOW
+
+
+`define RVFI
+
 module ibex_lockstep import ibex_pkg::*; #(
   parameter int unsigned            LockstepOffset    = 2,
   parameter bit                     PMPEnable         = 1'b0,

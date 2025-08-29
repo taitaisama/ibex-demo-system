@@ -14,13 +14,22 @@
 
 int main(void) {
 
+  timer_init();
+  timer_enable(5000000);
+
+  uint64_t last_elapsed_time = get_elapsed_time();
+
   // Reset green LEDs to having just one on
   set_outputs(GPIO_OUT, 0x0); // Bottom 4 bits are LCD control as you can see in top_artya7.sv
 
-  while (1) {    
-    uint32_t out_val = read_gpio(GPIO_OUT);
-    out_val = ~out_val;
-    set_outputs(GPIO_OUT, out_val);
-    asm volatile("wfi");
+  while (1) {
+    uint64_t cur_time = get_elapsed_time();
+    if (cur_time != last_elapsed_time) {
+      last_elapsed_time = cur_time;
+      uint32_t out_val = read_gpio(GPIO_OUT);
+      out_val = ~out_val;
+      set_outputs(GPIO_OUT, out_val);
+      asm volatile("wfi");
+    }
   }
 }

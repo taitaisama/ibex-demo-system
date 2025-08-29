@@ -71,6 +71,9 @@ filesets:
       - lowrisc:ibex:fpga_xilinx_shared
     files:
       - rtl/fpga/top_versal.sv
+      - rtl/fpga/versal_ip/rvfi_handler.sv
+      - rtl/fpga/versal_ip/rvfi_csr.sv
+      - rtl/fpga/versal_ip/rvfi_to_mem.sv
       - tcl/versal_ps.tcl: {file_type: tclSource}
     file_type: systemVerilogSource
 

@@ -5,19 +5,15 @@ if { $list_projs eq "" } {
     catch {common::send_gid_msg -ssname BD::TCL -id 2042 -severity "ERROR" "This script should be run inside an opened project"}
 }
 
-variable design_name
-set design_name ps_subsystem
-
-create_bd_design $design_name
-
-current_bd_design $design_name
-
 # Procedure to create entire design; Provide argument to make
 # procedure reusable. If parentCell is "", will use root.
 proc create_root_design { parentCell } {
 
-  variable script_folder
   variable design_name
+
+  set design_name ps_subsystem
+  create_bd_design $design_name
+  current_bd_design $design_name
 
   if { $parentCell eq "" } {
      set parentCell [get_bd_cells /]
@@ -53,12 +49,40 @@ proc create_root_design { parentCell } {
    CONFIG.READ_WRITE_MODE {READ_WRITE} \
    ] $PS_BRAM
 
-  set PS_REQ [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 PS_REQ ]
+  set PS_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 PS_IO ]
 
   set sys [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 sys ]
   set_property -dict [ list \
    CONFIG.FREQ_HZ {200000000} \
    ] $sys
+
+  set rvfi [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 rvfi ]
+  set_property -dict [ list \
+   CONFIG.FREQ_HZ {150000000} \
+   CONFIG.HAS_TKEEP {1} \
+   CONFIG.HAS_TLAST {1} \
+   CONFIG.HAS_TREADY {1} \
+   CONFIG.HAS_TSTRB {0} \
+   CONFIG.LAYERED_METADATA {undef} \
+   CONFIG.TDATA_NUM_BYTES {32} \
+   CONFIG.TDEST_WIDTH {0} \
+   CONFIG.TID_WIDTH {0} \
+   CONFIG.TUSER_WIDTH {0} \
+   ] $rvfi
+
+  set rvfi_csr [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 rvfi_csr ]
+  set_property -dict [ list \
+   CONFIG.FREQ_HZ {150000000} \
+   CONFIG.HAS_TKEEP {1} \
+   CONFIG.HAS_TLAST {1} \
+   CONFIG.HAS_TREADY {1} \
+   CONFIG.HAS_TSTRB {0} \
+   CONFIG.LAYERED_METADATA {undef} \
+   CONFIG.TDATA_NUM_BYTES {16} \
+   CONFIG.TDEST_WIDTH {0} \
+   CONFIG.TID_WIDTH {0} \
+   CONFIG.TUSER_WIDTH {0} \
+   ] $rvfi_csr
 
 
   # Create ports
@@ -132,8 +156,8 @@ proc create_root_design { parentCell } {
     CONFIG.NUM_CLKS {7} \
     CONFIG.NUM_MC {1} \
     CONFIG.NUM_MCP {4} \
-    CONFIG.NUM_MI {2} \
-    CONFIG.NUM_SI {6} \
+    CONFIG.NUM_MI {4} \
+    CONFIG.NUM_SI {8} \
   ] $axi_noc_0
 
 
@@ -148,9 +172,19 @@ proc create_root_design { parentCell } {
  ] [get_bd_intf_pins /axi_noc_0/M01_AXI]
 
   set_property -dict [ list \
+   CONFIG.APERTURES {{0x201_C000_0000 1G}} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/M02_AXI]
+
+  set_property -dict [ list \
+   CONFIG.APERTURES {{0x202_4000_0000 1G}} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/M03_AXI]
+
+  set_property -dict [ list \
    CONFIG.REGION {0} \
-   CONFIG.CONNECTIONS {M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M00_AXI {read_bw {5} write_bw {5}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {true}}} \
-   CONFIG.DEST_IDS {M01_AXI:0x40:M00_AXI:0x0} \
+   CONFIG.CONNECTIONS {M03_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M02_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M00_AXI {read_bw {5} write_bw {5}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {true}}} \
+   CONFIG.DEST_IDS {M03_AXI:0x140:M01_AXI:0xc0:M02_AXI:0x40:M00_AXI:0x0} \
    CONFIG.NOC_PARAMS {} \
    CONFIG.CATEGORY {ps_cci} \
  ] [get_bd_intf_pins /axi_noc_0/S00_AXI]
@@ -178,8 +212,8 @@ proc create_root_design { parentCell } {
 
   set_property -dict [ list \
    CONFIG.REGION {0} \
-   CONFIG.CONNECTIONS {M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
-   CONFIG.DEST_IDS {M01_AXI:0x40:M00_AXI:0x0} \
+   CONFIG.CONNECTIONS {M03_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M02_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
+   CONFIG.DEST_IDS {M03_AXI:0x140:M01_AXI:0xc0:M02_AXI:0x40:M00_AXI:0x0} \
    CONFIG.NOC_PARAMS {} \
    CONFIG.CATEGORY {ps_rpu} \
  ] [get_bd_intf_pins /axi_noc_0/S04_AXI]
@@ -190,6 +224,18 @@ proc create_root_design { parentCell } {
    CONFIG.NOC_PARAMS {} \
    CONFIG.CATEGORY {ps_pmc} \
  ] [get_bd_intf_pins /axi_noc_0/S05_AXI]
+
+  set_property -dict [ list \
+   CONFIG.CONNECTIONS {MC_0 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/S06_AXI]
+
+  set_property -dict [ list \
+   CONFIG.CONNECTIONS {MC_1 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/S07_AXI]
 
   set_property -dict [ list \
    CONFIG.ASSOCIATED_BUSIF {S00_AXI} \
@@ -216,7 +262,7 @@ proc create_root_design { parentCell } {
  ] [get_bd_pins /axi_noc_0/aclk5]
 
   set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {M00_AXI:M01_AXI} \
+   CONFIG.ASSOCIATED_BUSIF {M00_AXI:M01_AXI:M02_AXI:M03_AXI:S06_AXI:S07_AXI} \
  ] [get_bd_pins /axi_noc_0/aclk6]
 
   # Create instance: axi_bram_ctrl_0, and set properties
@@ -231,7 +277,7 @@ proc create_root_design { parentCell } {
   set axi_gpio_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0 ]
   set_property -dict [list \
     CONFIG.C_ALL_OUTPUTS {1} \
-    CONFIG.C_GPIO_WIDTH {1} \
+    CONFIG.C_GPIO_WIDTH {2} \
   ] $axi_gpio_0
 
 
@@ -262,13 +308,51 @@ proc create_root_design { parentCell } {
   ] $clk_wizard_0
 
 
+  # Create instance: axi_dma_0, and set properties
+  set axi_dma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_0 ]
+  set_property -dict [list \
+    CONFIG.c_include_mm2s {0} \
+    CONFIG.c_include_sg {0} \
+    CONFIG.c_m_axi_s2mm_data_width {256} \
+    CONFIG.c_s_axis_s2mm_tdata_width {256} \
+  ] $axi_dma_0
+
+
+  # Create instance: smartconnect_0, and set properties
+  set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
+  set_property CONFIG.NUM_SI {1} $smartconnect_0
+
+
+  # Create instance: axi_dma_1, and set properties
+  set axi_dma_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_1 ]
+  set_property -dict [list \
+    CONFIG.c_include_mm2s {0} \
+    CONFIG.c_include_sg {0} \
+    CONFIG.c_m_axi_s2mm_data_width {128} \
+    CONFIG.c_s_axis_s2mm_tdata_width {128} \
+  ] $axi_dma_1
+
+
+  # Create instance: smartconnect_1, and set properties
+  set smartconnect_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_1 ]
+  set_property CONFIG.NUM_SI {1} $smartconnect_1
+
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_ports PS_BRAM] [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA]
-  connect_bd_intf_net -intf_net axi_gpio_0_GPIO [get_bd_intf_ports PS_REQ] [get_bd_intf_pins axi_gpio_0/GPIO]
+  connect_bd_intf_net -intf_net axi_dma_0_M_AXI_S2MM [get_bd_intf_pins axi_dma_0/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S07_AXI]
+  connect_bd_intf_net -intf_net axi_dma_1_M_AXI_S2MM [get_bd_intf_pins axi_dma_1/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S06_AXI]
+  connect_bd_intf_net -intf_net axi_gpio_0_GPIO [get_bd_intf_ports PS_IO] [get_bd_intf_pins axi_gpio_0/GPIO]
   connect_bd_intf_net -intf_net axi_gpio_0_smc_M00_AXI [get_bd_intf_pins axi_gpio_0/S_AXI] [get_bd_intf_pins axi_gpio_0_smc/M00_AXI]
   connect_bd_intf_net -intf_net axi_noc_0_CH0_DDR4_0 [get_bd_intf_ports DDR4] [get_bd_intf_pins axi_noc_0/CH0_DDR4_0]
   connect_bd_intf_net -intf_net axi_noc_0_M00_AXI [get_bd_intf_pins axi_bram_ctrl_0/S_AXI] [get_bd_intf_pins axi_noc_0/M00_AXI]
   connect_bd_intf_net -intf_net axi_noc_0_M01_AXI [get_bd_intf_pins axi_gpio_0_smc/S00_AXI] [get_bd_intf_pins axi_noc_0/M01_AXI]
+  connect_bd_intf_net -intf_net axi_noc_0_M02_AXI [get_bd_intf_pins axi_noc_0/M02_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
+  connect_bd_intf_net -intf_net axi_noc_0_M03_AXI [get_bd_intf_pins axi_noc_0/M03_AXI] [get_bd_intf_pins smartconnect_1/S00_AXI]
+  connect_bd_intf_net -intf_net rvfi_1 [get_bd_intf_ports rvfi] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
+  connect_bd_intf_net -intf_net rvfi_csr_1 [get_bd_intf_ports rvfi_csr] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
+  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins axi_dma_0/S_AXI_LITE]
+  connect_bd_intf_net -intf_net smartconnect_1_M00_AXI [get_bd_intf_pins smartconnect_1/M00_AXI] [get_bd_intf_pins axi_dma_1/S_AXI_LITE]
   connect_bd_intf_net -intf_net sys_1 [get_bd_intf_ports sys] [get_bd_intf_pins util_ds_buf_0/CLK_IN_D]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_0 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_0] [get_bd_intf_pins axi_noc_0/S00_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_1 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_1] [get_bd_intf_pins axi_noc_0/S01_AXI]
@@ -284,12 +368,22 @@ proc create_root_design { parentCell } {
   [get_bd_pins axi_gpio_0_smc/aclk] \
   [get_bd_pins axi_gpio_0/s_axi_aclk] \
   [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] \
-  [get_bd_ports axi_clk]
+  [get_bd_ports axi_clk] \
+  [get_bd_pins smartconnect_0/aclk] \
+  [get_bd_pins axi_dma_0/s_axi_lite_aclk] \
+  [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] \
+  [get_bd_pins axi_dma_1/s_axi_lite_aclk] \
+  [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] \
+  [get_bd_pins smartconnect_1/aclk]
   connect_bd_net -net rst_sys_clk_100M_peripheral_aresetn  [get_bd_pins rst_sys_clk_100M/peripheral_aresetn] \
   [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] \
   [get_bd_pins axi_gpio_0/s_axi_aresetn] \
   [get_bd_pins axi_gpio_0_smc/aresetn] \
-  [get_bd_ports axi_rstn]
+  [get_bd_ports axi_rstn] \
+  [get_bd_pins smartconnect_0/aresetn] \
+  [get_bd_pins axi_dma_0/axi_resetn] \
+  [get_bd_pins axi_dma_1/axi_resetn] \
+  [get_bd_pins smartconnect_1/aresetn]
   connect_bd_net -net util_ds_buf_0_IBUF_OUT  [get_bd_pins util_ds_buf_0/IBUF_OUT] \
   [get_bd_pins clk_wizard_0/clk_in1] \
   [get_bd_pins axi_noc_0/sys_clk0]
@@ -310,15 +404,21 @@ proc create_root_design { parentCell } {
 
   # Create address segments
   assign_bd_address -offset 0x020100000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x0201C0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_dma_0/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x020240000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_dma_1/S_AXI_LITE/Reg] -force
   assign_bd_address -offset 0x020140000000 -range 0x00000080 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_noc_0/S00_AXI/C3_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_1] [get_bd_addr_segs axi_noc_0/S01_AXI/C2_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_2] [get_bd_addr_segs axi_noc_0/S02_AXI/C0_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_3] [get_bd_addr_segs axi_noc_0/S03_AXI/C1_DDR_LOW0] -force
   assign_bd_address -offset 0x020100000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x0201C0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_dma_0/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x020240000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_dma_1/S_AXI_LITE/Reg] -force
   assign_bd_address -offset 0x020140000000 -range 0x00000080 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs axi_noc_0/S07_AXI/C1_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs axi_noc_0/S06_AXI/C0_DDR_LOW0] -force
 
 
   # Restore current instance
@@ -336,4 +436,83 @@ proc create_root_design { parentCell } {
   update_compile_order -fileset sources_1
 }
 
+proc create_fifo_design { parentCell depth width design_name } {
+
+  create_bd_design $design_name
+  current_bd_design $design_name
+
+  if { $parentCell eq "" } {
+     set parentCell [get_bd_cells /]
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+
+  # Create interface ports
+  set fifo_read [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:fifo_read_rtl:1.0 fifo_read ]
+
+  set fifo_write [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:fifo_write_rtl:1.0 fifo_write ]
+
+
+  # Create ports
+  set clk [ create_bd_port -dir I -type clk -freq_hz 150000000 clk ]
+  set rst [ create_bd_port -dir I -type rst rst ]
+  set_property -dict [ list \
+   CONFIG.POLARITY {ACTIVE_HIGH} \
+ ] $rst
+
+  # Create instance: emb_fifo_gen_0, and set properties
+  set emb_fifo_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:emb_fifo_gen:1.0 emb_fifo_gen_0 ]
+  set_property -dict [list \
+    CONFIG.FIFO_WRITE_DEPTH $depth \
+    CONFIG.READ_MODE {FWFT} \
+    CONFIG.WRITE_DATA_WIDTH $width \
+  ] $emb_fifo_gen_0
+
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net fifo_read_1 [get_bd_intf_ports fifo_read] [get_bd_intf_pins emb_fifo_gen_0/FIFO_READ]
+  connect_bd_intf_net -intf_net fifo_write_1 [get_bd_intf_ports fifo_write] [get_bd_intf_pins emb_fifo_gen_0/FIFO_WRITE]
+
+  # Create port connections
+  connect_bd_net -net clk_1  [get_bd_ports clk] \
+  [get_bd_pins emb_fifo_gen_0/wr_clk]
+  connect_bd_net -net rst_1  [get_bd_ports rst] \
+  [get_bd_pins emb_fifo_gen_0/rst]
+
+  # Create address segments
+
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+
+  validate_bd_design
+  save_bd_design
+
+  set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
+  add_files $wrapper_file
+  update_compile_order -fileset sources_1
+}
+
 create_root_design ""
+create_fifo_design "" 16 832 "rvfi_fifo"
+create_fifo_design "" 256 256 "rvfi_mem_fifo"
+create_fifo_design "" 256 128 "rvfi_csr_fifo"

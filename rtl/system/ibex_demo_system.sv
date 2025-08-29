@@ -11,6 +11,7 @@
 // - Timer.
 // - Debug module.
 // - SPI for driving LCD screen.
+
 module ibex_demo_system #(
   parameter int                 GpiWidth       = 8,
   parameter int                 GpoWidth       = 16,
@@ -47,6 +48,22 @@ module ibex_demo_system #(
   output logic [31:0]	      ibex_ram_b_wdata_o,
   input logic		      ibex_ram_b_rvalid_i,
   input logic [31:0]	      ibex_ram_b_rdata_i,
+
+  output logic                rvfi_valid,
+  output logic                rvfi_trap,
+  output logic [ 4:0]         rvfi_rd_addr,
+  output logic [31:0]         rvfi_rd_wdata,
+  output logic [31:0]         rvfi_pc_rdata,
+  output logic [31:0]         rvfi_ext_pre_mip,
+  output logic [31:0]         rvfi_ext_post_mip,
+  output logic                rvfi_ext_nmi,
+  output logic                rvfi_ext_nmi_int,
+  output logic                rvfi_ext_debug_req,
+  output logic                rvfi_ext_rf_wr_suppress,
+  output logic [63:0]         rvfi_ext_mcycle,
+  output logic [31:0]         rvfi_ext_mhpmcounters [10],
+  output logic [31:0]         rvfi_ext_mhpmcountersh [10],
+  output logic                rvfi_ext_ic_scr_key_valid,
 
 // verilator lint_off UNUSED
   input logic		      tck_i,   // JTAG test clock pad
@@ -270,6 +287,30 @@ module ibex_demo_system #(
 
   assign rst_core_n = rst_sys_ni & ~ndmreset_req;
 
+  logic [63:0] rvfi_order;
+  logic [31:0] rvfi_insn;
+  logic        rvfi_halt;
+  logic        rvfi_intr;
+  logic [ 1:0] rvfi_mode;
+  logic [ 1:0] rvfi_ixl;
+  logic [ 4:0] rvfi_rs1_addr;
+  logic [ 4:0] rvfi_rs2_addr;
+  logic [ 4:0] rvfi_rs3_addr;
+  logic [31:0] rvfi_rs1_rdata;
+  logic [31:0] rvfi_rs2_rdata;
+  logic [31:0] rvfi_rs3_rdata;
+  logic [31:0] rvfi_pc_wdata;
+  logic [31:0] rvfi_mem_addr;
+  logic [ 3:0] rvfi_mem_rmask;
+  logic [ 3:0] rvfi_mem_wmask;
+  logic [31:0] rvfi_mem_rdata;
+  logic [31:0] rvfi_mem_wdata;
+  logic        rvfi_ext_debug_mode;
+  logic        rvfi_ext_irq_valid;
+
+  logic [31:0] unused_perf_regs [10];
+  logic [31:0] unused_perf_regsh [10];
+
   ibex_top #(
     .RegFile         ( RegFile                                 ),
     .MHPMCounterNum  ( 10                                      ),
@@ -325,6 +366,42 @@ module ibex_demo_system #(
     .debug_req_i        (dm_debug_req),
     .crash_dump_o       (),
     .double_fault_seen_o(),
+
+    .rvfi_valid,
+    .rvfi_order,
+    .rvfi_insn,
+    .rvfi_trap,
+    .rvfi_halt,
+    .rvfi_intr,
+    .rvfi_mode,
+    .rvfi_ixl,
+    .rvfi_rs1_addr,
+    .rvfi_rs2_addr,
+    .rvfi_rs3_addr,
+    .rvfi_rs1_rdata,
+    .rvfi_rs2_rdata,
+    .rvfi_rs3_rdata,
+    .rvfi_rd_addr,
+    .rvfi_rd_wdata,
+    .rvfi_pc_rdata,
+    .rvfi_pc_wdata,
+    .rvfi_mem_addr,
+    .rvfi_mem_rmask,
+    .rvfi_mem_wmask,
+    .rvfi_mem_rdata,
+    .rvfi_mem_wdata,
+    .rvfi_ext_pre_mip,
+    .rvfi_ext_post_mip,
+    .rvfi_ext_nmi,
+    .rvfi_ext_nmi_int,
+    .rvfi_ext_debug_req,
+    .rvfi_ext_debug_mode,
+    .rvfi_ext_rf_wr_suppress,
+    .rvfi_ext_mcycle,
+    .rvfi_ext_mhpmcounters,
+    .rvfi_ext_mhpmcountersh,
+    .rvfi_ext_ic_scr_key_valid,
+    .rvfi_ext_irq_valid,
 
     .fetch_enable_i        ('1),
     .alert_minor_o         (),

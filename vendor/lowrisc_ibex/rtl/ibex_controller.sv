@@ -10,6 +10,8 @@
 `include "prim_assert.sv"
 `include "dv_fcov_macros.svh"
 
+`define RVFI
+
 module ibex_controller #(
   parameter bit WritebackStage  = 1'b0,
   parameter bit BranchPredictor = 1'b0,

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // This is the top level SystemVerilog file that connects the IO on the board to the Ibex Demo System.
+
 module top_versal #(
   parameter SRAMInitFile = "/home/ritu/dev/work/ibex-demo-system/sw/c/build/demo/hello_world/demo.hex"
 ) (
@@ -64,6 +65,24 @@ module top_versal #(
    logic [31:0] ram_a_rdata;
 
    logic        ps_ctrl, ps_ctrl_d;
+   logic	force_stop;
+   logic	ps_send_last, ps_send_last_done, ps_send_last_csr_done, ps_send_last_called;
+
+   logic	rvfi_valid;
+   logic	rvfi_trap;
+   logic [ 4:0]	rvfi_rd_addr;
+   logic [31:0]	rvfi_rd_wdata;
+   logic [31:0]	rvfi_pc_rdata;
+   logic [31:0]	rvfi_ext_pre_mip;
+   logic [31:0]	rvfi_ext_post_mip;
+   logic	rvfi_ext_nmi;
+   logic	rvfi_ext_nmi_int;
+   logic	rvfi_ext_debug_req;
+   logic	rvfi_ext_rf_wr_suppress;
+   logic [63:0]	rvfi_ext_mcycle;
+   logic [31:0]	rvfi_ext_mhpmcounters [10];   
+   logic [31:0]	rvfi_ext_mhpmcountersh [10];
+   logic	rvfi_ext_ic_scr_key_valid;
 
    always_comb begin
       ram_a_req = ps_ctrl ? ps_bram_a_en : ibex_ram_a_req;
@@ -78,6 +97,24 @@ module top_versal #(
    
    always_ff @(posedge sys_clk) begin
       ps_ctrl_d <= ps_ctrl;
+   end
+
+   always_ff @(posedge sys_clk or negedge sys_rstn) begin
+      if (!sys_rstn) begin
+	 ps_send_last_done <= '0;
+	 ps_send_last_csr_done <= '0;
+	 ps_send_last_called <= '0;
+      end else begin
+	 if (ps_send_last) begin
+	    ps_send_last_called <= '1;
+	 end
+	 if (rvfi_tvalid && rvfi_tlast && rvfi_tready) begin
+	    ps_send_last_done <= '1;
+	 end
+	 if (rvfi_csr_tvalid && rvfi_csr_tlast && rvfi_csr_tready) begin
+	    ps_send_last_csr_done <= '1;
+	 end
+      end
    end
    
    assign sys_rstn = axi_rstn && !(ps_ctrl_d && !ps_ctrl);
@@ -99,7 +136,7 @@ module top_versal #(
    .a_rvalid_o(ram_a_rvalid),
    .a_rdata_o (ram_a_rdata),
 
-   .b_req_i   (ibex_ram_b_req),
+   .b_req_i   (ibex_ram_b_req && !force_stop),
    .b_we_i    (ibex_ram_b_we),
    .b_be_i    (ibex_ram_b_be),
    .b_addr_i  (ibex_ram_b_addr),
@@ -147,12 +184,118 @@ module top_versal #(
     .ibex_ram_b_rvalid_i (ibex_ram_b_rvalid),
     .ibex_ram_b_rdata_i (ibex_ram_b_rdata),
 
+    .rvfi_valid,
+    .rvfi_trap,
+    .rvfi_rd_addr,
+    .rvfi_rd_wdata,
+    .rvfi_pc_rdata,
+    .rvfi_ext_pre_mip,
+    .rvfi_ext_post_mip,
+    .rvfi_ext_nmi,
+    .rvfi_ext_nmi_int,
+    .rvfi_ext_debug_req,
+    .rvfi_ext_rf_wr_suppress,
+    .rvfi_ext_mcycle,
+    .rvfi_ext_mhpmcounters,
+    .rvfi_ext_mhpmcountersh,
+    .rvfi_ext_ic_scr_key_valid,
+
     .trst_ni(1'b1),
     .tms_i  (1'b0),
     .tck_i  (1'b0),
     .td_i   (1'b0),
     .td_o   ()
   );
+  
+  localparam int OUT_WIDTH = 256;
+  localparam int CSR_WIDTH = 128;
+
+   logic [OUT_WIDTH-1:0]        rvfi_tdata;
+   logic			rvfi_tvalid;
+   logic			rvfi_tready;
+   logic			rvfi_tlast;
+   logic [OUT_WIDTH/8-1:0]	rvfi_tkeep;
+   
+   logic [CSR_WIDTH-1:0]	rvfi_csr_tdata;
+   logic			rvfi_csr_tvalid;
+   logic			rvfi_csr_tready;
+   logic			rvfi_csr_tlast;
+   logic [CSR_WIDTH/8-1:0]	rvfi_csr_tkeep;
+
+   logic [OUT_WIDTH-1:0]	rvfi_handler_tdata;
+   logic			rvfi_handler_tvalid;
+   
+   logic [CSR_WIDTH-1:0]	rvfi_handler_csr_tdata;
+   logic			rvfi_handler_csr_tvalid;
+
+   logic			rvfi_handler_ready;
+
+   always_comb force_stop = ~rvfi_handler_ready;
+
+   rvfi_handler u_rh 
+     (
+      .clk (sys_clk),
+      .rstn (sys_rstn),
+
+      .rvfi_valid_i (rvfi_valid),
+      .rvfi_trap_i (rvfi_trap),
+      .rvfi_rd_addr_i (rvfi_rd_addr),
+      .rvfi_rd_wdata_i (rvfi_rd_wdata),
+      .rvfi_pc_rdata_i (rvfi_pc_rdata),
+      .rvfi_ext_pre_mip_i (rvfi_ext_pre_mip),
+      .rvfi_ext_post_mip_i (rvfi_ext_post_mip),
+      .rvfi_ext_nmi_i (rvfi_ext_nmi),
+      .rvfi_ext_nmi_int_i (rvfi_ext_nmi_int),
+      .rvfi_ext_debug_req_i (rvfi_ext_debug_req),
+      .rvfi_ext_rf_wr_suppress_i (rvfi_ext_rf_wr_suppress),
+      .rvfi_ext_mcycle_i (rvfi_ext_mcycle),
+      .rvfi_ext_mhpmcounters_i (rvfi_ext_mhpmcounters),
+      .rvfi_ext_mhpmcountersh_i (rvfi_ext_mhpmcountersh),
+      .rvfi_ext_ic_scr_key_valid_i (rvfi_ext_ic_scr_key_valid),
+
+      .rdata_o (rvfi_handler_tdata),
+      .rvalid_o (rvfi_handler_tvalid),
+      .rready_i (rvfi_tready),
+      .rkeep_o (rvfi_tkeep),
+
+      .rdata_csr_o (rvfi_handler_csr_tdata),
+      .rvalid_csr_o (rvfi_handler_csr_tvalid),
+      .rready_csr_i (rvfi_csr_tready),
+      .rkeep_csr_o (rvfi_csr_tkeep),
+
+      .rvfi_ready_o (rvfi_handler_ready)
+      );
+
+
+   always_comb begin
+      if (ps_send_last_called) begin
+	 if (!ps_send_last_done) begin
+	    rvfi_tdata = '0;
+	    rvfi_tvalid = '1;
+	    rvfi_tlast = '1;
+	 end else begin
+	    rvfi_tdata = 'x;
+	    rvfi_tvalid = '0;
+	    rvfi_tlast = 'x;
+	 end
+	 if (!ps_send_last_csr_done) begin
+	    rvfi_csr_tdata = '0;
+	    rvfi_csr_tvalid = '1;
+	    rvfi_csr_tlast = '1;
+	 end else begin
+	    rvfi_csr_tdata = 'x;
+	    rvfi_csr_tvalid = '0;
+	    rvfi_csr_tlast = 'x;
+	 end
+      end else begin
+	 rvfi_tdata = rvfi_handler_tdata;
+	 rvfi_tvalid = rvfi_handler_tvalid;
+	 rvfi_tlast = '0;
+	 rvfi_csr_tdata = rvfi_handler_csr_tdata;
+	 rvfi_csr_tvalid = rvfi_handler_csr_tvalid;
+	 rvfi_csr_tlast = '0;
+      end
+   end
    
    ps_subsystem_wrapper u_pssub (
     .DDR4_act_n         (DDR4_act_n    ),
@@ -169,6 +312,7 @@ module top_versal #(
     .DDR4_dqs_t         (DDR4_dqs_t    ),
     .DDR4_odt           (DDR4_odt      ),
     .DDR4_reset_n       (DDR4_reset_n  ),
+
     .PS_BRAM_addr (ps_bram_a_addr),
     .PS_BRAM_clk (ps_bram_a_clk),
     .PS_BRAM_din (ps_bram_a_wdata),
@@ -176,7 +320,21 @@ module top_versal #(
     .PS_BRAM_en (ps_bram_a_en),
     .PS_BRAM_rst (ps_bram_a_rst),
     .PS_BRAM_we (ps_bram_a_we),
-    .PS_REQ_tri_o (ps_ctrl),
+
+    .PS_IO_tri_o ({ps_ctrl, ps_send_last}),
+
+    .rvfi_tdata,
+    .rvfi_tvalid,
+    .rvfi_tready,
+    .rvfi_tkeep,
+    .rvfi_tlast,
+   
+    .rvfi_csr_tdata,
+    .rvfi_csr_tvalid,
+    .rvfi_csr_tready,
+    .rvfi_csr_tkeep,
+    .rvfi_csr_tlast,
+
     .axi_clk (sys_clk),
     .axi_rstn (axi_rstn),
     .sys_clk_n (sys_clk_n),
