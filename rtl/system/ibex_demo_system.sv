@@ -274,13 +274,15 @@ module ibex_demo_system #(
    
   assign core_instr_rdata = core_instr_sel_dbg ? dbg_device_rdata : mem_instr_rdata;
   assign core_instr_gnt = mem_instr_req | (dbg_instr_req & ~device_req[DbgDev]);
+
+  assign core_instr_rvalid = ibex_ram_b_rvalid_i;
    
   always @(posedge clk_sys_i or negedge rst_sys_ni) begin
     if (!rst_sys_ni) begin
-      core_instr_rvalid  <= 1'b0;
+      // core_instr_rvalid  <= 1'b0;
       core_instr_sel_dbg <= 1'b0;
     end else begin
-      core_instr_rvalid  <= core_instr_gnt;
+      // core_instr_rvalid  <= core_instr_gnt;
       core_instr_sel_dbg <= dbg_instr_req;
     end
   end
