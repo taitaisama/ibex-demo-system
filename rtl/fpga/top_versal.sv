@@ -86,35 +86,42 @@ module top_versal #(
    logic [31:0] rvfi_ext_mhpmcountersh [10];
    logic        rvfi_ext_ic_scr_key_valid;
    
-   localparam int OUT_WIDTH = 256;
-   localparam int CSR_WIDTH = 128;
+   localparam int RVFI_OUT_WIDTH = 256;
+   localparam int RVFI_CSR_OUT_WIDTH = 128;
+   localparam int RVFI_FIFO_WIDTH = 208;
+   localparam int RVFI_CSR_FIFO_WIDTH = 104;
 
-   logic [OUT_WIDTH-1:0]        rvfi_tdata;
-   logic                        rvfi_tvalid;
-   logic                        rvfi_tready;
-   logic                        rvfi_tlast;
-   logic [OUT_WIDTH/8-1:0]      rvfi_tkeep;
+   logic [RVFI_OUT_WIDTH-1:0]	    rvfi_tdata;
+   logic			    rvfi_tvalid;
+   logic			    rvfi_tready;
+   logic			    rvfi_tlast;
+   logic [RVFI_OUT_WIDTH/8-1:0]	    rvfi_tkeep;
    
-   logic [CSR_WIDTH-1:0]        rvfi_csr_tdata;
-   logic                        rvfi_csr_tvalid;
-   logic                        rvfi_csr_tready;
-   logic                        rvfi_csr_tlast;
-   logic [CSR_WIDTH/8-1:0]      rvfi_csr_tkeep;
+   logic [RVFI_CSR_OUT_WIDTH-1:0]   rvfi_csr_tdata;
+   logic			    rvfi_csr_tvalid;
+   logic			    rvfi_csr_tready;
+   logic			    rvfi_csr_tlast;
+   logic [RVFI_CSR_OUT_WIDTH/8-1:0] rvfi_csr_tkeep;
 
-   logic [OUT_WIDTH-1:0]        rvfi_handler_tdata;
-   logic                        rvfi_handler_tvalid;
+   logic [RVFI_OUT_WIDTH-1:0]	    rvfi_handler_tdata;
+   logic			    rvfi_handler_tvalid;
    
-   logic [CSR_WIDTH-1:0]        rvfi_handler_csr_tdata;
-   logic                        rvfi_handler_csr_tvalid;
+   logic [RVFI_CSR_OUT_WIDTH-1:0]   rvfi_handler_csr_tdata;
+   logic			    rvfi_handler_csr_tvalid;
 
-   logic                        rvfi_handler_ready;
+   logic			    rvfi_handler_ready;
 
-   localparam logic [31:0]	DEBUG_MAX_ADDR = 800;
-   logic [31:0]			debug_addr;
-   logic [63:0]			debug_data;
+   localparam logic [31:0]	    DEBUG_MAX_ADDR = 800;
+   logic [31:0]			    debug_addr;
+   logic [63:0]			    debug_data;
 
-   logic			pending_request;
-   logic [31:0]			pending_addr;
+   logic			    pending_request;
+   logic [31:0]			    pending_addr;
+
+   always_comb begin
+      rvfi_tkeep = {{(RVFI_FIFO_WIDTH/8){1'b1}}, {((RVFI_OUT_WIDTH-RVFI_FIFO_WIDTH)/8){1'b0}}};
+      rvfi_csr_tkeep = {{(RVFI_CSR_FIFO_WIDTH/8){1'b1}}, {((RVFI_CSR_OUT_WIDTH-RVFI_CSR_FIFO_WIDTH)/8){1'b0}}};      
+   end
 
    always_ff @(posedge sys_clk or negedge sys_rstn) begin
       if (!sys_rstn) begin
@@ -142,9 +149,7 @@ module top_versal #(
       end
    end
 
-   logic fifo_1_empty, fifo_1_almost_full, fifo_1_wr_en, fifo_1_rd_en, fifo_2_empty, fifo_2_almost_full, fifo_2_wr_en, fifo_2_rd_en, fifo_3_empty, fifo_3_almost_full, fifo_3_wr_en, fifo_3_rd_en;
-
-   always_comb debug_data = {rvfi_valid, rvfi_handler_tvalid, rvfi_handler_ready, fifo_1_empty, fifo_1_almost_full, fifo_1_wr_en, fifo_1_rd_en, fifo_2_empty, fifo_2_almost_full, fifo_2_wr_en, fifo_2_rd_en, fifo_3_empty, fifo_3_almost_full, fifo_3_wr_en, fifo_3_rd_en, rvfi_rd_addr, rvfi_tdata[185:181], ibex_ram_b_addr[9:0], rvfi_ext_mcycle[8:0]};
+   always_comb debug_data = {rvfi_valid, rvfi_tready, rvfi_tlast, rvfi_rd_addr, rvfi_tdata[185:181], rvfi_tkeep, ibex_ram_b_addr[9:0], rvfi_ext_mcycle[8:0]};
 
    always_comb begin
       ram_a_req = ps_ctrl ? ps_bram_a_en : ibex_ram_a_req;
@@ -300,27 +305,10 @@ module top_versal #(
       .rdata_o (rvfi_handler_tdata),
       .rvalid_o (rvfi_handler_tvalid),
       .rready_i (rvfi_tready),
-      .rkeep_o (rvfi_tkeep),
 
       .rdata_csr_o (rvfi_handler_csr_tdata),
       .rvalid_csr_o (rvfi_handler_csr_tvalid),
       .rready_csr_i (rvfi_csr_tready),
-      .rkeep_csr_o (rvfi_csr_tkeep),
-
-      .fifo_1_empty,
-      .fifo_1_almost_full,
-      .fifo_1_rd_en,
-      .fifo_1_wr_en,
-      
-      .fifo_2_empty,
-      .fifo_2_almost_full,
-      .fifo_2_rd_en,
-      .fifo_2_wr_en,
-
-      .fifo_3_empty,
-      .fifo_3_almost_full,
-      .fifo_3_rd_en,
-      .fifo_3_wr_en,
       
       .rvfi_ready_o (rvfi_handler_ready)
       );

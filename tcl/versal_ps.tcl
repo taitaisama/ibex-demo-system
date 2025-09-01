@@ -554,5 +554,5 @@ proc create_fifo_design { parentCell depth width design_name } {
 
 create_root_design ""
 create_fifo_design "" 16 832 "rvfi_fifo"
-create_fifo_design "" 256 256 "rvfi_mem_fifo"
-create_fifo_design "" 256 128 "rvfi_csr_fifo"
+create_fifo_design "" 256 208 "rvfi_mem_fifo"
+create_fifo_design "" 256 104 "rvfi_csr_fifo"

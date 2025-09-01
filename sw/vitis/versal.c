@@ -41,7 +41,7 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 
 #define MEM_BASE_ADDR		0x01000000
 
-#define RVFI_ADDR		    (MEM_BASE_ADDR + 0x00100000)
+#define RVFI_ADDR		(MEM_BASE_ADDR + 0x00100000)
 #define RVFI_CSR_ADDR		(MEM_BASE_ADDR + 0x00300000)
 
 u32 ps_io = 0;
@@ -105,17 +105,17 @@ u32 check_prog() {
 
 void print_rvfi_data() {
   printf("rvfi data\n");
-  for (int i = 0; i < 10; i ++) {
+  for (int i = 0; i < 100; i ++) {
     printf("%x, ", Xil_In32(RVFI_ADDR + i*4));
   }
   printf("\n\r");
 }
 
-#define DEBUG_LEN 19
+#define DEBUG_LEN 8
 void print_debug_data() {
   printf("debug data\n");
   
-  int widths [DEBUG_LEN] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 10, 28};
+  int widths [DEBUG_LEN] = {1, 1, 1, 5, 5, 32, 10, 9};
   int cumsum [DEBUG_LEN];
   u32 vals [DEBUG_LEN];
 
@@ -124,7 +124,9 @@ void print_debug_data() {
     cumsum[i] = cumsum[i-1] + widths[i];
   }
 
-  const char* names [DEBUG_LEN] = {"rvfi_valid:%x, ", "rvfi_handler_tvalid:%x, ", "rvfi_handler_ready:%x, ", "fifo_1_empty:%x, ", "fifo_1_almost_full:%x, ", "fifo_1_wr_en:%x, ", "fifo_1_rd_en:%x, ", "fifo_2_empty:%x, ", "fifo_2_almost_full:%x, ", "fifo_2_wr_en:%x, ", "fifo_2_rd_en:%x, ", "fifo_3_empty:%x, ", "fifo_3_almost_full:%x, ", "fifo_3_wr_en:%x, ", "fifo_3_rd_en:%x, ", "rvfi_rd_addr:%x, ", "rvfi_tdata:%x, ", "ibex_ram_b_addr:%x, ", "rvfi_ext_mcycle:%x, "};
+  /* const char* names [DEBUG_LEN] = {"rvfi_valid:%x, ", "rvfi_handler_tvalid:%x, ", "rvfi_handler_ready:%x, ", "fifo_1_empty:%x, ", "fifo_1_almost_full:%x, ", "fifo_1_wr_en:%x, ", "fifo_1_rd_en:%x, ", "fifo_2_empty:%x, ", "fifo_2_almost_full:%x, ", "fifo_2_wr_en:%x, ", "fifo_2_rd_en:%x, ", "fifo_3_empty:%x, ", "fifo_3_almost_full:%x, ", "fifo_3_wr_en:%x, ", "fifo_3_rd_en:%x, ", "rvfi_rd_addr:%x, ", "rvfi_tdata:%x, ", "ibex_ram_b_addr:%x, ", "rvfi_ext_mcycle:%x, "}; */
+
+  printf("rvfi_valid, rvfi_tready, rvfi_tlast, rvfi_rd_addr, rvfi_tdata[185:181], rvfi_tkeep, ibex_ram_b_addr[9:0], rvfi_ext_mcycle[8:0],\n\r");
   
   for (int i = 0; i < 100; i ++) {
     unsigned long long d = Xil_In64(DEBUG_ADDR + i*8);
@@ -134,21 +136,6 @@ void print_debug_data() {
       printf("%x, ", vals[i]);
     }
     printf("\n\r");
-
-    /* printf("rvfi_valid:%x, rvfi_handler_tvalid:%x, rvfi_handler_ready:%x, fifo_1_empty:%x, fifo_1_almost_full:%x, fifo_1_wr_en:%x, fifo_1_rd_en:%x, fifo_2_empty:%x, fifo_2_almost_full:%x, fifo_2_wr_en:%x, fifo_2_rd_en:%x, fifo_3_empty:%x, fifo_3_almost_full:%x, fifo_3_wr_en:%x, fifo_3_rd_en:%x, rvfi_rd_addr:%x, rvfi_tdata:%x, ibex_ram_b_addr:%x, rvfi_ext_mcycle:%x", vals[0], vals[1], vals[2], vals[3], vals[4], vals */
-
-    /* u32 rvfi_valid = (d >> 63) & 1; */
-    /* u32 rvfi_tvalid = (d >> 62) & 1; */
-    /* u32 rvfi_tready = (d >> 61) & 1; */
-
-
-    /* u32 rvfi_rd_addr = (d >> 56) & ((1<<5)-1); */
-    /* u32 rvfi_tdata = (d >> 51) & ((1<<5)-1); */
-    /* u32 ibex_ram_b_addr = (d >> 41) & ((1<<10)-1); */
-    /* u32 rvfi_ext_mcycle = (d >> 32) & ((1<<9)-1); */
-    /* u32 ibex_ram_b_rdata = d & ((1ll << 32) - 1); */
-
-    /* printf("rvfi_valid:%x, rvfi_tvalid:%x, rvfi_tready:%x, rvfi_rd_addr:%x rvfi_tdata:%x, ibex_ram_b_addr:%x, rvfi_ext_mcycle:%x, ibex_ram_b_rdata:%x\n\r", rvfi_valid, rvfi_tvalid, rvfi_tready, rvfi_rd_addr, rvfi_tdata, ibex_ram_b_addr, rvfi_ext_mcycle, ibex_ram_b_rdata); */
   }
   printf("\n\r");
 }

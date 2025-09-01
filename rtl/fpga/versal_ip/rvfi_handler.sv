@@ -1,6 +1,6 @@
 module rvfi_handler #(
-  parameter int OUT_WIDTH = 256,
-  parameter int CSR_WIDTH = 128) 
+  localparam int OUT_WIDTH = 208,
+  localparam int CSR_WIDTH = 104) 
 ( 
   input logic			 clk,
   input logic			 rstn,
@@ -23,27 +23,10 @@ module rvfi_handler #(
   output logic [OUT_WIDTH-1:0]	 rdata_o,
   output logic			 rvalid_o,
   input logic			 rready_i,
-  output logic [OUT_WIDTH/8-1:0] rkeep_o,
 
   output logic [CSR_WIDTH-1:0]	 rdata_csr_o,
   output logic			 rvalid_csr_o,
   input logic			 rready_csr_i,
-  output logic [CSR_WIDTH/8-1:0] rkeep_csr_o,
-
-  output logic			 fifo_1_empty,
-  output logic			 fifo_1_almost_full,
-  output logic			 fifo_1_rd_en,
-  output logic			 fifo_1_wr_en,
-
-  output logic			 fifo_2_empty,
-  output logic			 fifo_2_almost_full,
-  output logic			 fifo_2_rd_en,
-  output logic			 fifo_2_wr_en,
-  
-  output logic			 fifo_3_empty,
-  output logic			 fifo_3_almost_full,
-  output logic			 fifo_3_rd_en,
-  output logic			 fifo_3_wr_en,
 
   output logic			 rvfi_ready_o
 );
@@ -96,13 +79,6 @@ module rvfi_handler #(
 
    always_comb rvfi_to_mem_valid = !rvfi_fifo_empty && rvfi_to_mem_ready;
 
-   always_comb begin
-      fifo_1_empty = rvfi_fifo_empty;
-      fifo_1_almost_full = rvfi_fifo_almost_full;
-      fifo_1_rd_en = rvfi_to_mem_valid;
-      fifo_1_wr_en = rvfi_valid_i;
-   end
-
    rvfi_fifo_wrapper u_rvfi_fifo
      (
       .clk (clk),
@@ -133,7 +109,13 @@ module rvfi_handler #(
    end
    
 
-   rvfi_to_mem u_rtm
+   rvfi_to_mem
+     #(
+       .NUM_CSR_WORDS (20),
+       .IN_WIDTH (144),
+       .OUT_WIDTH (OUT_WIDTH),
+       .CSR_WIDTH (CSR_WIDTH)
+       ) u_rtm
      (
       .clk (clk),
       .rstn (rstn),
@@ -146,16 +128,6 @@ module rvfi_handler #(
       .rdata_o,
       .rvalid_o,
       .rready_i,
-
-      .fifo_2_empty,
-      .fifo_2_almost_full,
-      .fifo_2_rd_en,
-      .fifo_2_wr_en,
-
-      .fifo_3_empty,
-      .fifo_3_almost_full,
-      .fifo_3_rd_en,
-      .fifo_3_wr_en,
 
       .rdata_csr_o,
       .rvalid_csr_o,
