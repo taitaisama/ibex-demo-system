@@ -18,12 +18,10 @@
  */
 
 #include <stdio.h>
-#include <xaxidma_hw.h>
 #include <xstatus.h>
 #include "platform.h"
 #include "xil_printf.h"
 #include "xil_io.h"
-#include "xaxidma.h"
 #include "sleep.h"
 
 #define PROG_LEN      613
@@ -33,16 +31,16 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 
 #define MAX_PKT_LEN		0x300
 
-#define RVFI_DMA_ADDR		0x201C0000000
-#define RVFI_CSR_DMA_ADDR	0x20240000000
 #define BRAM_CTRL_ADDR          0x20100000000
 #define PS_IO_ADDR              0x20140000000
-#define DEBUG_ADDR              0x202C0000000
+#define DEBUG_ADDR              0x201C0000000
 
 #define MEM_BASE_ADDR		0x01000000
 
-#define RVFI_ADDR		(MEM_BASE_ADDR + 0x00100000)
-#define RVFI_CSR_ADDR		(MEM_BASE_ADDR + 0x00300000)
+#define POLL_TIMEOUT_COUNTER    1000000U
+
+#define RVFI_ADDR		(MEM_BASE_ADDR + 0x00300000)
+#define RVFI_CSR_ADDR		(MEM_BASE_ADDR + 0x00500000)
 
 u32 ps_io = 0;
 
@@ -67,27 +65,6 @@ void ps_send_last() {
   Xil_Out32(PS_IO_ADDR, ps_io);
 }
 
-u32 setup_dma(UINTPTR BaseAddress, XAxiDma* AxiDma)
-{
-  XAxiDma_Config *CfgPtr;
-
-  CfgPtr = XAxiDma_LookupConfig(BaseAddress);
-  if (!CfgPtr) {
-    xil_printf("No config found for %d\r\n", BaseAddress);
-    return XST_FAILURE;
-  }
-  u32 Status = XAxiDma_CfgInitialize(AxiDma, CfgPtr);
-  if (Status != XST_SUCCESS) {
-    xil_printf("Initialization failed %d\r\n", Status);
-    return XST_FAILURE;
-  }
-  if (XAxiDma_HasSg(AxiDma)) {
-    xil_printf("Device configured as SG mode \r\n");
-    return XST_FAILURE;
-  }
-  return XST_SUCCESS;
-}
-
 void set_prog() {
   for (int i = 0; i < PROG_LEN; i ++){
     Xil_Out32(BRAM_CTRL_ADDR + (i*4), PROG[i]);
@@ -104,6 +81,7 @@ u32 check_prog() {
 }
 
 void print_rvfi_data() {
+  Xil_DCacheInvalidateRange((UINTPTR)RVFI_ADDR, MAX_PKT_LEN);
   printf("rvfi data\n");
   for (int i = 0; i < 100; i ++) {
     printf("%x, ", Xil_In32(RVFI_ADDR + i*4));
@@ -111,81 +89,40 @@ void print_rvfi_data() {
   printf("\n\r");
 }
 
-#define DEBUG_LEN 8
 void print_debug_data() {
-  printf("debug data\n");
-  
-  int widths [DEBUG_LEN] = {1, 1, 1, 5, 5, 32, 10, 9};
-  int cumsum [DEBUG_LEN];
-  u32 vals [DEBUG_LEN];
-
-  cumsum[0] = widths[0];
-  for (int i = 1; i < DEBUG_LEN; i ++) {
-    cumsum[i] = cumsum[i-1] + widths[i];
-  }
-
-  /* const char* names [DEBUG_LEN] = {"rvfi_valid:%x, ", "rvfi_handler_tvalid:%x, ", "rvfi_handler_ready:%x, ", "fifo_1_empty:%x, ", "fifo_1_almost_full:%x, ", "fifo_1_wr_en:%x, ", "fifo_1_rd_en:%x, ", "fifo_2_empty:%x, ", "fifo_2_almost_full:%x, ", "fifo_2_wr_en:%x, ", "fifo_2_rd_en:%x, ", "fifo_3_empty:%x, ", "fifo_3_almost_full:%x, ", "fifo_3_wr_en:%x, ", "fifo_3_rd_en:%x, ", "rvfi_rd_addr:%x, ", "rvfi_tdata:%x, ", "ibex_ram_b_addr:%x, ", "rvfi_ext_mcycle:%x, "}; */
-
-  printf("rvfi_valid, rvfi_tready, rvfi_tlast, rvfi_rd_addr, rvfi_tdata[185:181], rvfi_tkeep, ibex_ram_b_addr[9:0], rvfi_ext_mcycle[8:0],\n\r");
-  
-  for (int i = 0; i < 100; i ++) {
-    unsigned long long d = Xil_In64(DEBUG_ADDR + i*8);
-    
-    for (int i = 0; i < DEBUG_LEN; i ++) {
-      vals[i] = (d >> (64-cumsum[i])) & ((1ll << widths[i])-1);
-      printf("%x, ", vals[i]);
+  for (int i = 0 ; i < 256; i ++) {
+    for (int j = 0; j < 16; j ++) {
+      u32 d = Xil_In32(DEBUG_ADDR + (i*16+j)*4);
+      for (int k = 0; k < 8; k ++) {
+	u8 x = (u8) ((d >> (k*4)) & ((1 << 4)-1));
+	printf("%x", x);
+      }
     }
-    printf("\n\r");
+    printf("\r\n");
   }
-  printf("\n\r");
 }
+
 
 int main()
 {
   init_platform();
 
-  XAxiDma rvfi_dma;
-  XAxiDma rvfi_csr_dma;
-
   set_ps_ctrl();
   print_rvfi_data();
-  if (setup_dma(RVFI_DMA_ADDR, &rvfi_dma) != XST_SUCCESS) {
-    return XST_FAILURE;
-  }
-  if (setup_dma(RVFI_CSR_DMA_ADDR, &rvfi_csr_dma) != XST_SUCCESS) {
-    return XST_FAILURE;
-  }
-
-  u32 tl = rvfi_dma.TxBdRing.MaxTransferLen;
-  printf("hello\n");
-
-  printf("max transfer len %x\n", tl);
-  /* print_debug_data(); */
   set_prog();
 
   if (check_prog() != XST_SUCCESS){
     return XST_FAILURE;
   }
-
-  Xil_DCacheFlushRange((UINTPTR)(RVFI_ADDR), MAX_PKT_LEN);
-  Xil_DCacheFlushRange((UINTPTR)(RVFI_CSR_ADDR), MAX_PKT_LEN);
-
-  if (XAxiDma_SimpleTransfer(&rvfi_dma, (UINTPTR)(RVFI_ADDR), MAX_PKT_LEN, XAXIDMA_DEVICE_TO_DMA) != XST_SUCCESS) {
-    return XST_FAILURE;
-  }
-
-  if (XAxiDma_SimpleTransfer(&rvfi_csr_dma, (UINTPTR)(RVFI_CSR_ADDR), MAX_PKT_LEN, XAXIDMA_DEVICE_TO_DMA) != XST_SUCCESS) {
-    return XST_FAILURE;
-  }
-  print_rvfi_data();
   set_pl_ctrl();
-  
+
   printf("waiting\n");
 
   usleep(10000U);
 
-  print_debug_data();
   print_rvfi_data();
+
+  print_debug_data();
 
   cleanup_platform();
   return 0;

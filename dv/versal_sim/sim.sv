@@ -6,8 +6,8 @@ module tb;
 
    localparam logic [7:0] max_counter = 8'd200;
 
-   localparam int	  OUT_WIDTH = 256;
-   localparam int	  CSR_WIDTH = 128;
+   localparam int	  OUT_WIDTH = 208;
+   localparam int	  CSR_WIDTH = 104;
 
    logic [7:0] counter = 0;
 
@@ -30,12 +30,10 @@ module tb;
    logic [OUT_WIDTH-1:0]        rvfi_tdata;
    logic			rvfi_tvalid;
    logic			rvfi_tready;
-   logic [OUT_WIDTH/8-1:0]	rvfi_tkeep;
    
    logic [CSR_WIDTH-1:0]	rvfi_csr_tdata;
    logic			rvfi_csr_tvalid;
    logic			rvfi_csr_tready;
-   logic [CSR_WIDTH/8-1:0]	rvfi_csr_tkeep;
 
 
    assign rvfi_tready = 1;
@@ -129,12 +127,10 @@ module tb;
       .rdata_o (rvfi_tdata),
       .rvalid_o (rvfi_tvalid),
       .rready_i (rvfi_tready),
-      .rkeep_o (rvfi_tkeep),
 
       .rdata_csr_o (rvfi_csr_tdata),
       .rvalid_csr_o (rvfi_csr_tvalid),
       .rready_csr_i (rvfi_csr_tready),
-      .rkeep_csr_o (rvfi_csr_tkeep),
 
       .rvfi_ready_o (rvfi_ready)
       );

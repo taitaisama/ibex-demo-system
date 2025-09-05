@@ -94,34 +94,31 @@ module top_versal #(
    logic [RVFI_OUT_WIDTH-1:0]	    rvfi_tdata;
    logic			    rvfi_tvalid;
    logic			    rvfi_tready;
-   logic			    rvfi_tlast;
    logic [RVFI_OUT_WIDTH/8-1:0]	    rvfi_tkeep;
    
    logic [RVFI_CSR_OUT_WIDTH-1:0]   rvfi_csr_tdata;
    logic			    rvfi_csr_tvalid;
    logic			    rvfi_csr_tready;
-   logic			    rvfi_csr_tlast;
    logic [RVFI_CSR_OUT_WIDTH/8-1:0] rvfi_csr_tkeep;
 
-   logic [RVFI_OUT_WIDTH-1:0]	    rvfi_handler_tdata;
+   logic [71:0]			    rvfi_cmd_tdata;
+   logic			    rvfi_cmd_tvalid;
+   logic			    rvfi_cmd_tready;
+   
+   logic [71:0]			    rvfi_csr_cmd_tdata;
+   logic			    rvfi_csr_cmd_tvalid;
+   logic			    rvfi_csr_cmd_tready;
+
+   logic [RVFI_FIFO_WIDTH-1:0]	    rvfi_handler_tdata;
    logic			    rvfi_handler_tvalid;
    
-   logic [RVFI_CSR_OUT_WIDTH-1:0]   rvfi_handler_csr_tdata;
+   logic [RVFI_CSR_FIFO_WIDTH-1:0]  rvfi_handler_csr_tdata;
    logic			    rvfi_handler_csr_tvalid;
 
    logic			    rvfi_handler_ready;
 
-   localparam logic [31:0]	    DEBUG_MAX_ADDR = 800;
-   logic [31:0]			    debug_addr;
-   logic [63:0]			    debug_data;
-
    logic			    pending_request;
    logic [31:0]			    pending_addr;
-
-   always_comb begin
-      rvfi_tkeep = {{(RVFI_FIFO_WIDTH/8){1'b1}}, {((RVFI_OUT_WIDTH-RVFI_FIFO_WIDTH)/8){1'b0}}};
-      rvfi_csr_tkeep = {{(RVFI_CSR_FIFO_WIDTH/8){1'b1}}, {((RVFI_CSR_OUT_WIDTH-RVFI_CSR_FIFO_WIDTH)/8){1'b0}}};      
-   end
 
    always_ff @(posedge sys_clk or negedge sys_rstn) begin
       if (!sys_rstn) begin
@@ -139,18 +136,6 @@ module top_versal #(
       end
    end
 
-   always_ff @(posedge sys_clk or negedge sys_rstn) begin
-      if (!sys_rstn) begin
-	 debug_addr <= 0;
-      end else begin
-	 if (debug_addr < DEBUG_MAX_ADDR) begin
-	    debug_addr <= debug_addr + 8;
-	 end
-      end
-   end
-
-   always_comb debug_data = {rvfi_valid, rvfi_tready, rvfi_tlast, rvfi_rd_addr, rvfi_tdata[185:181], rvfi_tkeep, ibex_ram_b_addr[9:0], rvfi_ext_mcycle[8:0]};
-
    always_comb begin
       ram_a_req = ps_ctrl ? ps_bram_a_en : ibex_ram_a_req;
       ram_a_we = ps_ctrl ? ps_bram_a_we : ibex_ram_a_we;
@@ -161,7 +146,7 @@ module top_versal #(
       ibex_ram_a_rdata = ram_a_rdata;
       ps_bram_a_rdata = ram_a_rdata;
    end   
-   
+
    always_ff @(posedge sys_clk) begin
       ps_ctrl_d <= ps_ctrl;
    end
@@ -178,10 +163,10 @@ module top_versal #(
          if (ps_send_last || pl_send_last) begin
             send_last_called <= '1;
          end
-         if (rvfi_tvalid && rvfi_tlast && rvfi_tready) begin
+         if (rvfi_tvalid && rvfi_tready && send_last_called) begin
             send_last_done <= '1;
          end
-         if (rvfi_csr_tvalid && rvfi_csr_tlast && rvfi_csr_tready) begin
+         if (rvfi_csr_tvalid && rvfi_csr_tready && send_last_called) begin
             send_last_csr_done <= '1;
          end
 	 if (ibex_ram_b_rvalid && !ps_ctrl) begin
@@ -302,14 +287,23 @@ module top_versal #(
       .rvfi_ext_mhpmcountersh_i (rvfi_ext_mhpmcountersh),
       .rvfi_ext_ic_scr_key_valid_i (rvfi_ext_ic_scr_key_valid),
 
-      .rdata_o (rvfi_handler_tdata),
-      .rvalid_o (rvfi_handler_tvalid),
-      .rready_i (rvfi_tready),
+      .fifo_data_o (rvfi_handler_tdata),
+      .fifo_valid_o (rvfi_handler_tvalid),
+      .fifo_ready_i (rvfi_tready),
 
-      .rdata_csr_o (rvfi_handler_csr_tdata),
-      .rvalid_csr_o (rvfi_handler_csr_tvalid),
-      .rready_csr_i (rvfi_csr_tready),
+      .cmd_data_o (rvfi_cmd_tdata),
+      .cmd_valid_o (rvfi_cmd_tvalid),
+      .cmd_ready_i (rvfi_cmd_tready),
+
+      .fifo_data_csr_o (rvfi_handler_csr_tdata),
+      .fifo_valid_csr_o (rvfi_handler_csr_tvalid),
+      .fifo_ready_csr_i (rvfi_csr_tready),
       
+      .cmd_csr_data_o (rvfi_csr_cmd_tdata),
+      .cmd_csr_valid_o (rvfi_csr_cmd_tvalid),
+      .cmd_csr_ready_i (rvfi_csr_cmd_tready),
+
+      .flush (send_last_called),
       .rvfi_ready_o (rvfi_handler_ready)
       );
 
@@ -319,32 +313,38 @@ module top_versal #(
          if (!send_last_done) begin
             rvfi_tdata = '0;
             rvfi_tvalid = '1;
-            rvfi_tlast = '1;
          end else begin
             rvfi_tdata = 'x;
             rvfi_tvalid = '0;
-            rvfi_tlast = 'x;
          end
          if (!send_last_csr_done) begin
             rvfi_csr_tdata = '0;
             rvfi_csr_tvalid = '1;
-            rvfi_csr_tlast = '1;
          end else begin
             rvfi_csr_tdata = 'x;
             rvfi_csr_tvalid = '0;
-            rvfi_csr_tlast = 'x;
          end
       end else begin
-         rvfi_tdata = rvfi_handler_tdata;
+         rvfi_tdata[RVFI_OUT_WIDTH-1 -: RVFI_FIFO_WIDTH] = rvfi_handler_tdata;
+	 rvfi_tdata[RVFI_OUT_WIDTH-RVFI_FIFO_WIDTH-1:0] = '0;
          rvfi_tvalid = rvfi_handler_tvalid;
-         rvfi_tlast = '0;
-         rvfi_csr_tdata = rvfi_handler_csr_tdata;
+         rvfi_csr_tdata[RVFI_CSR_OUT_WIDTH-1 -: RVFI_CSR_FIFO_WIDTH] = rvfi_handler_csr_tdata;
+	 rvfi_csr_tdata[RVFI_CSR_OUT_WIDTH-RVFI_CSR_FIFO_WIDTH-1:0] = '0;
          rvfi_csr_tvalid = rvfi_handler_csr_tvalid;
-         rvfi_csr_tlast = '0;
       end
-   end
+      // rvfi_tkeep = {{(RVFI_FIFO_WIDTH/8){1'b1}}, {((RVFI_OUT_WIDTH-RVFI_FIFO_WIDTH)/8){1'b0}}};
+      // rvfi_csr_tkeep = {{(RVFI_CSR_FIFO_WIDTH/8){1'b1}}, {((RVFI_CSR_OUT_WIDTH-RVFI_CSR_FIFO_WIDTH)/8){1'b0}}};
+      rvfi_tkeep = {(RVFI_OUT_WIDTH/8){1'b1}};
+      rvfi_csr_tkeep = {(RVFI_CSR_OUT_WIDTH/8){1'b1}};
+   end   
+
+   // ps_subsystem_debug_wrapper u_pssub 
+   ps_subsystem_wrapper u_pssub
+   (
    
-   ps_subsystem_wrapper u_pssub (
+    // .clk (sys_clk),
+    // .rstn (sys_rstn),
+      
     .DDR4_act_n         (DDR4_act_n    ),
     .DDR4_adr           (DDR4_adr      ),
     .DDR4_ba            (DDR4_ba       ),
@@ -368,27 +368,25 @@ module top_versal #(
     .PS_BRAM_rst (ps_bram_a_rst),
     .PS_BRAM_we (ps_bram_a_we),
 
-    .DEBUG_BRAM_addr (debug_addr),
-    .DEBUG_BRAM_clk (sys_clk),
-    .DEBUG_BRAM_din (debug_data),
-    .DEBUG_BRAM_dout (),
-    .DEBUG_BRAM_en (1),
-    .DEBUG_BRAM_rst (~axi_rstn),
-    .DEBUG_BRAM_we (8'b11111111),
-
     .PS_IO_tri_o ({ps_ctrl, ps_send_last}),
 
     .rvfi_tdata,
     .rvfi_tvalid,
     .rvfi_tready,
     .rvfi_tkeep,
-    .rvfi_tlast,
+
+    .rvfi_cmd_tdata,
+    .rvfi_cmd_tvalid,
+    .rvfi_cmd_tready,
    
     .rvfi_csr_tdata,
     .rvfi_csr_tvalid,
     .rvfi_csr_tready,
     .rvfi_csr_tkeep,
-    .rvfi_csr_tlast,
+    
+    .rvfi_csr_cmd_tdata,
+    .rvfi_csr_cmd_tvalid,
+    .rvfi_csr_cmd_tready,
 
     .axi_clk (sys_clk),
     .axi_rstn (axi_rstn),
