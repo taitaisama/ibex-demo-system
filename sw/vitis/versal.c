@@ -31,7 +31,7 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 
 #define MAX_PKT_LEN		0x300
 
-#define BRAM_CTRL_ADDR          0x20100000000
+#define PROG_ADDR               0x00100000
 #define PS_IO_ADDR              0x20140000000
 #define DEBUG_ADDR              0x201C0000000
 
@@ -44,36 +44,35 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 
 u32 ps_io = 0;
 
-int is_ps_ctrl() {
-  return ps_io & 2;
-}
-
-void set_ps_ctrl() {
-  ps_io = ps_io | 2;
-  Xil_Out32(PS_IO_ADDR, ps_io);
-}
-
-void set_pl_ctrl() {
+int set_ps_rstn() {
   ps_io = ps_io & (~2);
   Xil_Out32(PS_IO_ADDR, ps_io);
 }
 
-void ps_send_last() {
-  ps_io = ps_io | 1;
+int unset_ps_rstn() {
+  ps_io = ps_io | 2;
   Xil_Out32(PS_IO_ADDR, ps_io);
-  ps_io = ps_io & (~1);
+}
+
+int ps_dont_end() {
+  ps_io = ps_io | (~1);
+  Xil_Out32(PS_IO_ADDR, ps_io);
+}
+
+int ps_end() {
+  ps_io = ps_io | 1;
   Xil_Out32(PS_IO_ADDR, ps_io);
 }
 
 void set_prog() {
   for (int i = 0; i < PROG_LEN; i ++){
-    Xil_Out32(BRAM_CTRL_ADDR + (i*4), PROG[i]);
+    Xil_Out32(PROG_ADDR + (i*4), PROG[i]);
   }
 }
 
 u32 check_prog() {
   for (int i = 0; i < PROG_LEN; i ++){
-    if (PROG[i] != Xil_In32(BRAM_CTRL_ADDR + (i*4))) {
+    if (PROG[i] != Xil_In32(PROG_ADDR + (i*4))) {
       return XST_FAILURE;
     }
   }
@@ -91,7 +90,7 @@ void print_rvfi_data() {
 
 void print_debug_data() {
   for (int i = 0 ; i < 256; i ++) {
-    for (int j = 0; j < 16; j ++) {
+    for (int j = 0; j < 8; j ++) {
       u32 d = Xil_In32(DEBUG_ADDR + (i*16+j)*4);
       for (int k = 0; k < 8; k ++) {
 	u8 x = (u8) ((d >> (k*4)) & ((1 << 4)-1));
@@ -107,18 +106,25 @@ int main()
 {
   init_platform();
 
-  set_ps_ctrl();
+  set_ps_rstn();
+
+  ps_dont_end();
+
   print_rvfi_data();
+
   set_prog();
 
   if (check_prog() != XST_SUCCESS){
     return XST_FAILURE;
   }
-  set_pl_ctrl();
+
+  unset_ps_rstn();
 
   printf("waiting\n");
 
   usleep(10000U);
+
+  ps_end();
 
   print_rvfi_data();
 

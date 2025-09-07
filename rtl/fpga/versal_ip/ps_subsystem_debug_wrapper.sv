@@ -1,46 +1,46 @@
 module ps_subsystem_debug_wrapper
   (
 
-output [0:0] DDR4_act_n,
-output [16:0] DDR4_adr,
-output [1:0] DDR4_ba,
-output [0:0] DDR4_bg,
-output [0:0] DDR4_ck_c,
-output [0:0] DDR4_ck_t,
-output [0:0] DDR4_cke,
-output [0:0] DDR4_cs_n,
-inout [7:0] DDR4_dm_n,
-inout [63:0] DDR4_dq,
-inout [7:0] DDR4_dqs_c,
-inout [7:0] DDR4_dqs_t,
-output [0:0] DDR4_odt,
-output [0:0] DDR4_reset_n,
-input [71:0] rvfi_cmd_tdata,
-output [0:0] rvfi_cmd_tready,
-input [0:0] rvfi_cmd_tvalid,
-input [255:0] rvfi_tdata,
-input [31:0] rvfi_tkeep,
-output [0:0] rvfi_tready,
-input [0:0] rvfi_tvalid,
-output [15:0] PS_BRAM_addr,
-output [0:0] PS_BRAM_clk,
-output [31:0] PS_BRAM_din,
-input [31:0] PS_BRAM_dout,
-output [0:0] PS_BRAM_en,
-output [0:0] PS_BRAM_rst,
-output [3:0] PS_BRAM_we,
-output [1:0] PS_IO_tri_o,
-output [0:0] axi_clk,
-output [0:0] axi_rstn,
-input [71:0] rvfi_csr_cmd_tdata,
-output [0:0] rvfi_csr_cmd_tready,
-input [0:0] rvfi_csr_cmd_tvalid,
-input [127:0] rvfi_csr_tdata,
-input [15:0] rvfi_csr_tkeep,
-output [0:0] rvfi_csr_tready,
-input [0:0] rvfi_csr_tvalid,
-input [0:0] sys_clk_n,
-input [0:0] sys_clk_p
+   output [0:0]	 DDR4_act_n,
+   output [16:0] DDR4_adr,
+   output [1:0]	 DDR4_ba,
+   output [0:0]	 DDR4_bg,
+   output [0:0]	 DDR4_ck_c,
+   output [0:0]	 DDR4_ck_t,
+   output [0:0]	 DDR4_cke,
+   output [0:0]	 DDR4_cs_n,
+   inout [7:0]	 DDR4_dm_n,
+   inout [63:0]	 DDR4_dq,
+   inout [7:0]	 DDR4_dqs_c,
+   inout [7:0]	 DDR4_dqs_t,
+   output [0:0]	 DDR4_odt,
+   output [0:0]	 DDR4_reset_n,
+   input [71:0]	 rvfi_cmd_tdata,
+   output [0:0]	 rvfi_cmd_tready,
+   input [0:0]	 rvfi_cmd_tvalid,
+   input [255:0] rvfi_tdata,
+   input [31:0]	 rvfi_tkeep,
+   output [0:0]	 rvfi_tready,
+   input [0:0]	 rvfi_tvalid,
+   output [15:0] PS_BRAM_addr,
+   output [0:0]	 PS_BRAM_clk,
+   output [31:0] PS_BRAM_din,
+   input [31:0]	 PS_BRAM_dout,
+   output [0:0]	 PS_BRAM_en,
+   output [0:0]	 PS_BRAM_rst,
+   output [3:0]	 PS_BRAM_we,
+   output [1:0]	 PS_IO_tri_o,
+   output [0:0]	 axi_clk,
+   output [0:0]	 axi_rstn,
+   input [71:0]	 rvfi_csr_cmd_tdata,
+   output [0:0]	 rvfi_csr_cmd_tready,
+   input [0:0]	 rvfi_csr_cmd_tvalid,
+   input [127:0] rvfi_csr_tdata,
+   input [15:0]	 rvfi_csr_tkeep,
+   output [0:0]	 rvfi_csr_tready,
+   input [0:0]	 rvfi_csr_tvalid,
+   input [0:0]	 sys_clk_n,
+   input [0:0]	 sys_clk_p
 
    );
 
@@ -65,14 +65,17 @@ logic [0:0]DM_OUT_awready;
 logic [2:0]DM_OUT_awsize;
 logic [3:0]DM_OUT_awuser;
 logic [0:0]DM_OUT_awvalid;
+
 logic [0:0]DM_OUT_bready;
 logic [1:0]DM_OUT_bresp;
 logic [0:0]DM_OUT_bvalid;
+
 logic [255:0]DM_OUT_wdata;
 logic [0:0]DM_OUT_wlast;
 logic [0:0]DM_OUT_wready;
 logic [31:0]DM_OUT_wstrb;
 logic [0:0]DM_OUT_wvalid;
+
 logic [255:0]RVFI_FIFO_OUT_tdata;
 logic [31:0]RVFI_FIFO_OUT_tkeep;
 logic [0:0]RVFI_FIFO_OUT_tready;

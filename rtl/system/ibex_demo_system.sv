@@ -40,6 +40,7 @@ module ibex_demo_system #(
   output logic [31:0]	      ibex_ram_a_wdata_o,
   input logic		      ibex_ram_a_rvalid_i,
   input logic [31:0]	      ibex_ram_a_rdata_i,
+  input logic		      ibex_ram_a_gnt_i,
 			      
   output logic		      ibex_ram_b_req_o,
   output logic [3:0]	      ibex_ram_b_we_o,
@@ -48,22 +49,25 @@ module ibex_demo_system #(
   output logic [31:0]	      ibex_ram_b_wdata_o,
   input logic		      ibex_ram_b_rvalid_i,
   input logic [31:0]	      ibex_ram_b_rdata_i,
+  input logic		      ibex_ram_b_gnt_i,
 
-  output logic                rvfi_valid,
-  output logic                rvfi_trap,
-  output logic [ 4:0]         rvfi_rd_addr,
-  output logic [31:0]         rvfi_rd_wdata,
-  output logic [31:0]         rvfi_pc_rdata,
-  output logic [31:0]         rvfi_ext_pre_mip,
-  output logic [31:0]         rvfi_ext_post_mip,
-  output logic                rvfi_ext_nmi,
-  output logic                rvfi_ext_nmi_int,
-  output logic                rvfi_ext_debug_req,
-  output logic                rvfi_ext_rf_wr_suppress,
-  output logic [63:0]         rvfi_ext_mcycle,
-  output logic [31:0]         rvfi_ext_mhpmcounters [10],
-  output logic [31:0]         rvfi_ext_mhpmcountersh [10],
-  output logic                rvfi_ext_ic_scr_key_valid,
+  output logic		      rvfi_valid,
+  output logic		      rvfi_trap,
+  output logic [ 4:0]	      rvfi_rd_addr,
+  output logic [31:0]	      rvfi_rd_wdata,
+  output logic [31:0]	      rvfi_pc_rdata,
+  output logic [31:0]	      rvfi_ext_pre_mip,
+  output logic [31:0]	      rvfi_ext_post_mip,
+  output logic		      rvfi_ext_nmi,
+  output logic		      rvfi_ext_nmi_int,
+  output logic		      rvfi_ext_debug_req,
+  output logic		      rvfi_ext_rf_wr_suppress,
+  output logic [63:0]	      rvfi_ext_mcycle,
+  output logic [31:0]	      rvfi_ext_mhpmcounters [10],
+  output logic [31:0]	      rvfi_ext_mhpmcountersh [10],
+  output logic		      rvfi_ext_ic_scr_key_valid,
+
+  input logic		      force_stop,
 
 // verilator lint_off UNUSED
   input logic		      tck_i,   // JTAG test clock pad
@@ -273,7 +277,7 @@ module ibex_demo_system #(
 
    
   assign core_instr_rdata = core_instr_sel_dbg ? dbg_device_rdata : mem_instr_rdata;
-  assign core_instr_gnt = mem_instr_req | (dbg_instr_req & ~device_req[DbgDev]);
+  assign core_instr_gnt = (mem_instr_req & ibex_ram_b_gnt_i) | (dbg_instr_req & ~device_req[DbgDev]);
 
   assign core_instr_rvalid = ibex_ram_b_rvalid_i;
    
@@ -321,6 +325,7 @@ module ibex_demo_system #(
     .DbgTriggerEn    ( DbgTriggerEn                            ),
     .DbgHwBreakNum   ( DbgHwBreakNum                           ),
     .DmHaltAddr      ( DEBUG_START + dm::HaltAddress[31:0]     ),
+    .ICache          ( 1'b1                                    ),
     .DmExceptionAddr ( DEBUG_START + dm::ExceptionAddress[31:0])
   ) u_top (
     .clk_i (clk_sys_i),
@@ -343,7 +348,7 @@ module ibex_demo_system #(
     .instr_err_i       ('0),
 
     .data_req_o       (host_req[CoreD]),
-    .data_gnt_i       (host_gnt[CoreD]),
+    .data_gnt_i       (host_gnt[CoreD] & ibex_ram_a_gnt_i),
     .data_rvalid_i    (host_rvalid[CoreD]),
     .data_we_o        (host_we[CoreD]),
     .data_be_o        (host_be[CoreD]),
@@ -404,6 +409,8 @@ module ibex_demo_system #(
     .rvfi_ext_mhpmcountersh,
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
+
+    .force_stop,
 
     .fetch_enable_i        ('1),
     .alert_minor_o         (),
