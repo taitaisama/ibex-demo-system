@@ -1,7 +1,6 @@
 module read_ram_to_axi
 # (
    parameter int NUM_ID_BITS = 4,
-   parameter int QUEUE_DELAY = 3,
    parameter int READ_BURST_LEN = 4
    )
 (
@@ -33,202 +32,298 @@ module read_ram_to_axi
   input logic [NUM_ID_BITS-1:0]		    m_rid
 );
 
-   // maybe do an input fifo type thing
-   typedef struct packed {
-      logic [31:0] value;
-      logic        recv_pending;
-      logic	   send_pending;
-   } read_t;
-   
-   read_t read_buffer [READ_BURST_LEN][2**NUM_ID_BITS];
+   if (READ_BURST_LEN == 1) begin : gen_no_burst
 
-   logic [NUM_ID_BITS-1:0] last_read_counter;
-   logic [NUM_ID_BITS-1:0] this_read_counter;
-   logic [NUM_ID_BITS-1:0] next_read_counter;
+      typedef struct packed {
+	 logic [31:0] value;
+	 logic        recv_pending;
+	 logic	      send_pending;
+      } read_t;
 
-   typedef struct packed {
-      logic [NUM_ID_BITS-1:0] read_id;
-      logic [$clog2(READ_BURST_LEN)-1:0] read_burst_idx;
-   } pending_read_t;
+      read_t read_buffer [2**NUM_ID_BITS];
 
-   logic [NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:0] read_send_fifo_trans;
-   logic [NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:0] read_queue_fifo_trans;
+      logic [NUM_ID_BITS-1:0] last_read_counter;
+      logic [NUM_ID_BITS-1:0] this_read_counter;
+      logic [NUM_ID_BITS-1:0] next_read_counter;
 
-   pending_read_t read_send_trans;
-   pending_read_t read_queue_trans;
+      typedef struct packed {
+	 logic [NUM_ID_BITS-1:0] read_id;
+      } pending_read_t;
 
-   always_comb begin
-      read_send_trans.read_burst_idx = read_send_fifo_trans[NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:NUM_ID_BITS];
-      read_send_trans.read_id = read_send_fifo_trans[NUM_ID_BITS-1:0];
-      
-      read_queue_fifo_trans[NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:NUM_ID_BITS] = read_queue_trans.read_burst_idx;
-      read_queue_fifo_trans[NUM_ID_BITS-1:0] = read_queue_trans.read_id;
-   end
-   
-   logic					  push_read;
-   logic					  push_read_d;
-   logic					  push_read_delays [QUEUE_DELAY+1];
+      logic [NUM_ID_BITS-1:0] read_send_fifo_trans;
+      logic [NUM_ID_BITS-1:0] read_queue_fifo_trans;
 
-   logic					  pop_read;
+      pending_read_t read_send_trans;
+      pending_read_t read_queue_trans;
 
-   always_ff @(posedge clk) begin
-      for (int i = 1; i <= QUEUE_DELAY; i ++) begin
-	 push_read_delays[i-1] <= push_read_delays[i];
+      always_comb begin
+	 read_send_trans.read_id = read_send_fifo_trans[NUM_ID_BITS-1:0];
+	 read_queue_fifo_trans[NUM_ID_BITS-1:0] = read_queue_trans.read_id;
       end
-   end
+      
+      logic					  push_read;
 
-   always_comb begin
-      push_read_delays[QUEUE_DELAY] = push_read;
-      push_read_d = push_read_delays[0];
-   end
+      logic					  pop_read;
+      logic					  read_fifo_valid;
+      logic					  fifo_busy;
 
-   logic [$clog2(READ_BURST_LEN)+NUM_ID_BITS:0]	  read_fifo_count;
-   logic					  read_fifo_empty;
+      logic					  next_read_counter_is_busy;
 
-   logic					  last_read_valid;
-   logic [31:0]					  last_read_addr;
-   logic [$clog2(READ_BURST_LEN)-1:0]		  last_read_burst_idx;
-   logic [$clog2(READ_BURST_LEN)-1:0]		  this_read_burst_idx;
-   logic					  this_read_in_burst;
-
-   logic					  next_read_counter_is_busy;
-
-   always_comb begin
-      next_read_counter_is_busy = 0;
-      for (int i = 0; i < READ_BURST_LEN; i ++) begin
-	 if (read_buffer[i][next_read_counter].send_pending) begin
+      always_comb begin
+	 next_read_counter_is_busy = 0;
+	 if (read_buffer[next_read_counter].send_pending) begin
 	    next_read_counter_is_busy = 1;
 	 end
+	 s_gnt = (!next_read_counter_is_busy) && m_arready && (!fifo_busy);
       end
-      s_gnt = (!next_read_counter_is_busy) && m_arready;
-   end
 
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 read_fifo_count <= 0;
-      end else begin
-	 if (push_read_d && !pop_read) begin
-	    read_fifo_count <= read_fifo_count + 1;
-	 end else if (!push_read_d && pop_read) begin
-	    read_fifo_count <= read_fifo_count - 1;
-	 end
+      always_comb begin
+	 read_queue_trans.read_id = this_read_counter;
+	 push_read = s_gnt && s_req;
+	 pop_read = s_rvalid;
       end
-   end
 
-   always_comb begin
-      read_fifo_empty = read_fifo_count == 0;
-      read_queue_trans.read_id = this_read_counter;
-      read_queue_trans.read_burst_idx = this_read_burst_idx;
-      push_read = s_gnt && s_req;
-      pop_read = s_rvalid;
-   end
-
-   always_comb begin
-      next_read_counter = this_read_counter + 1;
-      if (last_read_valid && (last_read_burst_idx != READ_BURST_LEN-1) && (s_addr - last_read_addr) == 4) begin
-	 this_read_in_burst = 1;
-	 this_read_burst_idx = last_read_burst_idx + 1;
-	 this_read_counter = last_read_counter;
-      end else begin
-	 this_read_in_burst = 0;
-	 this_read_burst_idx = 0;
+      always_comb begin
+	 next_read_counter = this_read_counter + 1;
 	 this_read_counter = last_read_counter + 1;
       end
-   end
 
-   // size > 2**NUM_ID_BITS * READ_BURST_LEN
-   // fallthrough mode
-   read_fifo_wrapper u_pending_reads 
-     (
-      .clk (clk),
-      .rst (~rstn),
-      .fifo_read_rd_data (read_send_fifo_trans),
-      .fifo_read_rd_en (pop_read),
-      .fifo_write_wr_data (read_queue_fifo_trans),
-      .fifo_write_wr_en (push_read)
-      );
+      // size > 2**NUM_ID_BITS * READ_BURST_LEN
+      // fallthrough mode
+      read_fifo_wrapper u_pending_reads 
+	(
+	 .clk (clk),
+	 .rst (~rstn),
+	 .data_valid (read_fifo_valid),
+	 .fifo_wr_busy (fifo_busy),
+	 .fifo_read_rd_data (read_send_fifo_trans),
+	 .fifo_read_rd_en (pop_read),
+	 .fifo_write_wr_data (read_queue_fifo_trans),
+	 .fifo_write_wr_en (push_read)
+	 );
 
-   logic [$clog2(READ_BURST_LEN)-1:0] recv_burst_idx;
+      logic				 send_ready;
 
-   logic			      send_ready;
+      always_comb begin
+	 send_ready = read_fifo_valid && !read_buffer[read_send_trans.read_id].recv_pending;
+	 s_rvalid = send_ready;
+	 info_rid = read_send_trans.read_id;
+	 s_rdata = read_buffer[read_send_trans.read_id].value;
+      end
 
-   always_comb begin
-      send_ready = !read_fifo_empty && !read_buffer[read_send_trans.read_burst_idx][read_send_trans.read_id].recv_pending;
-      s_rvalid = send_ready;
-      info_rid = read_send_trans.read_id;
-      info_rburst = read_send_trans.read_burst_idx;
-      s_rdata = read_buffer[read_send_trans.read_burst_idx][read_send_trans.read_id].value;
-   end
-
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 for (int i = 0; i < READ_BURST_LEN; i ++) begin
+      always_ff @(posedge clk or negedge rstn) begin
+	 if (!rstn) begin
 	    for (int j = 0; j < 2**NUM_ID_BITS; j ++) begin
-	       read_buffer[i][j].value <= 'x;
-	       read_buffer[i][j].recv_pending <= 0;
-	       read_buffer[i][j].send_pending <= 0;
+	       read_buffer[j].value <= 'x;
+	       read_buffer[j].recv_pending <= 0;
+	       read_buffer[j].send_pending <= 0;
+	    end
+	 end else begin
+	    if (s_gnt && s_req) begin
+	       read_buffer[this_read_counter].send_pending <= 1;
+	       read_buffer[this_read_counter].recv_pending <= 1;
+	    end
+	    if (m_rvalid && m_rready) begin
+	       read_buffer[m_rid].value <= m_rdata;
+	       read_buffer[m_rid].recv_pending <= 0;
+	    end
+	    if (send_ready) begin
+	       read_buffer[read_send_trans.read_id].send_pending <= 0;
 	    end
 	 end
-      end else begin
-	 if (s_gnt && s_req) begin
-	    read_buffer[this_read_burst_idx][this_read_counter].send_pending <= 1;
-	    if (!this_read_in_burst) begin // send another axi req, in read_buffer set recv_pending
-	       for (int i = 0; i < READ_BURST_LEN; i ++) begin
-		  read_buffer[i][this_read_counter].recv_pending <= 1;
+      end
+
+      always_ff @(posedge clk or negedge rstn) begin
+	 if (!rstn) begin
+	    last_read_counter <= (2**NUM_ID_BITS)-1;
+	 end else begin
+	    if (s_gnt && s_req) begin
+	       last_read_counter <= this_read_counter;
+	    end
+	 end
+      end
+
+      always_comb begin
+	 m_arlen = 1;
+	 m_arid = this_read_counter;
+	 m_arburst = 0;
+	 m_arsize = 4;
+	 m_araddr = s_addr;
+	 m_arvalid = s_gnt && s_req;
+	 m_rready = 1;
+      end
+
+   end else begin : gen_burst
+
+      typedef struct packed {
+	 logic [31:0] value;
+	 logic        recv_pending;
+	 logic	      send_pending;
+      } read_t;
+      
+      read_t read_buffer [READ_BURST_LEN][2**NUM_ID_BITS];
+
+      logic [NUM_ID_BITS-1:0] last_read_counter;
+      logic [NUM_ID_BITS-1:0] this_read_counter;
+      logic [NUM_ID_BITS-1:0] next_read_counter;
+
+      typedef struct packed {
+	 logic [NUM_ID_BITS-1:0] read_id;
+	 logic [$clog2(READ_BURST_LEN)-1:0] read_burst_idx;
+      } pending_read_t;
+
+      logic [NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:0] read_send_fifo_trans;
+      logic [NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:0] read_queue_fifo_trans;
+
+      pending_read_t read_send_trans;
+      pending_read_t read_queue_trans;
+
+      always_comb begin
+	 read_send_trans.read_burst_idx = read_send_fifo_trans[NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:NUM_ID_BITS];
+	 read_send_trans.read_id = read_send_fifo_trans[NUM_ID_BITS-1:0];
+	 
+	 read_queue_fifo_trans[NUM_ID_BITS+$clog2(READ_BURST_LEN)-1:NUM_ID_BITS] = read_queue_trans.read_burst_idx;
+	 read_queue_fifo_trans[NUM_ID_BITS-1:0] = read_queue_trans.read_id;
+      end
+      
+      logic					  push_read;
+
+      logic					  pop_read;
+      logic					  read_fifo_valid;
+      logic					  fifo_busy;
+
+      logic					  last_read_valid;
+      logic [31:0]				  last_read_addr;
+      logic [$clog2(READ_BURST_LEN)-1:0]	  last_read_burst_idx;
+      logic [$clog2(READ_BURST_LEN)-1:0]	  this_read_burst_idx;
+      logic					  this_read_in_burst;
+
+      logic					  next_read_counter_is_busy;
+
+      always_comb begin
+	 next_read_counter_is_busy = 0;
+	 for (int i = 0; i < READ_BURST_LEN; i ++) begin
+	    if (read_buffer[i][next_read_counter].send_pending) begin
+	       next_read_counter_is_busy = 1;
+	    end
+	 end
+	 s_gnt = (!next_read_counter_is_busy) && m_arready && (!fifo_busy);
+      end
+
+      always_comb begin
+	 read_queue_trans.read_id = this_read_counter;
+	 read_queue_trans.read_burst_idx = this_read_burst_idx;
+	 push_read = s_gnt && s_req;
+	 pop_read = s_rvalid;
+      end
+
+      always_comb begin
+	 next_read_counter = this_read_counter + 1;
+	 if (last_read_valid && (last_read_burst_idx != READ_BURST_LEN-1) && (s_addr - last_read_addr) == 4) begin
+	    this_read_in_burst = 1;
+	    this_read_burst_idx = last_read_burst_idx + 1;
+	    this_read_counter = last_read_counter;
+	 end else begin
+	    this_read_in_burst = 0;
+	    this_read_burst_idx = 0;
+	    this_read_counter = last_read_counter + 1;
+	 end
+      end
+
+      // size > 2**NUM_ID_BITS * READ_BURST_LEN
+      // fallthrough mode
+      read_fifo_wrapper u_pending_reads 
+	(
+	 .clk (clk),
+	 .rst (~rstn),
+	 .data_valid (read_fifo_valid),
+	 .fifo_wr_busy (fifo_busy),
+	 .fifo_read_rd_data (read_send_fifo_trans),
+	 .fifo_read_rd_en (pop_read),
+	 .fifo_write_wr_data (read_queue_fifo_trans),
+	 .fifo_write_wr_en (push_read)
+	 );
+
+      logic [$clog2(READ_BURST_LEN)-1:0] recv_burst_idx;
+
+      logic				 send_ready;
+
+      always_comb begin
+	 send_ready = read_fifo_valid && !read_buffer[read_send_trans.read_burst_idx][read_send_trans.read_id].recv_pending;
+	 s_rvalid = send_ready;
+	 info_rid = read_send_trans.read_id;
+	 info_rburst = read_send_trans.read_burst_idx;
+	 s_rdata = read_buffer[read_send_trans.read_burst_idx][read_send_trans.read_id].value;
+      end
+
+      always_ff @(posedge clk or negedge rstn) begin
+	 if (!rstn) begin
+	    for (int i = 0; i < READ_BURST_LEN; i ++) begin
+	       for (int j = 0; j < 2**NUM_ID_BITS; j ++) begin
+		  read_buffer[i][j].value <= 'x;
+		  read_buffer[i][j].recv_pending <= 0;
+		  read_buffer[i][j].send_pending <= 0;
+	       end
+	    end
+	 end else begin
+	    if (s_gnt && s_req) begin
+	       read_buffer[this_read_burst_idx][this_read_counter].send_pending <= 1;
+	       if (!this_read_in_burst) begin // send another axi req, in read_buffer set recv_pending
+		  for (int i = 0; i < READ_BURST_LEN; i ++) begin
+		     read_buffer[i][this_read_counter].recv_pending <= 1;
+		  end
+	       end
+	    end
+	    if (m_rvalid && m_rready) begin
+	       read_buffer[recv_burst_idx][m_rid].value <= m_rdata;
+	       read_buffer[recv_burst_idx][m_rid].recv_pending <= 0;
+	    end
+	    if (send_ready) begin
+	       read_buffer[read_send_trans.read_burst_idx][read_send_trans.read_id].send_pending <= 0;
+	    end
+	 end
+      end
+
+      always_ff @(posedge clk or negedge rstn) begin
+	 if (!rstn) begin
+	    recv_burst_idx <= 0;
+	 end else begin
+	    if (m_rready && m_rvalid) begin
+	       if (m_rlast) begin
+		  recv_burst_idx <= 0;
+	       end else begin
+		  recv_burst_idx <= recv_burst_idx + 1;
 	       end
 	    end
 	 end
-	 if (m_rvalid && m_rready) begin
-	    read_buffer[recv_burst_idx][m_rid].value <= m_rdata;
-	    read_buffer[recv_burst_idx][m_rid].recv_pending <= 0;
-	 end
-	 if (send_ready) begin
-	    read_buffer[read_send_trans.read_burst_idx][read_send_trans.read_id].send_pending <= 0;
-	 end
       end
-   end
 
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 recv_burst_idx <= 0;
-      end else begin
-	 if (m_rready && m_rvalid) begin
-	    if (m_rlast) begin
-	       recv_burst_idx <= 0;
-	    end else begin
-	       recv_burst_idx <= recv_burst_idx + 1;
+      always_ff @(posedge clk or negedge rstn) begin
+	 if (!rstn) begin
+	    last_read_counter <= (2**NUM_ID_BITS)-1;
+	    last_read_valid <= 0;
+	    last_read_addr <= 'x;
+	    last_read_burst_idx <= '0;
+	 end else begin
+	    if (s_gnt && s_req) begin
+	       last_read_counter <= this_read_counter;
+	       last_read_valid <= 1;
+	       last_read_addr <= s_addr;
+	       last_read_burst_idx <= this_read_burst_idx;
 	    end
 	 end
       end
-   end
 
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 last_read_counter <= (2**NUM_ID_BITS)-1;
-	 last_read_valid <= 0;
-	 last_read_addr <= 'x;
-	 last_read_burst_idx <= '0;
-      end else begin
-	 if (s_gnt && s_req) begin
-	    last_read_counter <= this_read_counter;
-	    last_read_valid <= 1;
-	    last_read_addr <= s_addr;
-	    last_read_burst_idx <= this_read_burst_idx;
-	 end
+      always_comb begin
+	 m_arlen = READ_BURST_LEN;
+	 m_arid = this_read_counter;
+	 m_arburst = 1;
+	 m_arsize = 4;
+	 m_araddr = s_addr;
+	 m_arvalid = s_gnt && s_req && !this_read_in_burst;
+	 m_rready = 1;
       end
-   end // always_ff @ (posedge clk or negedge rstn)
 
-   logic [31:0] testing;
-
-   always_comb begin
-      m_arlen = READ_BURST_LEN;
-      m_arid = this_read_counter;
-      m_arburst = 1;
-      m_arsize = 4;
-      m_araddr = s_addr;
-      m_arvalid = s_gnt && s_req && !this_read_in_burst;
-      m_rready = 1;
-      testing = (s_rvalid && s_req && s_gnt) ? ((s_addr - s_rdata)/4) - read_fifo_count : 'x;
    end
-
+   
 endmodule
