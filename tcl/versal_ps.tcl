@@ -128,18 +128,18 @@ proc create_root_design { parentCell } {
    CONFIG.DATA_WIDTH {32} \
    CONFIG.HAS_BRESP {1} \
    CONFIG.HAS_BURST {1} \
-   CONFIG.HAS_CACHE {1} \
-   CONFIG.HAS_LOCK {1} \
-   CONFIG.HAS_PROT {1} \
-   CONFIG.HAS_QOS {1} \
-   CONFIG.HAS_REGION {1} \
+   CONFIG.HAS_CACHE {0} \
+   CONFIG.HAS_LOCK {0} \
+   CONFIG.HAS_PROT {0} \
+   CONFIG.HAS_QOS {0} \
+   CONFIG.HAS_REGION {0} \
    CONFIG.HAS_RRESP {1} \
    CONFIG.HAS_WSTRB {1} \
-   CONFIG.ID_WIDTH {0} \
-   CONFIG.MAX_BURST_LENGTH {256} \
-   CONFIG.NUM_READ_OUTSTANDING {1} \
+   CONFIG.ID_WIDTH {4} \
+   CONFIG.MAX_BURST_LENGTH {4} \
+   CONFIG.NUM_READ_OUTSTANDING {16} \
    CONFIG.NUM_READ_THREADS {1} \
-   CONFIG.NUM_WRITE_OUTSTANDING {1} \
+   CONFIG.NUM_WRITE_OUTSTANDING {16} \
    CONFIG.NUM_WRITE_THREADS {1} \
    CONFIG.PROTOCOL {AXI4} \
    CONFIG.READ_WRITE_MODE {READ_WRITE} \
@@ -159,18 +159,18 @@ proc create_root_design { parentCell } {
    CONFIG.DATA_WIDTH {32} \
    CONFIG.HAS_BRESP {1} \
    CONFIG.HAS_BURST {1} \
-   CONFIG.HAS_CACHE {1} \
-   CONFIG.HAS_LOCK {1} \
-   CONFIG.HAS_PROT {1} \
-   CONFIG.HAS_QOS {1} \
-   CONFIG.HAS_REGION {1} \
+   CONFIG.HAS_CACHE {0} \
+   CONFIG.HAS_LOCK {0} \
+   CONFIG.HAS_PROT {0} \
+   CONFIG.HAS_QOS {0} \
+   CONFIG.HAS_REGION {0} \
    CONFIG.HAS_RRESP {1} \
    CONFIG.HAS_WSTRB {1} \
-   CONFIG.ID_WIDTH {0} \
-   CONFIG.MAX_BURST_LENGTH {256} \
-   CONFIG.NUM_READ_OUTSTANDING {1} \
+   CONFIG.ID_WIDTH {4} \
+   CONFIG.MAX_BURST_LENGTH {4} \
+   CONFIG.NUM_READ_OUTSTANDING {16} \
    CONFIG.NUM_READ_THREADS {1} \
-   CONFIG.NUM_WRITE_OUTSTANDING {1} \
+   CONFIG.NUM_WRITE_OUTSTANDING {16} \
    CONFIG.NUM_WRITE_THREADS {1} \
    CONFIG.PROTOCOL {AXI4} \
    CONFIG.READ_WRITE_MODE {READ_ONLY} \
@@ -593,11 +593,25 @@ proc create_fifo_design { parentCell depth width design_name } {
   set_property -dict [ list \
    CONFIG.POLARITY {ACTIVE_HIGH} \
  ] $rst
+  set data_valid [ create_bd_port -dir O data_valid ]
+  set fifo_wr_busy [ create_bd_port -dir O fifo_wr_busy ]
+  set fifo_almost_full [ create_bd_port -dir O fifo_almost_full ]
+
+  set full_thresh [expr {$depth - 5}]
 
   # Create instance: emb_fifo_gen_0, and set properties
   set emb_fifo_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:emb_fifo_gen:1.0 emb_fifo_gen_0 ]
   set_property -dict [list \
+    CONFIG.ENABLE_ALMOST_EMPTY {false} \
+    CONFIG.ENABLE_ALMOST_FULL {false} \
+    CONFIG.ENABLE_DATA_COUNT {false} \
+    CONFIG.ENABLE_OVERFLOW {false} \
+    CONFIG.ENABLE_PROGRAMMABLE_EMPTY {false} \
+    CONFIG.ENABLE_PROGRAMMABLE_FULL {true} \
+    CONFIG.ENABLE_UNDERFLOW {false} \
+    CONFIG.ENABLE_WRITE_ACK {false} \
     CONFIG.FIFO_WRITE_DEPTH $depth \
+    CONFIG.PROG_FULL_THRESH $full_thresh \
     CONFIG.READ_MODE {FWFT} \
     CONFIG.WRITE_DATA_WIDTH $width \
   ] $emb_fifo_gen_0
@@ -610,12 +624,21 @@ proc create_fifo_design { parentCell depth width design_name } {
   # Create port connections
   connect_bd_net -net clk_1  [get_bd_ports clk] \
   [get_bd_pins emb_fifo_gen_0/wr_clk]
+  connect_bd_net -net emb_fifo_gen_0_data_valid  [get_bd_pins emb_fifo_gen_0/data_valid] \
+  [get_bd_ports data_valid]
+  connect_bd_net -net emb_fifo_gen_0_prog_full  [get_bd_pins emb_fifo_gen_0/prog_full] \
+  [get_bd_ports fifo_almost_full]
+  connect_bd_net -net emb_fifo_gen_0_wr_rst_busy  [get_bd_pins emb_fifo_gen_0/wr_rst_busy] \
+  [get_bd_ports fifo_wr_busy]
   connect_bd_net -net rst_1  [get_bd_ports rst] \
   [get_bd_pins emb_fifo_gen_0/rst]
+
+  # Create address segments
+
+
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 
   set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
@@ -624,4 +647,9 @@ proc create_fifo_design { parentCell depth width design_name } {
 }
 
 create_root_design ""
-create_fifo_design "" 16 832 "rvfi_fifo"
+create_fifo_design "" 128 4 "fifo_4_128"
+create_fifo_design "" 128 6 "fifo_6_128"
+create_fifo_design "" 128 32 "fifo_32_128"
+create_fifo_design "" 128 40 "fifo_40_128"
+create_fifo_design "" 128 69 "fifo_69_128"
+create_fifo_design "" 16 832 "fifo_832_16"

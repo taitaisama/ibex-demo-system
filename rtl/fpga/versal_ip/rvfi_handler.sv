@@ -63,7 +63,6 @@ module rvfi_handler #(
    rvfi_data_t fifo_input_rvfi;
    rvfi_data_t fifo_output_rvfi;
 
-
    always_comb begin
       fifo_input_rvfi.rvfi_trap = rvfi_trap_i;
       fifo_input_rvfi.rvfi_rd_addr = rvfi_rd_addr_i;
@@ -83,29 +82,29 @@ module rvfi_handler #(
       fifo_input_rvfi.rvfi_ext_ic_scr_key_valid = rvfi_ext_ic_scr_key_valid_i;
    end
 
-   logic        rvfi_fifo_empty;
+   logic        rvfi_fifo_data_valid;
    logic        rvfi_fifo_almost_full;
+   logic	rvfi_fifo_busy;
 
    logic        rvfi_to_mem_ready;
    logic        rvfi_to_mem_valid;
 
-   always_comb rvfi_to_mem_valid = !rvfi_fifo_empty && rvfi_to_mem_ready;
+   always_comb rvfi_to_mem_valid = rvfi_fifo_data_valid && rvfi_to_mem_ready;
 
-   rvfi_fifo_wrapper u_rvfi_fifo
-     (
+   fifo_wrapper #(.WIDTH(832), .DEPTH(16))
+   u_rvfi_fifo (
       .clk (clk),
       .rst (~rstn),
-      .fifo_read_almost_empty (),
-      .fifo_read_empty (rvfi_fifo_empty),
+      .data_valid (rvfi_fifo_data_valid),
+      .fifo_wr_busy (rvfi_fifo_busy),
       .fifo_read_rd_data (fifo_output_rvfi),
       .fifo_read_rd_en (rvfi_to_mem_valid),
-      .fifo_write_almost_full (rvfi_fifo_almost_full),
-      .fifo_write_full (),
+      .fifo_almost_full (rvfi_fifo_almost_full),
       .fifo_write_wr_data (fifo_input_rvfi),
       .fifo_write_wr_en (rvfi_valid_i)
       );
 
-   always_comb rvfi_ready_o = ~rvfi_fifo_almost_full;
+   always_comb rvfi_ready_o = ~rvfi_fifo_almost_full && ~rvfi_fifo_busy;
 
    logic [63:0]  rvfi_out_mcycle;
    logic [143:0] rvfi_out_data;
