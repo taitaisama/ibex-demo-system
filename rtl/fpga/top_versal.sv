@@ -114,6 +114,7 @@ module top_versal
    logic		     DEBUG_en;
    logic		     DEBUG_rst;
    logic [DEBUG_WIDTH/8-1:0] DEBUG_we;
+   logic [7:0]		     DEBUG_counter;
 
    always_comb sys_rstn = axi_rstn && ps_rstn;
 
@@ -202,6 +203,7 @@ module top_versal
       end else begin
 	 sys_rstn_d <= sys_rstn;
 	 sys_rstn_d_d <= sys_rstn_d && sys_rstn;
+	 DEBUG_counter <= DEBUG_counter + 1;
 	 if (DEBUG_addr < MAX_DEBUG_ADDR) begin
 	    DEBUG_addr += (DEBUG_WIDTH/8);
 	 end
@@ -259,11 +261,13 @@ module top_versal
 
     .IBEX_DATA_arvalid (m_a_arvalid),
     .IBEX_DATA_arready (m_a_arready),
-    .IBEX_DATA_araddr (m_a_araddr),
+    .IBEX_DATA_araddr ({32'd0, m_a_araddr}),
     .IBEX_DATA_arsize (m_a_arsize),
     .IBEX_DATA_arburst (m_a_arburst),
     .IBEX_DATA_arid (m_a_arid),
     .IBEX_DATA_arlen (m_a_arlen),
+    .IBEX_DATA_arcache (3),
+
     .IBEX_DATA_rvalid (m_a_rvalid),
     .IBEX_DATA_rready (m_a_rready),
     .IBEX_DATA_rlast (m_a_rlast),
@@ -272,11 +276,13 @@ module top_versal
     .IBEX_DATA_rid (m_a_rid),
     .IBEX_DATA_awvalid (m_a_awvalid),
     .IBEX_DATA_awready (m_a_awready),
-    .IBEX_DATA_awaddr (m_a_awaddr),
+    .IBEX_DATA_awaddr ({32'd0, m_a_awaddr}),
     .IBEX_DATA_awsize (m_a_awsize),
     .IBEX_DATA_awburst (m_a_awburst),
     .IBEX_DATA_awid (m_a_awid),
     .IBEX_DATA_awlen (m_a_awlen),
+    .IBEX_DATA_awcache (3),
+    
     .IBEX_DATA_wvalid (m_a_wvalid),
     .IBEX_DATA_wready (m_a_wready),
     .IBEX_DATA_wlast (m_a_wlast),
@@ -290,11 +296,13 @@ module top_versal
 
     .IBEX_INSTR_arvalid (m_b_arvalid),
     .IBEX_INSTR_arready (m_b_arready),
-    .IBEX_INSTR_araddr (m_b_araddr),
+    .IBEX_INSTR_araddr ({32'd0, m_b_araddr}),
     .IBEX_INSTR_arsize (m_b_arsize),
     .IBEX_INSTR_arburst (m_b_arburst),
     .IBEX_INSTR_arid (m_b_arid),
     .IBEX_INSTR_arlen (m_b_arlen),
+    .IBEX_INSTR_arcache (3),
+    
     .IBEX_INSTR_rvalid (m_b_rvalid),
     .IBEX_INSTR_rready (m_b_rready),
     .IBEX_INSTR_rlast (m_b_rlast),

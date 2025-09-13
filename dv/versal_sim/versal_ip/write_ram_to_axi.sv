@@ -28,12 +28,12 @@ module write_ram_to_axi
   output logic			 m_wlast,
   output logic [31:0]		 m_wdata,
   output logic [3:0]		 m_wstrb,
-  output logic [NUM_ID_BITS:0]	 m_wid,
+  output logic [NUM_ID_BITS-1:0] m_wid,
 
   input logic			 m_bvalid,
   output logic			 m_bready,
   input logic [1:0]		 m_bresp,
-  input logic [NUM_ID_BITS:0]	 m_bid
+  input logic [NUM_ID_BITS-1:0]	 m_bid
 );
 
    logic write_ack_pending [2**NUM_ID_BITS];
@@ -138,7 +138,8 @@ module write_ram_to_axi
 
    // size > 2**NUM_ID_BITS
    // fallthrough mode
-   write_fifo_wrapper u_pending_writes 
+    fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(128)) 
+       u_pending_writes 
      (
       .clk (clk),
       .rst (~rstn),

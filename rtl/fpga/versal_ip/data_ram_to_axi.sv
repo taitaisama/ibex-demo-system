@@ -1,5 +1,6 @@
 module data_ram_to_axi
 # (
+   parameter int READ_BURST_BITS = 2,
    parameter int NUM_ID_BITS = 4
    )
 (
@@ -61,18 +62,11 @@ module data_ram_to_axi
 
    always_comb begin
       s_gnt = !fifo_almost_full && !fifo_busy;
+      q_req = fifo_valid;
    end
 
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 q_req <= 0;
-      end else begin
-	 q_req <= fifo_valid;
-      end
-   end
-
-   fifo_wrapper #(.WIDTH(69), .DEPTH(128)) 
-   u_drf (
+      fifo_wrapper #(.WIDTH(69), .DEPTH(128)) u_drf
+     (
       .clk(clk),
       .rst (~rstn),
       .data_valid (fifo_valid),
@@ -82,7 +76,7 @@ module data_ram_to_axi
       .fifo_read_rd_en (q_req && q_gnt),
       .fifo_write_wr_data ({s_we, s_be, s_addr, s_wdata}),
       .fifo_write_wr_en (s_gnt && s_req)
-      ); 
+      );   
 
    logic req_to_outstanding;
 
@@ -100,8 +94,6 @@ module data_ram_to_axi
       logic        is_valid;
    } outstanding_req;
 
-   logic [NUM_ID_BITS-1:0] info_rid;
-
    outstanding_req outstanding_reads  [2**NUM_ID_BITS];
    outstanding_req outstanding_writes [2**NUM_ID_BITS];
 
@@ -112,18 +104,18 @@ module data_ram_to_axi
 	    outstanding_writes[i].is_valid <= 0;
 	 end
       end else begin
-	 if (s_rvalid) begin
-	    outstanding_reads[info_rid].is_valid <= 0;
+	 if (m_rvalid && m_rready && m_rlast) begin
+	    outstanding_reads[m_rid].is_valid <= 0;
 	 end
 	 if (m_bvalid && m_bready) begin
 	    outstanding_writes[m_bid].is_valid <= 0;
 	 end
-	 if (q_rreq) begin
-	    outstanding_reads[m_arid].addr <= q_addr;
+	 if (m_arvalid && m_arready) begin
+	    outstanding_reads[m_arid].addr <= m_araddr;
 	    outstanding_reads[m_arid].is_valid <= 1;
 	 end
-	 if (q_wreq) begin
-	    outstanding_writes[m_awid].addr <= q_addr;
+	 if (m_awvalid && m_awready) begin
+	    outstanding_writes[m_awid].addr <= m_awaddr;
 	    outstanding_writes[m_awid].is_valid <= 1;
 	 end
       end
@@ -133,11 +125,11 @@ module data_ram_to_axi
       req_to_outstanding = 0;
       for (int i = 0; i < 2**NUM_ID_BITS; i ++) begin
 	 if (q_req) begin
-	    if (outstanding_writes[i].addr == q_addr && outstanding_writes[i].is_valid) begin
+	    if (outstanding_writes[i].addr[31:2] == q_addr[31:2] && outstanding_writes[i].is_valid) begin
 	       req_to_outstanding = 1;
 	    end
 	    if (q_we) begin
-	       if (outstanding_reads[i].addr == q_addr && outstanding_reads[i].is_valid) begin
+	       if (outstanding_reads[i].addr[31:2+READ_BURST_BITS] == q_addr[31:2+READ_BURST_BITS] && outstanding_reads[i].is_valid) begin
 		  req_to_outstanding = 1;
 	       end
 	    end
@@ -147,7 +139,7 @@ module data_ram_to_axi
 
    read_ram_to_axi
      #( .NUM_ID_BITS (NUM_ID_BITS),
-	.READ_BURST_LEN (1)
+	.READ_BURST_BITS (READ_BURST_BITS)
 	) u_read_ram
        (
 	.clk (clk),
@@ -159,7 +151,7 @@ module data_ram_to_axi
 	.s_rdata (s_rdata),
 	.s_gnt (q_rgnt),
 
-	.info_rid (info_rid),
+	.info_rid (),
 	.info_rburst (),
 
 	.m_arvalid (m_arvalid),

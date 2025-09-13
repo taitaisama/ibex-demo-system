@@ -1,7 +1,7 @@
 module instr_ram_to_axi
 # (
    parameter int NUM_ID_BITS = 4,
-   parameter int READ_BURST_LEN = 4
+   parameter int READ_BURST_BITS = 2
    )
 (
   input logic			 clk,
@@ -12,8 +12,6 @@ module instr_ram_to_axi
   output logic			 s_rvalid,
   output logic [31:0]		 s_rdata,
   output logic			 s_gnt,
-
-  output logic [77:0]		 debug,
 
   output logic			 m_arvalid,
   input logic			 m_arready,
@@ -36,28 +34,13 @@ module instr_ram_to_axi
 
    logic			 fifo_valid, fifo_busy, fifo_almost_full;
 
-   logic [37:0]			 read_debug;
-
-   
-   logic [3:0]			 info_rid;
-   logic [1:0]			 info_rburst;
-
-   always_comb debug = {q_req, q_gnt, q_addr, info_rid, info_rburst, read_debug};
-
    always_comb begin
       s_gnt = !fifo_almost_full && !fifo_busy;
+      q_req = fifo_valid;
    end
 
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 q_req <= 0;
-      end else begin
-	 q_req <= fifo_valid;
-      end
-   end
-
-   fifo_wrapper #(.WIDTH (32), .DEPTH (128))
-   u_drf (
+   fifo_wrapper #(.WIDTH(32), .DEPTH(128)) u_drf
+     (
       .clk(clk),
       .rst (~rstn),
       .data_valid (fifo_valid),
@@ -67,11 +50,12 @@ module instr_ram_to_axi
       .fifo_read_rd_en (q_req && q_gnt),
       .fifo_write_wr_data (s_addr),
       .fifo_write_wr_en (s_gnt && s_req)
-      );
+      );   
+
 
    read_ram_to_axi
      #( .NUM_ID_BITS (NUM_ID_BITS),
-	.READ_BURST_LEN (READ_BURST_LEN)
+	.READ_BURST_BITS (READ_BURST_BITS)
 	) u_read_ram
        (
 	.clk (clk),
@@ -83,10 +67,8 @@ module instr_ram_to_axi
 	.s_rdata (s_rdata),
 	.s_gnt (q_gnt),
 
-	.debug (read_debug),
-
-	.info_rid (info_rid),
-	.info_rburst (info_rburst),
+	.info_rid (),
+	.info_rburst (),
 
 	.m_arvalid (m_arvalid),
 	.m_arready (m_arready),

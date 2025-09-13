@@ -1,7 +1,7 @@
 module instr_ram_to_axi
 # (
    parameter int NUM_ID_BITS = 4,
-   parameter int READ_BURST_LEN = 4
+   parameter int READ_BURST_BITS = 4
    )
 (
   input logic			 clk,
@@ -55,7 +55,7 @@ module instr_ram_to_axi
 
    read_ram_to_axi
      #( .NUM_ID_BITS (NUM_ID_BITS),
-	.READ_BURST_LEN (READ_BURST_LEN)
+	.READ_BURST_BITS (READ_BURST_BITS)
 	) u_read_ram
        (
 	.clk (clk),

@@ -46,8 +46,21 @@ module write_ram_to_axi
       logic [31:0] write_value;
    } pending_write_t;
 
+   logic [NUM_ID_BITS+35:0] write_send_fifo_trans;
+   logic [NUM_ID_BITS+35:0] write_queue_fifo_trans;
+
    pending_write_t write_send_trans;
    pending_write_t write_queue_trans;
+
+   always_comb begin
+      write_send_trans.write_value = write_send_fifo_trans[31:0];
+      write_send_trans.write_id = write_send_fifo_trans[NUM_ID_BITS+31:32];
+      write_send_trans.write_strb = write_send_fifo_trans[NUM_ID_BITS+35 -: 4];
+
+      write_queue_fifo_trans[31:0] = write_queue_trans.write_value;
+      write_queue_fifo_trans[NUM_ID_BITS+31:32] = write_queue_trans.write_id;
+      write_queue_fifo_trans[NUM_ID_BITS+35 -: 4] = write_queue_trans.write_strb;
+   end
    
    logic					  push_write;
    logic					  push_write_d;
@@ -67,16 +80,6 @@ module write_ram_to_axi
    end
 
    logic			  write_fifo_valid;
-   logic			  fifo_data_valid;
-
-   always_ff @(posedge clk or negedge rstn) begin
-      if (!rstn) begin
-	 write_fifo_valid <= 0;
-      end else begin
-	 write_fifo_valid <= fifo_data_valid;
-      end      
-   end
-
    logic			  fifo_busy;
    logic			  next_ack_is_pending;
 
@@ -135,15 +138,16 @@ module write_ram_to_axi
 
    // size > 2**NUM_ID_BITS
    // fallthrough mode
-   fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(128)) 
-   u_pending_writes (
+    fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(128)) 
+       u_pending_writes 
+     (
       .clk (clk),
       .rst (~rstn),
-      .data_valid (fifo_data_valid),
+      .data_valid (write_fifo_valid),
       .fifo_wr_busy (fifo_busy),
-      .fifo_read_rd_data (write_send_trans),
+      .fifo_read_rd_data (write_send_fifo_trans),
       .fifo_read_rd_en (pop_write),
-      .fifo_write_wr_data (write_queue_trans),
+      .fifo_write_wr_data (write_queue_fifo_trans),
       .fifo_write_wr_en (push_write)
       );
 

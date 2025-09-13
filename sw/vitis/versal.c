@@ -68,6 +68,7 @@ void set_prog() {
   for (int i = 0; i < PROG_LEN; i ++){
     Xil_Out32(PROG_ADDR + (i*4), PROG[i]);
   }
+  Xil_DCacheInvalidateRange((UINTPTR)&PROG[0], MAX_PKT_LEN);
 }
 
 u32 check_prog() {
@@ -91,7 +92,7 @@ void print_rvfi_data() {
 void print_debug_data() {
   for (int i = 0 ; i < 256; i ++) {
     for (int j = 0; j < 8; j ++) {
-      u32 d = Xil_In32(DEBUG_ADDR + (i*16+j)*4);
+      u32 d = Xil_In32(DEBUG_ADDR + (i*+8+j)*4);
       for (int k = 0; k < 8; k ++) {
 	u8 x = (u8) ((d >> (k*4)) & ((1 << 4)-1));
 	printf("%x", x);
