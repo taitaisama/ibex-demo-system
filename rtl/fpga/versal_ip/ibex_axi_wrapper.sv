@@ -24,7 +24,7 @@ module ibex_axi_wrapper
    input logic		rvfi_csr_cmd_tready,
 
    input logic		flush,
-
+   input logic [31:0] base_addr,
    output logic [255:0]	debug,
 
    output logic		m_a_arvalid,
@@ -86,7 +86,8 @@ module ibex_axi_wrapper
    logic [31:0]			    ibex_ram_a_wdata;
    logic			    ibex_ram_a_rvalid;
    logic [31:0]			    ibex_ram_a_rdata;
-   logic			    ibex_ram_a_gnt;   
+   logic			    ibex_ram_a_gnt;
+   logic [31:0]			    ibex_ram_a_addr_abs;
 
    logic			    ibex_ram_b_req;
    logic			    ibex_ram_b_we;
@@ -96,16 +97,23 @@ module ibex_axi_wrapper
    logic			    ibex_ram_b_rvalid;
    logic [31:0]			    ibex_ram_b_rdata;
    logic			    ibex_ram_b_gnt;
+   logic [31:0]			    ibex_ram_b_addr_abs;
 
    logic [39:0]			    instr_debug;
 
    logic [37:0]			    DEBUG_counter = 0;
+   
+   always_comb begin
+       ibex_ram_a_addr = ibex_ram_a_addr_abs - 32'h001000000 + base_addr;
+       ibex_ram_b_addr = ibex_ram_b_addr_abs - 32'h001000000 + base_addr;
+   end
+   
 
    always_ff @(posedge sys_clk) begin
       DEBUG_counter <= DEBUG_counter + 1;
    end
    
-   always_comb debug = {ibex_ram_b_req, ibex_ram_b_we, ibex_ram_b_addr, ibex_ram_b_rvalid, ibex_ram_b_rdata, ibex_ram_b_gnt, m_b_arvalid, m_b_arready, m_b_araddr, m_b_rvalid, m_b_rready, m_b_rdata, m_b_rid, m_b_rlast, m_b_arid, DEBUG_counter, instr_debug, 4'hf, 25'd0, 4'hf};
+   always_comb debug = {ibex_ram_b_req, ibex_ram_b_we, ibex_ram_b_addr, ibex_ram_b_rvalid, ibex_ram_b_rdata, ibex_ram_b_gnt, m_b_arvalid, m_b_arready, m_b_araddr, m_b_rvalid, m_b_rready, m_b_rdata, m_b_rid, m_b_rlast, m_b_arid, DEBUG_counter, base_addr, instr_debug[7:0], 4'hf, 25'd0, 4'hf};
 
    data_ram_to_axi #(.NUM_ID_BITS (4)) 
    u_dr2a
@@ -198,7 +206,7 @@ module ibex_axi_wrapper
       .ibex_ram_a_req,
       .ibex_ram_a_we,
       .ibex_ram_a_be,
-      .ibex_ram_a_addr,
+      .ibex_ram_a_addr (ibex_ram_a_addr_abs),
       .ibex_ram_a_wdata,
       .ibex_ram_a_rvalid,
       .ibex_ram_a_rdata,
@@ -207,7 +215,7 @@ module ibex_axi_wrapper
       .ibex_ram_b_req,
       .ibex_ram_b_we,
       .ibex_ram_b_be,
-      .ibex_ram_b_addr,
+      .ibex_ram_b_addr (ibex_ram_b_addr_abs),
       .ibex_ram_b_wdata,
       .ibex_ram_b_rvalid,
       .ibex_ram_b_rdata,

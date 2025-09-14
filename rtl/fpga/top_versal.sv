@@ -115,6 +115,8 @@ module top_versal
    logic		     DEBUG_rst;
    logic [DEBUG_WIDTH/8-1:0] DEBUG_we;
    logic [7:0]		     DEBUG_counter;
+   
+   logic [31:0]      base_addr;
 
    always_comb sys_rstn = axi_rstn && ps_rstn;
 
@@ -144,7 +146,7 @@ module top_versal
       .rvfi_csr_cmd_tready (rvfi_csr_cmd_tready),
       
       .flush (ps_stop),
-
+      .base_addr (base_addr),
       .debug (DEBUG_din),
 
       .m_a_arvalid (m_a_arvalid),
@@ -240,6 +242,7 @@ module top_versal
     .DDR4_reset_n       (DDR4_reset_n  ),
 
     .PS_IO_tri_o ({ps_rstn, ps_stop}),
+    .BASE_ADDR_tri_o (base_addr),
 
     .rvfi_tdata,
     .rvfi_tvalid,
