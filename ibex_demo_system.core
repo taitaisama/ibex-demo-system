@@ -74,15 +74,17 @@ filesets:
       - rtl/fpga/versal_ip/rvfi_handler.sv
       - rtl/fpga/versal_ip/rvfi_csr.sv
       - rtl/fpga/versal_ip/rvfi_to_mem.sv
-      - rtl/fpga/versal_ip/rgmii_reset.v
-      - rtl/fpga/versal_ip/ibex_rvfi_wrapper.sv
-      - rtl/fpga/versal_ip/ibex_axi_wrapper.sv
       - rtl/fpga/versal_ip/read_ram_to_axi.sv
       - rtl/fpga/versal_ip/write_ram_to_axi.sv
       - rtl/fpga/versal_ip/data_ram_to_axi.sv
       - rtl/fpga/versal_ip/instr_ram_to_axi.sv
       - rtl/fpga/versal_ip/fifo_wrapper.sv
       - rtl/fpga/versal_ip/datamover_cmd.sv
+      - rtl/fpga/versal_ip/verilog_wrappers/rgmii_reset.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/verilog_wrappers/data_ram_to_axi_bridge.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/verilog_wrappers/ibex_demo_system_wrapper.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/verilog_wrappers/instr_ram_to_axi_bridge.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/verilog_wrappers/rvfi_to_stream.v: {file_type: verilogSource}
       - tcl/versal_ps.tcl: {file_type: tclSource}
     file_type: systemVerilogSource
 

@@ -38,191 +38,119 @@ module top_versal
     output reg	  led
 );
 
-   logic sys_clk;
-   logic axi_rstn, sys_rstn;
+   logic	  sys_clk;
+   logic	  sys_rstn;
 
-   logic [255:0] rvfi_tdata;
-   logic	 rvfi_tvalid;
-   logic	 rvfi_tready;
-   logic [31:0]	 rvfi_tkeep;
-  
-   logic [127:0] rvfi_csr_tdata;
-   logic	 rvfi_csr_tvalid;
-   logic	 rvfi_csr_tready;
-   logic [15:0]	 rvfi_csr_tkeep;
+   logic [31:0]	  ibex_ram_base_addr;
 
-   logic [71:0]	 rvfi_cmd_tdata;
-   logic	 rvfi_cmd_tvalid;
-   logic	 rvfi_cmd_tready;
-  
-   logic [71:0]	 rvfi_csr_cmd_tdata;
-   logic	 rvfi_csr_cmd_tvalid;
-   logic	 rvfi_csr_cmd_tready;
+   logic	  ibex_ram_a_req;
+   logic [3:0]	  ibex_ram_a_we;
+   logic [3:0]	  ibex_ram_a_be;
+   logic [31:0]	  ibex_ram_a_addr;
+   logic [31:0]	  ibex_ram_a_wdata;
+   logic	  ibex_ram_a_rvalid;
+   logic [31:0]	  ibex_ram_a_rdata;
+   logic	  ibex_ram_a_gnt;
+
+   logic	  ibex_ram_b_req;
+   logic [3:0]	  ibex_ram_b_we;
+   logic [3:0]	  ibex_ram_b_be;
+   logic [31:0]	  ibex_ram_b_addr;
+   logic [31:0]	  ibex_ram_b_wdata;
+   logic	  ibex_ram_b_rvalid;
+   logic [31:0]	  ibex_ram_b_rdata;
+   logic	  ibex_ram_b_gnt;
+
+   logic	  rvfi_valid;
+   logic	  rvfi_trap;
+   logic [ 4:0]	  rvfi_rd_addr;
+   logic [31:0]	  rvfi_rd_wdata;
+   logic [31:0]	  rvfi_pc_rdata;
+   logic [31:0]	  rvfi_ext_pre_mip;
+   logic [31:0]	  rvfi_ext_post_mip;
+   logic	  rvfi_ext_nmi;
+   logic	  rvfi_ext_nmi_int;
+   logic	  rvfi_ext_debug_req;
+   logic	  rvfi_ext_rf_wr_suppress;
+   logic [63:0]	  rvfi_ext_mcycle;
+   logic [319:0]  rvfi_ext_mhpmcounters;
+   logic [319:0]  rvfi_ext_mhpmcountersh;
+   logic	  rvfi_ext_ic_scr_key_valid;
    
-   logic [7:0]	 rvfi_sts_tdata;
-   logic	 rvfi_sts_tvalid;
-   logic	 rvfi_sts_tready;
-  
-   logic [7:0]	 rvfi_csr_sts_tdata;
-   logic	 rvfi_csr_sts_tvalid;
-   logic	 rvfi_csr_sts_tready;
+   logic	  force_stop;
 
-   logic	 m_a_arvalid;
-   logic	 m_a_arready;
-   logic [31:0]	 m_a_araddr;
-   logic [2:0]	 m_a_arsize;
-   logic [1:0]	 m_a_arburst;
-   logic [3:0]	 m_a_arid;
-   logic [7:0]	 m_a_arlen;
+   logic [31:0]	  ibex_ram_a_addr_abs, ibex_ram_b_addr_abs;
 
-   logic	 m_a_rvalid;
-   logic	 m_a_rready;
-   logic	 m_a_rlast;
-   logic [31:0]	 m_a_rdata;
-   logic [1:0]	 m_a_rresp;
-   logic [3:0]	 m_a_rid;
+   always_comb begin
+      ibex_ram_a_addr = ibex_ram_a_addr_abs + ibex_ram_base_addr - 32'h00100000;
+      ibex_ram_b_addr = ibex_ram_b_addr_abs + ibex_ram_base_addr - 32'h00100000;
+   end
 
-   logic	 m_a_awvalid;
-   logic	 m_a_awready;
-   logic [31:0]	 m_a_awaddr;
-   logic [2:0]	 m_a_awsize;
-   logic [1:0]	 m_a_awburst;
-   logic [3:0]	 m_a_awid;
-   logic [7:0]	 m_a_awlen;
+  ibex_demo_system #(
+    .GpiWidth     ( 0            ),
+    .GpoWidth     ( 1            ),
+    .PwmWidth     ( 0            )
+  ) u_ibex_demo_system (
+    //input
+    .clk_sys_i (sys_clk),
+    .rst_sys_ni(sys_rstn),
+    .gp_i      (),
+    .uart_rx_i (1'b0),
 
-   logic	 m_a_wvalid;
-   logic	 m_a_wready;
-   logic	 m_a_wlast;
-   logic [31:0]	 m_a_wdata;
-   logic [3:0]	 m_a_wstrb;
-   logic [3:0]	 m_a_wid;
+    //output
+    .gp_o     (led),
+    .pwm_o    (),
+    .uart_tx_o(),
 
-   logic	 m_a_bvalid;
-   logic	 m_a_bready;
-   logic [1:0]	 m_a_bresp;
-   logic [3:0]	 m_a_bid;
+    .spi_rx_i (1'b0),
+    .spi_tx_o (),
+    .spi_sck_o(),
 
-   logic	 m_b_arvalid;
-   logic	 m_b_arready;
-   logic [31:0]	 m_b_araddr;
-   logic [2:0]	 m_b_arsize;
-   logic [1:0]	 m_b_arburst;
-   logic [3:0]	 m_b_arid;
-   logic [7:0]	 m_b_arlen;
+    .ibex_ram_a_req_o (ibex_ram_a_req),
+    .ibex_ram_a_we_o (ibex_ram_a_we),
+    .ibex_ram_a_be_o (ibex_ram_a_be),
+    .ibex_ram_a_addr_o (ibex_ram_a_addr_abs),
+    .ibex_ram_a_wdata_o (ibex_ram_a_wdata),
+    .ibex_ram_a_rvalid_i (ibex_ram_a_rvalid),
+    .ibex_ram_a_rdata_i (ibex_ram_a_rdata),
+    .ibex_ram_a_gnt_i (ibex_ram_a_gnt),
+                              
+    .ibex_ram_b_req_o (ibex_ram_b_req),
+    .ibex_ram_b_we_o (ibex_ram_b_we),
+    .ibex_ram_b_be_o (ibex_ram_b_be),
+    .ibex_ram_b_addr_o (ibex_ram_b_addr_abs),
+    .ibex_ram_b_wdata_o (ibex_ram_b_wdata),
+    .ibex_ram_b_rvalid_i (ibex_ram_b_rvalid),
+    .ibex_ram_b_rdata_i (ibex_ram_b_rdata),
+    .ibex_ram_b_gnt_i (ibex_ram_b_gnt),
 
-   logic	 m_b_rvalid;
-   logic	 m_b_rready;
-   logic	 m_b_rlast;
-   logic [31:0]	 m_b_rdata;
-   logic [1:0]	 m_b_rresp;
-   logic [3:0]	 m_b_rid;
+    .rvfi_valid (rvfi_valid),
+    .rvfi_trap (rvfi_trap),
+    .rvfi_rd_addr (rvfi_rd_addr),
+    .rvfi_rd_wdata (rvfi_rd_wdata),
+    .rvfi_pc_rdata (rvfi_pc_rdata),
+    .rvfi_ext_pre_mip (rvfi_ext_pre_mip),
+    .rvfi_ext_post_mip (rvfi_ext_post_mip),
+    .rvfi_ext_nmi (rvfi_ext_nmi),
+    .rvfi_ext_nmi_int (rvfi_ext_nmi_int),
+    .rvfi_ext_debug_req (rvfi_ext_debug_req),
+    .rvfi_ext_rf_wr_suppress (rvfi_ext_rf_wr_suppress),
+    .rvfi_ext_mcycle (rvfi_ext_mcycle),
+    .rvfi_ext_mhpmcounters (rvfi_ext_mhpmcounters),
+    .rvfi_ext_mhpmcountersh (rvfi_ext_mhpmcountersh),
+    .rvfi_ext_ic_scr_key_valid (rvfi_ext_ic_scr_key_valid),
 
-   logic	ps_rstn, ps_stop;
+    .force_stop (force_stop),
 
-   logic [31:0]      prog_addr;
-   logic [31:0]      rvfi_start_addr;
-   logic [31:0]      rvfi_csr_start_addr;
-   logic [31:0]      rvfi_end_addr;
-   logic [31:0]      rvfi_csr_end_addr;
+    .trst_ni(1'b1),
+    .tms_i  (1'b0),
+    .tck_i  (1'b0),
+    .td_i   (1'b0),
+    .td_o   ()
+  );
 
-   always_comb sys_rstn = axi_rstn && ps_rstn;
-
-   ibex_axi_wrapper
-     (
-      .sys_clk (sys_clk),
-      .sys_rstn (sys_rstn),
-
-      .led (led),
-
-      .rvfi_start_addr (rvfi_start_addr),
-      .rvfi_csr_start_addr (rvfi_csr_start_addr),
-      .rvfi_end_addr (rvfi_end_addr),
-      .rvfi_csr_end_addr (rvfi_csr_end_addr),
-
-      .rvfi_tdata (rvfi_tdata),
-      .rvfi_tvalid (rvfi_tvalid),
-      .rvfi_tready (rvfi_tready),
-      .rvfi_tkeep (rvfi_tkeep),
-      
-      .rvfi_csr_tdata (rvfi_csr_tdata),
-      .rvfi_csr_tvalid (rvfi_csr_tvalid),
-      .rvfi_csr_tready (rvfi_csr_tready),
-      .rvfi_csr_tkeep (rvfi_csr_tkeep),
-
-      .rvfi_cmd_tdata (rvfi_cmd_tdata),
-      .rvfi_cmd_tvalid (rvfi_cmd_tvalid),
-      .rvfi_cmd_tready (rvfi_cmd_tready),
-      
-      .rvfi_csr_cmd_tdata (rvfi_csr_cmd_tdata),
-      .rvfi_csr_cmd_tvalid (rvfi_csr_cmd_tvalid),
-      .rvfi_csr_cmd_tready (rvfi_csr_cmd_tready),
-
-      .rvfi_sts_tdata (rvfi_sts_tdata),
-      .rvfi_sts_tvalid (rvfi_sts_tvalid),
-      .rvfi_sts_tready (rvfi_sts_tready),
-      
-      .rvfi_csr_sts_tdata (rvfi_csr_sts_tdata),
-      .rvfi_csr_sts_tvalid (rvfi_csr_sts_tvalid),
-      .rvfi_csr_sts_tready (rvfi_csr_sts_tready),      
-
-      .flush (ps_stop),
-      .base_addr (prog_addr),
-
-      .m_a_arvalid (m_a_arvalid),
-      .m_a_arready (m_a_arready),
-      .m_a_araddr (m_a_araddr),
-      .m_a_arsize (m_a_arsize),
-      .m_a_arburst (m_a_arburst),
-      .m_a_arid (m_a_arid),
-      .m_a_arlen (m_a_arlen),
-      .m_a_rvalid (m_a_rvalid),
-      .m_a_rready (m_a_rready),
-      .m_a_rlast (m_a_rlast),
-      .m_a_rdata (m_a_rdata),
-      .m_a_rresp (m_a_rresp),
-      .m_a_rid (m_a_rid),
-      .m_a_awvalid (m_a_awvalid),
-      .m_a_awready (m_a_awready),
-      .m_a_awaddr (m_a_awaddr),
-      .m_a_awsize (m_a_awsize),
-      .m_a_awburst (m_a_awburst),
-      .m_a_awid (m_a_awid),
-      .m_a_awlen (m_a_awlen),
-      .m_a_wvalid (m_a_wvalid),
-      .m_a_wready (m_a_wready),
-      .m_a_wlast (m_a_wlast),
-      .m_a_wdata (m_a_wdata),
-      .m_a_wstrb (m_a_wstrb),
-      .m_a_wid (m_a_wid),
-      .m_a_bvalid (m_a_bvalid),
-      .m_a_bready (m_a_bready),
-      .m_a_bresp (m_a_bresp),
-      .m_a_bid (m_a_bid),
-
-      .m_b_arvalid (m_b_arvalid),
-      .m_b_arready (m_b_arready),
-      .m_b_araddr (m_b_araddr),
-      .m_b_arsize (m_b_arsize),
-      .m_b_arburst (m_b_arburst),
-      .m_b_arid (m_b_arid),
-      .m_b_arlen (m_b_arlen),
-      .m_b_rvalid (m_b_rvalid),
-      .m_b_rready (m_b_rready),
-      .m_b_rlast (m_b_rlast),
-      .m_b_rdata (m_b_rdata),
-      .m_b_rresp (m_b_rresp),
-      .m_b_rid (m_b_rid)
-
-      );
-
-
-
-   // ps_subsystem_debug_wrapper u_pssub 
    ps_subsystem_wrapper u_pssub
    (
-   
-    // .clk (sys_clk),
-    // .rstn (sys_rstn),
       
     .DDR4_act_n         (DDR4_act_n    ),
     .DDR4_adr           (DDR4_adr      ),
@@ -239,89 +167,42 @@ module top_versal
     .DDR4_odt           (DDR4_odt      ),
     .DDR4_reset_n       (DDR4_reset_n  ),
 
-    .PS_IO_tri_o ({ps_rstn, ps_stop}),
-    .PROG_ADDR_tri_o (prog_addr),
-    .RVFI_START_ADDR_tri_o (rvfi_start_addr),
-    .RVFI_CSR_START_ADDR_tri_o (rvfi_csr_start_addr),
-    .RVFI_END_ADDR_tri_i (rvfi_end_addr),
-    .RVFI_CSR_END_ADDR_tri_i (rvfi_csr_end_addr),
+    .PROG_ADDR_tri_o (ibex_ram_base_addr),
+    .force_stop,
 
-    .rvfi_tdata,
-    .rvfi_tvalid,
-    .rvfi_tready,
-    .rvfi_tkeep,
+    .ibex_ram_a_req,
+    .ibex_ram_a_we,
+    .ibex_ram_a_be,
+    .ibex_ram_a_addr,
+    .ibex_ram_a_wrdata (ibex_ram_a_wdata),
+    .ibex_ram_a_rdvalid (ibex_ram_a_rvalid),
+    .ibex_ram_a_rddata (ibex_ram_a_rdata),
+    .ibex_ram_a_gnt,
 
-    .rvfi_cmd_tdata,
-    .rvfi_cmd_tvalid,
-    .rvfi_cmd_tready,
+    .ibex_ram_b_req,
+    .ibex_ram_b_we,
+    .ibex_ram_b_be,
+    .ibex_ram_b_addr,
+    .ibex_ram_b_wrdata (ibex_ram_b_wdata),
+    .ibex_ram_b_rdvalid (ibex_ram_b_rvalid),
+    .ibex_ram_b_rddata (ibex_ram_b_rdata),
+    .ibex_ram_b_gnt,
 
-    .rvfi_sts_tdata,
-    .rvfi_sts_tvalid,
-    .rvfi_sts_tready,
-   
-    .rvfi_csr_tdata,
-    .rvfi_csr_tvalid,
-    .rvfi_csr_tready,
-    .rvfi_csr_tkeep,
-    
-    .rvfi_csr_cmd_tdata,
-    .rvfi_csr_cmd_tvalid,
-    .rvfi_csr_cmd_tready,
-
-    .rvfi_csr_sts_tdata,
-    .rvfi_csr_sts_tvalid,
-    .rvfi_csr_sts_tready,
-
-    .IBEX_DATA_arvalid (m_a_arvalid),
-    .IBEX_DATA_arready (m_a_arready),
-    .IBEX_DATA_araddr ({32'd0, m_a_araddr}),
-    .IBEX_DATA_arsize (m_a_arsize),
-    .IBEX_DATA_arburst (m_a_arburst),
-    .IBEX_DATA_arid (m_a_arid),
-    .IBEX_DATA_arlen (m_a_arlen),
-    .IBEX_DATA_arcache (3),
-
-    .IBEX_DATA_rvalid (m_a_rvalid),
-    .IBEX_DATA_rready (m_a_rready),
-    .IBEX_DATA_rlast (m_a_rlast),
-    .IBEX_DATA_rdata (m_a_rdata),
-    .IBEX_DATA_rresp (m_a_rresp),
-    .IBEX_DATA_rid (m_a_rid),
-    .IBEX_DATA_awvalid (m_a_awvalid),
-    .IBEX_DATA_awready (m_a_awready),
-    .IBEX_DATA_awaddr ({32'd0, m_a_awaddr}),
-    .IBEX_DATA_awsize (m_a_awsize),
-    .IBEX_DATA_awburst (m_a_awburst),
-    .IBEX_DATA_awid (m_a_awid),
-    .IBEX_DATA_awlen (m_a_awlen),
-    .IBEX_DATA_awcache (3),
-    
-    .IBEX_DATA_wvalid (m_a_wvalid),
-    .IBEX_DATA_wready (m_a_wready),
-    .IBEX_DATA_wlast (m_a_wlast),
-    .IBEX_DATA_wdata (m_a_wdata),
-    .IBEX_DATA_wstrb (m_a_wstrb),
-    //.IBEX_DATA_wid (m_a_wid),
-    .IBEX_DATA_bvalid (m_a_bvalid),
-    .IBEX_DATA_bready (m_a_bready),
-    .IBEX_DATA_bresp (m_a_bresp),
-    .IBEX_DATA_bid (m_a_bid),
-
-    .IBEX_INSTR_arvalid (m_b_arvalid),
-    .IBEX_INSTR_arready (m_b_arready),
-    .IBEX_INSTR_araddr ({32'd0, m_b_araddr}),
-    .IBEX_INSTR_arsize (m_b_arsize),
-    .IBEX_INSTR_arburst (m_b_arburst),
-    .IBEX_INSTR_arid (m_b_arid),
-    .IBEX_INSTR_arlen (m_b_arlen),
-    .IBEX_INSTR_arcache (3),
-    
-    .IBEX_INSTR_rvalid (m_b_rvalid),
-    .IBEX_INSTR_rready (m_b_rready),
-    .IBEX_INSTR_rlast (m_b_rlast),
-    .IBEX_INSTR_rdata (m_b_rdata),
-    .IBEX_INSTR_rresp (m_b_rresp),
-    .IBEX_INSTR_rid (m_b_rid),
+    .rvfi_valid,
+    .rvfi_trap,
+    .rvfi_rd_addr,
+    .rvfi_rd_wdata,
+    .rvfi_pc_rdata,
+    .rvfi_ext_pre_mip,
+    .rvfi_ext_post_mip,
+    .rvfi_ext_nmi,
+    .rvfi_ext_nmi_int,
+    .rvfi_ext_debug_req,
+    .rvfi_ext_rf_wr_suppress,
+    .rvfi_ext_mcycle,
+    .rvfi_ext_mhpmcounters,
+    .rvfi_ext_mhpmcountersh,
+    .rvfi_ext_ic_scr_key_valid,
 
     .mdio_mdc,
     .mdio_mdio_io,
@@ -333,8 +214,8 @@ module top_versal
     .rgmii_tx_ctl,
     .rgmii_txc,
 
-    .axi_clk (sys_clk),
-    .axi_rstn (axi_rstn),
+    .sys_clk (sys_clk),
+    .sys_rstn (sys_rstn),
     .sys_clk_n (sys_clk_n),
     .sys_clk_p (sys_clk_p)
    );

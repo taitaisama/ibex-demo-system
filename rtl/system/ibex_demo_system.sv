@@ -63,8 +63,8 @@ module ibex_demo_system #(
   output logic		      rvfi_ext_debug_req,
   output logic		      rvfi_ext_rf_wr_suppress,
   output logic [63:0]	      rvfi_ext_mcycle,
-  output logic [31:0]	      rvfi_ext_mhpmcounters [10],
-  output logic [31:0]	      rvfi_ext_mhpmcountersh [10],
+  output logic [319:0]	      rvfi_ext_mhpmcounters,
+  output logic [319:0]	      rvfi_ext_mhpmcountersh,
   output logic		      rvfi_ext_ic_scr_key_valid,
 
   input logic		      force_stop,
@@ -293,6 +293,16 @@ module ibex_demo_system #(
 
   assign rst_core_n = rst_sys_ni & ~ndmreset_req;
 
+  logic [31:0] rvfi_ext_mhpmcounters_arr [10];
+  logic [31:0]	rvfi_ext_mhpmcountersh_arr [10];
+
+  always_comb begin
+     for (int i = 0; i < 10; i ++) begin
+	rvfi_ext_mhpmcounters[i*32 +: 32] = rvfi_ext_mhpmcounters_arr[i];
+	rvfi_ext_mhpmcountersh[i*32 +: 32] = rvfi_ext_mhpmcountersh_arr[i];
+     end
+  end
+
   logic [63:0] rvfi_order;
   logic [31:0] rvfi_insn;
   logic        rvfi_halt;
@@ -405,8 +415,8 @@ module ibex_demo_system #(
     .rvfi_ext_debug_mode,
     .rvfi_ext_rf_wr_suppress,
     .rvfi_ext_mcycle,
-    .rvfi_ext_mhpmcounters,
-    .rvfi_ext_mhpmcountersh,
+    .rvfi_ext_mhpmcounters (rvfi_ext_mhpmcounters_arr),
+    .rvfi_ext_mhpmcountersh (rvfi_ext_mhpmcountersh_arr),
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
 
