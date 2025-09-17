@@ -16,6 +16,11 @@ module ibex_rvfi_wrapper #(
 
     output logic			    led,
   
+    input logic [31:0]			    rvfi_start_addr,
+    input logic [31:0]			    rvfi_csr_start_addr,
+    output logic [31:0]			    rvfi_end_addr,
+    output logic [31:0]			    rvfi_csr_end_addr,
+
     output logic			    ibex_ram_a_req,
     output logic [3:0]			    ibex_ram_a_we,
     output logic [3:0]			    ibex_ram_a_be,
@@ -51,6 +56,14 @@ module ibex_rvfi_wrapper #(
     output logic [71:0]			    rvfi_csr_cmd_tdata,
     output logic			    rvfi_csr_cmd_tvalid,
     input logic				    rvfi_csr_cmd_tready,
+
+    input logic [7:0]			    rvfi_sts_tdata,
+    input logic				    rvfi_sts_tvalid,
+    output logic			    rvfi_sts_tready,
+   
+    input logic [7:0]			    rvfi_csr_sts_tdata,
+    input logic				    rvfi_csr_sts_tvalid,
+    output logic			    rvfi_csr_sts_tready,
 
     input logic				    flush
 );
@@ -89,6 +102,11 @@ module ibex_rvfi_wrapper #(
      (
       .clk (sys_clk),
       .rstn (sys_rstn),
+
+      .rvfi_start_addr,
+      .rvfi_csr_start_addr,
+      .rvfi_end_addr,
+      .rvfi_csr_end_addr,
 
       .rvfi_valid_i (rvfi_valid && sys_rstn),
       .rvfi_trap_i (rvfi_trap),

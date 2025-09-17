@@ -1,19 +1,25 @@
 module datamover_cmd #(
     parameter DATA_WIDTH   = 8,
     parameter ADDR_WIDTH   = 32,
-    parameter START_ADDR   = 32'hC000_0000,
     parameter THRESHOLD    = 32
 )(
-    input logic         clk,
-    input logic         rstn,
+    input logic		clk,
+    input logic		rstn,
   
-    input logic         fifo_write,
+    input logic [31:0]	start_addr,
+    output logic [31:0]	end_addr,
 
-    input logic         flush,
+    input logic		fifo_write,
 
-    output logic [71:0] m_axis_cmd_tdata,
-    output logic        m_axis_cmd_tvalid,
-    input logic         m_axis_cmd_tready
+    input logic		flush,
+
+    output logic [71:0]	m_axis_cmd_tdata,
+    output logic	m_axis_cmd_tvalid,
+    input logic		m_axis_cmd_tready,
+  
+    input logic [7:0]	m_axis_sts_tdata,
+    input logic		m_axis_sts_tvalid,
+    output logic	m_axis_sts_tready
 );
 
    logic trigger;
@@ -41,9 +47,42 @@ module datamover_cmd #(
 
    logic [22:0]                 BTT;
    logic [ADDR_WIDTH-1:0]       ADDR;
+
    always_comb begin
       write_amount = (flush ? fill_level : THRESHOLD);
       BTT = write_amount * (DATA_WIDTH/8);
+   end
+
+   logic [31:0] fifo_rd_data;
+   logic	fifo_rd_en, fifo_wr_en;
+   
+   
+   fifo_wrapper #(.WIDTH(32), .DEPTH(128)) u_addr_fifo
+     (
+      .clk (clk),
+      .rst (~rstn),
+      
+      .fifo_read_rd_data (fifo_rd_data),
+      .fifo_read_rd_en (fifo_rd_en),
+      .fifo_write_wr_data (ADDR),
+      .fifo_write_wr_en (fifo_wr_en)
+      );
+
+
+   always_comb begin
+      fifo_rd_en = m_axis_sts_tready && m_axis_sts_tvalid;
+      fifo_wr_en = m_axis_cmd_tready && m_axis_cmd_tvalid;
+      m_axis_sts_tready = 1;
+   end
+
+   always @(posedge clk or negedge rstn) begin
+      if (!rstn) begin
+	 end_addr <= start_addr;
+      end else begin
+	 if (fifo_rd_en) begin
+	    end_addr <= fifo_rd_data;
+	 end
+      end
    end
 
    always @(posedge clk or negedge rstn) begin
@@ -51,7 +90,7 @@ module datamover_cmd #(
          m_axis_cmd_tvalid <= 0;
          m_axis_cmd_tdata  <= 0;
          fill_level <= 0;
-         ADDR <= START_ADDR;
+         ADDR <= start_addr;
       end else begin
          if (trigger && !m_axis_cmd_tvalid) begin
             // format: {RSVD:4, TAG:4, ADDR:32, DRR:1, EOF:1, DSA:6, TYPE:1, BTT:22}

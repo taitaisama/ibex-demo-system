@@ -7,8 +7,8 @@
 module top_versal
 (
   // These inputs are defined in data/pins_artya7.xdc
-    input         sys_clk_p,
-    input         sys_clk_n,
+    input	  sys_clk_p,
+    input	  sys_clk_n,
     
     output [0:0]  DDR4_act_n,
     output [16:0] DDR4_adr,
@@ -18,18 +18,28 @@ module top_versal
     output [0:0]  DDR4_ck_t,
     output [0:0]  DDR4_cke,
     output [0:0]  DDR4_cs_n,
-    inout [7:0]   DDR4_dm_n,
+    inout [7:0]	  DDR4_dm_n,
     inout [63:0]  DDR4_dq,
-    inout [7:0]   DDR4_dqs_c,
-    inout [7:0]   DDR4_dqs_t,
+    inout [7:0]	  DDR4_dqs_c,
+    inout [7:0]	  DDR4_dqs_t,
     output [0:0]  DDR4_odt,
     output [0:0]  DDR4_reset_n,
   
-    output reg    led
+    output	  mdio_mdc,
+    inout	  mdio_mdio_io,
+    output [0:0]  phy_reset_n,
+    input [3:0]	  rgmii_rd,
+    input	  rgmii_rx_ctl,
+    input	  rgmii_rxc,
+    output [3:0]  rgmii_td,
+    output	  rgmii_tx_ctl,
+    output	  rgmii_txc,
+
+    output reg	  led
 );
 
    logic sys_clk;
-   logic axi_rstn, sys_rstn, sys_rstn_d, sys_rstn_d_d;
+   logic axi_rstn, sys_rstn;
 
    logic [255:0] rvfi_tdata;
    logic	 rvfi_tvalid;
@@ -48,6 +58,14 @@ module top_versal
    logic [71:0]	 rvfi_csr_cmd_tdata;
    logic	 rvfi_csr_cmd_tvalid;
    logic	 rvfi_csr_cmd_tready;
+   
+   logic [7:0]	 rvfi_sts_tdata;
+   logic	 rvfi_sts_tvalid;
+   logic	 rvfi_sts_tready;
+  
+   logic [7:0]	 rvfi_csr_sts_tdata;
+   logic	 rvfi_csr_sts_tvalid;
+   logic	 rvfi_csr_sts_tready;
 
    logic	 m_a_arvalid;
    logic	 m_a_arready;
@@ -99,33 +117,27 @@ module top_versal
    logic [1:0]	 m_b_rresp;
    logic [3:0]	 m_b_rid;
 
-
    logic	ps_rstn, ps_stop;
 
-   localparam int DEBUG_WIDTH = 256;
-   localparam int DEBUG_DEPTH = 512;
-   
-   localparam logic [15:0] MAX_DEBUG_ADDR = ((DEBUG_WIDTH*DEBUG_DEPTH)/8);
-   
-   logic [15:0]		     DEBUG_addr;
-   logic		     DEBUG_clk;
-   logic [DEBUG_WIDTH-1:0]   DEBUG_din;
-   logic [DEBUG_WIDTH-1:0]   DEBUG_dout;
-   logic		     DEBUG_en;
-   logic		     DEBUG_rst;
-   logic [DEBUG_WIDTH/8-1:0] DEBUG_we;
-   logic [7:0]		     DEBUG_counter;
-   
-   logic [31:0]      base_addr;
+   logic [31:0]      prog_addr;
+   logic [31:0]      rvfi_start_addr;
+   logic [31:0]      rvfi_csr_start_addr;
+   logic [31:0]      rvfi_end_addr;
+   logic [31:0]      rvfi_csr_end_addr;
 
    always_comb sys_rstn = axi_rstn && ps_rstn;
 
    ibex_axi_wrapper
      (
       .sys_clk (sys_clk),
-      .sys_rstn (sys_rstn_d_d),
+      .sys_rstn (sys_rstn),
 
       .led (led),
+
+      .rvfi_start_addr (rvfi_start_addr),
+      .rvfi_csr_start_addr (rvfi_csr_start_addr),
+      .rvfi_end_addr (rvfi_end_addr),
+      .rvfi_csr_end_addr (rvfi_csr_end_addr),
 
       .rvfi_tdata (rvfi_tdata),
       .rvfi_tvalid (rvfi_tvalid),
@@ -144,10 +156,17 @@ module top_versal
       .rvfi_csr_cmd_tdata (rvfi_csr_cmd_tdata),
       .rvfi_csr_cmd_tvalid (rvfi_csr_cmd_tvalid),
       .rvfi_csr_cmd_tready (rvfi_csr_cmd_tready),
+
+      .rvfi_sts_tdata (rvfi_sts_tdata),
+      .rvfi_sts_tvalid (rvfi_sts_tvalid),
+      .rvfi_sts_tready (rvfi_sts_tready),
       
+      .rvfi_csr_sts_tdata (rvfi_csr_sts_tdata),
+      .rvfi_csr_sts_tvalid (rvfi_csr_sts_tvalid),
+      .rvfi_csr_sts_tready (rvfi_csr_sts_tready),      
+
       .flush (ps_stop),
-      .base_addr (base_addr),
-      .debug (DEBUG_din),
+      .base_addr (prog_addr),
 
       .m_a_arvalid (m_a_arvalid),
       .m_a_arready (m_a_arready),
@@ -197,27 +216,6 @@ module top_versal
       );
 
 
-   always_ff @(posedge sys_clk or negedge sys_rstn) begin
-      if (!sys_rstn) begin
-	 DEBUG_addr = 0;
-	 sys_rstn_d <= 0;
-	 sys_rstn_d_d <= 0;
-      end else begin
-	 sys_rstn_d <= sys_rstn;
-	 sys_rstn_d_d <= sys_rstn_d && sys_rstn;
-	 DEBUG_counter <= DEBUG_counter + 1;
-	 if (DEBUG_addr < MAX_DEBUG_ADDR) begin
-	    DEBUG_addr += (DEBUG_WIDTH/8);
-	 end
-      end
-   end
-
-   always_comb begin
-      DEBUG_clk = sys_clk;
-      DEBUG_rst = ~sys_rstn;
-      DEBUG_we = 32'hffffffff;
-      DEBUG_en = 1;
-   end
 
    // ps_subsystem_debug_wrapper u_pssub 
    ps_subsystem_wrapper u_pssub
@@ -242,7 +240,11 @@ module top_versal
     .DDR4_reset_n       (DDR4_reset_n  ),
 
     .PS_IO_tri_o ({ps_rstn, ps_stop}),
-    .BASE_ADDR_tri_o (base_addr),
+    .PROG_ADDR_tri_o (prog_addr),
+    .RVFI_START_ADDR_tri_o (rvfi_start_addr),
+    .RVFI_CSR_START_ADDR_tri_o (rvfi_csr_start_addr),
+    .RVFI_END_ADDR_tri_i (rvfi_end_addr),
+    .RVFI_CSR_END_ADDR_tri_i (rvfi_csr_end_addr),
 
     .rvfi_tdata,
     .rvfi_tvalid,
@@ -252,6 +254,10 @@ module top_versal
     .rvfi_cmd_tdata,
     .rvfi_cmd_tvalid,
     .rvfi_cmd_tready,
+
+    .rvfi_sts_tdata,
+    .rvfi_sts_tvalid,
+    .rvfi_sts_tready,
    
     .rvfi_csr_tdata,
     .rvfi_csr_tvalid,
@@ -261,6 +267,10 @@ module top_versal
     .rvfi_csr_cmd_tdata,
     .rvfi_csr_cmd_tvalid,
     .rvfi_csr_cmd_tready,
+
+    .rvfi_csr_sts_tdata,
+    .rvfi_csr_sts_tvalid,
+    .rvfi_csr_sts_tready,
 
     .IBEX_DATA_arvalid (m_a_arvalid),
     .IBEX_DATA_arready (m_a_arready),
@@ -313,13 +323,15 @@ module top_versal
     .IBEX_INSTR_rresp (m_b_rresp),
     .IBEX_INSTR_rid (m_b_rid),
 
-    .DEBUG_addr,
-    .DEBUG_clk,
-    .DEBUG_din,
-    .DEBUG_dout,
-    .DEBUG_en,
-    .DEBUG_rst,
-    .DEBUG_we,
+    .mdio_mdc,
+    .mdio_mdio_io,
+    .phy_reset_n,
+    .rgmii_rd,
+    .rgmii_rx_ctl,
+    .rgmii_rxc,
+    .rgmii_td,
+    .rgmii_tx_ctl,
+    .rgmii_txc,
 
     .axi_clk (sys_clk),
     .axi_rstn (axi_rstn),

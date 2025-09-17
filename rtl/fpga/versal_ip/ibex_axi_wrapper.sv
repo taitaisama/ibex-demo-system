@@ -5,6 +5,11 @@ module ibex_axi_wrapper
 
    output logic		led,
 
+   input logic [31:0]	rvfi_start_addr,
+   input logic [31:0]	rvfi_csr_start_addr,
+   output logic [31:0]	rvfi_end_addr,
+   output logic [31:0]	rvfi_csr_end_addr,
+
    output logic [255:0]	rvfi_tdata,
    output logic		rvfi_tvalid,
    input logic		rvfi_tready,
@@ -23,9 +28,16 @@ module ibex_axi_wrapper
    output logic		rvfi_csr_cmd_tvalid,
    input logic		rvfi_csr_cmd_tready,
 
+   input logic [7:0]	rvfi_sts_tdata,
+   input logic		rvfi_sts_tvalid,
+   output logic		rvfi_sts_tready,
+   
+   input logic [7:0]	rvfi_csr_sts_tdata,
+   input logic		rvfi_csr_sts_tvalid,
+   output logic		rvfi_csr_sts_tready,
+
    input logic		flush,
-   input logic [31:0] base_addr,
-   output logic [255:0]	debug,
+   input logic [31:0]	base_addr,
 
    output logic		m_a_arvalid,
    input logic		m_a_arready,
@@ -99,21 +111,11 @@ module ibex_axi_wrapper
    logic			    ibex_ram_b_gnt;
    logic [31:0]			    ibex_ram_b_addr_abs;
 
-   logic [39:0]			    instr_debug;
-
-   logic [37:0]			    DEBUG_counter = 0;
-   
    always_comb begin
        ibex_ram_a_addr = ibex_ram_a_addr_abs - 32'h001000000 + base_addr;
        ibex_ram_b_addr = ibex_ram_b_addr_abs - 32'h001000000 + base_addr;
    end
    
-
-   always_ff @(posedge sys_clk) begin
-      DEBUG_counter <= DEBUG_counter + 1;
-   end
-   
-   always_comb debug = {ibex_ram_b_req, ibex_ram_b_we, ibex_ram_b_addr, ibex_ram_b_rvalid, ibex_ram_b_rdata, ibex_ram_b_gnt, m_b_arvalid, m_b_arready, m_b_araddr, m_b_rvalid, m_b_rready, m_b_rdata, m_b_rid, m_b_rlast, m_b_arid, DEBUG_counter, base_addr, instr_debug[7:0], 4'hf, 25'd0, 4'hf};
 
    data_ram_to_axi #(.NUM_ID_BITS (4)) 
    u_dr2a
@@ -178,8 +180,6 @@ module ibex_axi_wrapper
       .s_rdata (ibex_ram_b_rdata),
       .s_gnt (ibex_ram_b_gnt),
 
-      //.debug (instr_debug),
-
       .m_arvalid (m_b_arvalid),
       .m_arready (m_b_arready),
       .m_araddr (m_b_araddr),
@@ -202,7 +202,12 @@ module ibex_axi_wrapper
       .sys_clk,
       .sys_rstn,
       .led,
-      
+
+      .rvfi_start_addr,
+      .rvfi_csr_start_addr,
+      .rvfi_end_addr,
+      .rvfi_csr_end_addr,
+
       .ibex_ram_a_req,
       .ibex_ram_a_we,
       .ibex_ram_a_be,
@@ -235,6 +240,12 @@ module ibex_axi_wrapper
       .rvfi_csr_cmd_tdata,
       .rvfi_csr_cmd_tvalid,
       .rvfi_csr_cmd_tready,
+      .rvfi_sts_tdata,
+      .rvfi_sts_tvalid,
+      .rvfi_sts_tready,
+      .rvfi_csr_sts_tdata,
+      .rvfi_csr_sts_tvalid,
+      .rvfi_csr_sts_tready,
       .flush
       );
    

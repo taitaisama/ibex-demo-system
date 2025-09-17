@@ -3,36 +3,48 @@ module rvfi_to_mem #(
      parameter int NUM_CSR_WORDS = 20,
      parameter int IN_WIDTH = 144,
      parameter int OUT_WIDTH = 208,
-     parameter int CSR_WIDTH = 104,
-     parameter int RVFI_ADDR = 32'h0130_0000,
-     parameter int RVFI_CSR_ADDR = 32'h0150_0000) 
-   (
-     input logic		  clk,
-     input logic		  rstn,
-     input logic		  valid_i,
-     input [63:0]		  rvfi_mcycle,
-     input [IN_WIDTH-1:0]	  rvfi,
-     input [31:0]		  rvfi_csr [NUM_CSR_WORDS],
-     output logic		  wready_o,
-     input logic		  flush,
+     parameter int CSR_WIDTH = 104) 
+(
 
-     output logic [OUT_WIDTH-1:0] fifo_data_o,
-     output logic		  fifo_valid_o,
-     input logic		  fifo_ready_i,
+ input logic [31:0]	      rvfi_start_addr,
+ input logic [31:0]	      rvfi_csr_start_addr,
+ output logic [31:0]	      rvfi_end_addr,
+ output logic [31:0]	      rvfi_csr_end_addr,
+
+ input logic		      clk,
+ input logic		      rstn,
+ input logic		      valid_i,
+ input [63:0]		      rvfi_mcycle,
+ input [IN_WIDTH-1:0]	      rvfi,
+ input [31:0]		      rvfi_csr [NUM_CSR_WORDS],
+ output logic		      wready_o,
+ input logic		      flush,
+
+ output logic [OUT_WIDTH-1:0] fifo_data_o,
+ output logic		      fifo_valid_o,
+ input logic		      fifo_ready_i,
      
-     output logic [71:0]	  cmd_data_o,
-     output logic		  cmd_valid_o,
-     input logic		  cmd_ready_i,
+ output logic [71:0]	      cmd_data_o,
+ output logic		      cmd_valid_o,
+ input logic		      cmd_ready_i,
 
-     output logic [CSR_WIDTH-1:0] fifo_data_csr_o,
-     output logic		  fifo_valid_csr_o,
-     input logic		  fifo_ready_csr_i,
+ input logic [7:0]	      sts_data_o,
+ input logic		      sts_valid_o,
+ output logic		      sts_ready_i,
+
+ output logic [CSR_WIDTH-1:0] fifo_data_csr_o,
+ output logic		      fifo_valid_csr_o,
+ input logic		      fifo_ready_csr_i,
      
-     output logic [71:0]	  cmd_csr_data_o,
-     output logic		  cmd_csr_valid_o,
-     input logic		  cmd_csr_ready_i
+ output logic [71:0]	      cmd_csr_data_o,
+ output logic		      cmd_csr_valid_o,
+ input logic		      cmd_csr_ready_i,
 
-    );
+ input logic [7:0]	      sts_csr_data_o,
+ input logic		      sts_csr_valid_o,
+ output logic		      sts_csr_ready_i
+
+ );
 
    logic [63:0]   mcycle;
 
@@ -69,31 +81,39 @@ module rvfi_to_mem #(
    end
 
    datamover_cmd
-     #(.DATA_WIDTH (OUT_WIDTH),
-       .START_ADDR (RVFI_ADDR)
+     #(.DATA_WIDTH (OUT_WIDTH)
        ) u_dmc
      (
       .clk (clk),
       .rstn (rstn),
+      .start_addr (rvfi_start_addr),
+      .end_addr (rvfi_end_addr),
       .fifo_write (fifo_valid_o && fifo_ready_i),
       .flush (flush),
       .m_axis_cmd_tdata (cmd_data_o),
       .m_axis_cmd_tvalid (cmd_valid_o),
-      .m_axis_cmd_tready (cmd_ready_i)
+      .m_axis_cmd_tready (cmd_ready_i),
+      .m_axis_sts_tdata (sts_data_o),
+      .m_axis_sts_tvalid (sts_valid_o),
+      .m_axis_sts_tready (sts_ready_i)
       );
    
    datamover_cmd
-     #(.DATA_WIDTH (CSR_WIDTH),
-       .START_ADDR (RVFI_CSR_ADDR)
+     #(.DATA_WIDTH (CSR_WIDTH)
        ) u_dmc_csr
      (
       .clk (clk),
       .rstn (rstn),
+      .start_addr (rvfi_csr_start_addr),
+      .end_addr (rvfi_csr_end_addr),
       .fifo_write (fifo_csr_valid_o && fifo_csr_ready_i),
       .flush (flush),
       .m_axis_cmd_tdata (cmd_csr_data_o),
       .m_axis_cmd_tvalid (cmd_csr_valid_o),
-      .m_axis_cmd_tready (cmd_csr_ready_i)
+      .m_axis_cmd_tready (cmd_csr_ready_i),
+      .m_axis_sts_tdata (sts_csr_data_o),
+      .m_axis_sts_tvalid (sts_csr_valid_o),
+      .m_axis_sts_tready (sts_csr_ready_i)
       );   
 
 endmodule

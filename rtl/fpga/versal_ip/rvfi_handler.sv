@@ -1,11 +1,15 @@
 module rvfi_handler #(
   parameter int	OUT_WIDTH = 208,
-  parameter int	CSR_WIDTH = 104,
-  parameter int	RVFI_ADDR = 32'h0130_0000,
-  parameter int	RVFI_CSR_ADDR = 32'h0150_0000)
+  parameter int	CSR_WIDTH = 104)
 ( 
   input logic		       clk,
   input logic		       rstn,
+
+  input logic [31:0]	       rvfi_start_addr,
+  input logic [31:0]	       rvfi_csr_start_addr,
+  output logic [31:0]	       rvfi_end_addr,
+  output logic [31:0]	       rvfi_csr_end_addr,
+
   input logic		       rvfi_valid_i,
   input logic		       rvfi_trap_i,
   input logic [ 4:0]	       rvfi_rd_addr_i,
@@ -30,6 +34,10 @@ module rvfi_handler #(
   output logic		       cmd_valid_o,
   input logic		       cmd_ready_i,
 
+  input logic [7:0]	       sts_data_o,
+  input logic		       sts_valid_o,
+  output logic		       sts_ready_i,
+
   output logic [CSR_WIDTH-1:0] fifo_data_csr_o,
   output logic		       fifo_valid_csr_o,
   input logic		       fifo_ready_csr_i,
@@ -37,6 +45,10 @@ module rvfi_handler #(
   output logic [71:0]	       cmd_csr_data_o,
   output logic		       cmd_csr_valid_o,
   input logic		       cmd_csr_ready_i,
+
+  input logic [7:0]	       sts_csr_data_o,
+  input logic		       sts_csr_valid_o,
+  output logic		       sts_csr_ready_i,
 
   input logic		       flush,
 
@@ -125,13 +137,17 @@ module rvfi_handler #(
        .NUM_CSR_WORDS (20),
        .IN_WIDTH (144),
        .OUT_WIDTH (OUT_WIDTH),
-       .CSR_WIDTH (CSR_WIDTH),
-       .RVFI_ADDR (RVFI_ADDR),
-       .RVFI_CSR_ADDR (RVFI_CSR_ADDR)
+       .CSR_WIDTH (CSR_WIDTH)
        ) u_rtm
      (
       .clk (clk),
       .rstn (rstn),
+
+      .rvfi_start_addr,
+      .rvfi_csr_start_addr,
+      .rvfi_end_addr,
+      .rvfi_csr_end_addr,
+
       .valid_i (rvfi_to_mem_valid),
       .rvfi_mcycle (rvfi_out_mcycle),
       .rvfi (rvfi_out_data),
@@ -147,13 +163,21 @@ module rvfi_handler #(
       .cmd_valid_o,
       .cmd_ready_i,
       
+      .sts_data_o,
+      .sts_valid_o,
+      .sts_ready_i,
+      
       .fifo_data_csr_o,
       .fifo_valid_csr_o,
       .fifo_ready_csr_i,
 
       .cmd_csr_data_o,
       .cmd_csr_valid_o,
-      .cmd_csr_ready_i
+      .cmd_csr_ready_i,
+
+      .sts_csr_data_o,
+      .sts_csr_valid_o,
+      .sts_csr_ready_i
       
       );
    

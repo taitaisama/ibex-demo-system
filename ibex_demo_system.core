@@ -74,6 +74,7 @@ filesets:
       - rtl/fpga/versal_ip/rvfi_handler.sv
       - rtl/fpga/versal_ip/rvfi_csr.sv
       - rtl/fpga/versal_ip/rvfi_to_mem.sv
+      - rtl/fpga/versal_ip/rgmii_reset.v
       - rtl/fpga/versal_ip/ibex_rvfi_wrapper.sv
       - rtl/fpga/versal_ip/ibex_axi_wrapper.sv
       - rtl/fpga/versal_ip/read_ram_to_axi.sv
