@@ -70,7 +70,7 @@ filesets:
       - lowrisc:ibex:rv_timer
       - lowrisc:ibex:fpga_xilinx_shared
     files:
-      - rtl/fpga/ibex_demo_system_wrapper.v
+      - rtl/fpga/versal_ip/ibex_demo_system_wrapper.v
     file_type: verilogSource
 
   files_sonata:

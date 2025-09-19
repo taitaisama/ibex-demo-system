@@ -22,11 +22,14 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 #define GPIO_2_OFFSET               0x20000
 #define GPIO_SIZE                   0x30000
 
-void * GPIO_mem;
+#define DEBUG_ADDR                  0x020100000000
+#define DEBUG_SIZE                  0x00004000
 
+void * GPIO_mem;
+void * DEBUG_mem;
 void * reserved_mem;
 
-int setup_gpio() {
+int setup_gpio_mem() {
   int fd;
   if ((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
     perror("Error opening /dev/mem");
@@ -47,8 +50,23 @@ int setup_reserved_mem() {
     perror("Error opening /dev/mem");
     return -1;
   }
-  reserved_mem = mmap(NULL, RESERVED_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, RESERVED_MEM_BASE_ADDR);
+  reserved_mem = mmap(NULL, DEBUG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, DEBUG_ADDR);
   if (reserved_mem == MAP_FAILED) {
+    perror("mmap");
+    close(fd);
+    return -1;
+  }
+  return 0;
+}
+
+int setup_debug_mem() {
+  int fd;
+  if ((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
+    perror("Error opening /dev/mem");
+    return -1;
+  }
+  DEBUG_mem = mmap(NULL, RESERVED_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, RESERVED_MEM_BASE_ADDR);
+  if (DEBUG_mem == MAP_FAILED) {
     perror("mmap");
     close(fd);
     return -1;
@@ -111,9 +129,18 @@ void print_rvfi(int len) {
   printf("\n");
 }
 
+void print_debug(int len) {
+  volatile uint32_t * virt_addr;
+  virt_addr = (volatile uint32_t*) ((char*)debug_mem + PROG_OFFSET);
+  for (int i = 0; i < len; i ++) {
+    printf("%d, ", virt_addr[i]);
+  }
+  printf("\n");
+}
+
 int main() {
 
-  if (setup_gpio() || setup_reserved_mem()) {
+  if (setup_gpio_mem() || setup_reserved_mem() || setup_debug_mem()) {
     return -1;
   }
   

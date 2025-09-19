@@ -231,5 +231,20 @@
         <spirit:defaultValue>0</spirit:defaultValue>
       </spirit:wire>
     </spirit:port>
+     <spirit:port>
+      <spirit:logicalName>force_stop</spirit:logicalName>
+      <spirit:wire>
+        <spirit:onMaster>
+          <spirit:presence>required</spirit:presence>
+          <spirit:width>1</spirit:width>
+        </spirit:onMaster>
+        <spirit:onSlave>
+          <spirit:presence>required</spirit:presence>
+          <spirit:width>1</spirit:width>
+          <spirit:direction>out</spirit:direction>
+        </spirit:onSlave>
+        <spirit:defaultValue>0</spirit:defaultValue>
+      </spirit:wire>
+    </spirit:port>
   </spirit:ports>
 </spirit:abstractionDefinition>

@@ -47,38 +47,33 @@
 // DO NOT MODIFY THIS FILE.
 
 
-`ifndef ibex_rvfi_v1_0
-`define ibex_rvfi_v1_0
+`ifndef ibex_ram_v1_0
+`define ibex_ram_v1_0
 
-interface ibex_rvfi_v1_0();
-  logic valid = 0;                                      // 
-  logic trap = 0;                                       // 
-  logic [4:0] rd_addr = 0;                              // 
-  logic [31:0] rd_wdata = 0;                             // 
-  logic [31:0] pc_rdata = 0;                             // 
-  logic [31:0] ext_pre_mip = 0;                          // 
-  logic [31:0] ext_post_mip = 0;                         // 
-  logic ext_nmi = 0;                                    // 
-  logic ext_nmi_int = 0;                                // 
-  logic ext_debug_req = 0;                              // 
-  logic ext_rf_wr_suppress = 0;                         // 
-  logic [63:0] ext_mcycle = 0;                      // 
-  logic [319:0] ext_mhpmcounters = 0;                     // 
-  logic [319:0] ext_mhpmcountersh = 0;                    // 
-  logic ext_ic_scr_key_valid = 0;                       // 
+interface ibex_ram_v1_0();
+  logic req = 0;                                        // 
+  logic we = 0;                                         // 
+  logic [3:0] be = 0;                                   // 
+  logic [31:0] addr = 0;                                // 
+  logic [31:0] wr_data = 0;                             // 
+  logic rd_valid = 0;                                   // 
+  logic [31:0] rd_data = 0;                             // 
+  logic gnt = 0;                                        // 
 
   modport MASTER (
-    output valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input rd_valid, rd_data, gnt, 
+    output req, we, be, addr, wr_data
     );
 
   modport SLAVE (
-    input valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input req, we, be, addr, wr_data, 
+    output rd_valid, rd_data, gnt
     );
 
   modport MONITOR (
-    input valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input req, we, be, addr, wr_data, rd_valid, rd_data, gnt
     );
 
-endinterface // ibex_rvfi_v1_0
+endinterface // ibex_ram_v1_0
 
 `endif

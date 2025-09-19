@@ -26,6 +26,7 @@ module rvfi_to_stream
   input [319:0]		   rvfi_ext_mhpmcounters, 
   input [319:0]		   rvfi_ext_mhpmcountersh,
   input			   rvfi_ext_ic_scr_key_valid,
+  output		   rvfi_force_stop,
 
   output [OUT_WIDTH-1:0]   rvfi_stream_tdata,
   output		   rvfi_stream_tvalid,
@@ -53,8 +54,7 @@ module rvfi_to_stream
   input			   rvfi_csr_sts_tvalid,
   output		   rvfi_csr_sts_tready,
 
-  input			   flush,
-  output		   rvfi_busy
+  input			   flush
 );
 
 
@@ -108,7 +108,7 @@ module rvfi_to_stream
       .sts_csr_ready_i (rvfi_csr_sts_tready),
       
       .flush (flush),
-      .rvfi_busy_o (rvfi_busy)
+      .rvfi_busy_o (rvfi_force_stop)
   );
    
 endmodule

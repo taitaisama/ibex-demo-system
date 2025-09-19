@@ -33,136 +33,123 @@
 
 unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b70006f, 0x0b30006f, 0x0af0006f, 0x0ab0006f, 0x0a70006f, 0x0a30006f, 0x09f0006f, 0x09b0006f, 0x0970006f, 0x0930006f, 0x08f0006f, 0x08b0006f, 0x0870006f, 0x0830006f, 0x07f0006f, 0x07b0006f, 0x0770006f, 0x0730006f, 0x06f0006f, 0x06b0006f, 0x0670006f, 0x0630006f, 0x05f0006f, 0x05b0006f, 0x0570006f, 0x0530006f, 0x04f0006f, 0x04b0006f, 0x04b0006f, 0xd6067179, 0x1800d422, 0x5537230d, 0x0513004c, 0x4581b405, 0x2b692b65, 0xfea42423, 0xfeb42623, 0x05374581, 0x25398000, 0x20232361, 0x2223fea4, 0x2703feb4, 0x2783fe04, 0x1863fe84, 0x270300f7, 0x2783fe44, 0x0c63fec4, 0x270302f7, 0x2783fe04, 0x2423fe44, 0x2623fee4, 0x0537fef4, 0x2bdd8000, 0xfca42e23, 0xfdc42783, 0xfff7c793, 0xfcf42e23, 0xfdc42583, 0x80000537, 0x00732b75, 0xb76d1050, 0xce061101, 0x1000cc22, 0xfea42623, 0xfec42703, 0x166347a9, 0x45b500f7, 0x80001537, 0x27832635, 0xf793fec4, 0x85be0ff7, 0x80001537, 0x27832e31, 0x853efec4, 0x446240f2, 0x80826105, 0xc6061141, 0x0800c422, 0x80001537, 0x87aa24f9, 0x40b2853e, 0x01414422, 0x11018082, 0xcc22ce06, 0x26231000, 0xa819fea4, 0xfec42783, 0x00178713, 0xfee42623, 0x0007c783, 0x3769853e, 0xfec42783, 0x0007c783, 0x4781f3f5, 0x40f2853e, 0x61054462, 0x71798082, 0xd422d606, 0x2e231800, 0x2623fca4, 0xa091fe04, 0xfdc42783, 0x242383f1, 0x2703fef4, 0x47a5fe84, 0x00e7c963, 0xfe842783, 0x03078793, 0x3789853e, 0x2783a039, 0x8793fe84, 0x853e0377, 0x27833f15, 0x0792fdc4, 0xfcf42e23, 0xfec42783, 0x26230785, 0x2703fef4, 0x479dfec4, 0xfae7dce3, 0x00010001, 0x542250b2, 0x80826145, 0xc6221141, 0x07b70800, 0x07a10002, 0xc3984705, 0x44320001, 0x80820141, 0xce221101, 0x27f31000, 0x26233410, 0x2783fef4, 0x853efec4, 0x61054472, 0x11018082, 0x1000ce22, 0x342027f3, 0xfef42623, 0xfec42783, 0x4472853e, 0x80826105, 0xce221101, 0x27f31000, 0x26233430, 0x2783fef4, 0x853efec4, 0x61054472, 0x11018082, 0x1000ce22, 0xb00027f3, 0xfef42623, 0xfec42783, 0x4472853e, 0x80826105, 0xc6221141, 0x10730800, 0x0001b000, 0x01414432, 0x71798082, 0x1800d622, 0xfca42e23, 0xfcb42c23, 0xfdc42703, 0xf46347fd, 0x478500e7, 0x0797a879, 0x87930000, 0x43986e67, 0xfdc42783, 0x97ba078a, 0xfef42623, 0xfd842703, 0xfec42783, 0x40f707b3, 0xfef42423, 0xfe842703, 0x000807b7, 0x00f75863, 0xfe842703, 0xfff807b7, 0x00f75463, 0xa8b14789, 0xfe842783, 0xfef42223, 0xfe442783, 0x01479713, 0x7fe007b7, 0x27838f7d, 0x9693fe44, 0x07b70097, 0x8ff50010, 0x26838f5d, 0xf7b7fe44, 0x8ff5000f, 0x27838f5d, 0x9693fe44, 0x07b700b7, 0x8ff58000, 0xe7938fd9, 0x202306f7, 0x2783fef4, 0x2703fec4, 0xc398fe04, 0x0000100f, 0x853e4781, 0x61455432, 0x11018082, 0x1000ce22, 0xfea42623, 0xfec42783, 0x3047a073, 0x44720001, 0x80826105, 0xce221101, 0x26231000, 0x2783fea4, 0xb073fec4, 0x00013047, 0x61054472, 0x11018082, 0x1000ce22, 0xfea42623, 0xfec42783, 0x47a1c789, 0x3007a073, 0x47a1a021, 0x3007b073, 0x44720001, 0x80826105, 0xc6061141, 0x0800c422, 0x00000517, 0x59c50513, 0x0517334d, 0x05130000, 0x3b615a25, 0x00000517, 0x5a850513, 0x35993379, 0x853e87aa, 0x05173b7d, 0x05130000, 0x3bb55a25, 0x87aa35b9, 0x3375853e, 0x00000517, 0x59c50513, 0x3d9933ad, 0x853e87aa, 0x45293b69, 0xa0013321, 0xc6061141, 0x0800c422, 0x37916541, 0x3f954505, 0x40b20001, 0x01414422, 0x71798082, 0x1800d622, 0xfca42e23, 0x262357fd, 0x2783fef4, 0x07a1fdc4, 0x8b85439c, 0x2783e791, 0x439cfdc4, 0xfef42623, 0xfec42783, 0x5432853e, 0x80826145, 0xce221101, 0x26231000, 0x87aefea4, 0xfef405a3, 0x27830001, 0x07a1fec4, 0x8b89439c, 0x2783fbfd, 0x0791fec4, 0xfeb44703, 0x0001c398, 0x61054472, 0x11018082, 0x1000ce22, 0xfea42423, 0xfeb42623, 0x800026b7, 0x567d06a1, 0x2683c290, 0xd713fec4, 0x47810006, 0x800026b7, 0x87ba06b1, 0x27b7c29c, 0x07a18000, 0xfe842703, 0x0001c398, 0x61054472, 0x71798082, 0xd422d606, 0x2c231800, 0x2e23fca4, 0x28fdfcb4, 0xfea42423, 0xfeb42623, 0xfe842603, 0xfec42683, 0xfd842503, 0xfdc42583, 0x00a60733, 0x3833883a, 0x87b300c8, 0x06b300b6, 0x87b600f8, 0xfee42423, 0xfef42623, 0xfe842503, 0xfec42583, 0x00013f8d, 0x542250b2, 0x80826145, 0xc686715d, 0xc29ac496, 0xde22c09e, 0xda2edc2a, 0xd636d832, 0xd23ed43a, 0xce46d042, 0xca76cc72, 0xc67ec87a, 0x07970880, 0x87930000, 0x43984627, 0x853a43dc, 0x3f8585be, 0x00000797, 0x44878793, 0x43dc4398, 0x45814505, 0x00a70633, 0x38338832, 0x86b300e8, 0x07b300b7, 0x86be00d8, 0x87b68732, 0x00000697, 0x42068693, 0xc2dcc298, 0x40b60001, 0x431642a6, 0x54724386, 0x55d25562, 0x56b25642, 0x57925722, 0x48f25802, 0x4ed24e62, 0x4fb24f42, 0x00736161, 0x11413020, 0xc422c606, 0x05970800, 0x85930000, 0x451df625, 0x000131f9, 0x442240b2, 0x80820141, 0xce221101, 0x28371000, 0x08118000, 0x00082803, 0xff042623, 0x80002837, 0x00082803, 0xff042423, 0x80002837, 0x28030811, 0x28830008, 0x9ce3fec4, 0x2803fd08, 0x8542fec4, 0x17934581, 0x47010005, 0xfe842583, 0x4681862e, 0x00c765b3, 0xfeb42023, 0x22238fd5, 0x2703fef4, 0x2783fe04, 0x853afe44, 0x447285be, 0x80826105, 0xc6221141, 0x07970800, 0x87930000, 0x439835e7, 0x853a43dc, 0x443285be, 0x80820141, 0xce061101, 0x1000cc22, 0xfea42423, 0xfeb42623, 0x00000797, 0x33878793, 0x47014681, 0xc3d8c394, 0x00000697, 0x33068693, 0xfe842703, 0xfec42783, 0xc2dcc298, 0xfe842503, 0xfec42583, 0x05133d0d, 0x39750800, 0x31f54505, 0x40f20001, 0x61054462, 0x11418082, 0x0800c622, 0x08000793, 0x3047b073, 0x44320001, 0x80820141, 0xce221101, 0x26231000, 0x2423fea4, 0x2783feb4, 0x2703fec4, 0xc398fe84, 0x44720001, 0x80826105, 0xce221101, 0x26231000, 0x2783fea4, 0x439cfec4, 0x4472853e, 0x80826105, 0xd6067179, 0x1800d422, 0xfca42e23, 0xfcb42c23, 0xfcc42a23, 0xfd442783, 0x2a238b85, 0x2503fcf4, 0x37d9fdc4, 0xfea42623, 0xfd842783, 0x17b34705, 0xc79300f7, 0x873efff7, 0xfec42783, 0x26238ff9, 0x2783fef4, 0x2703fd84, 0x17b3fd44, 0x270300f7, 0x8fd9fec4, 0xfef42623, 0xfec42583, 0xfdc42503, 0x000137a5, 0x542250b2, 0x80826145, 0xd6067179, 0x1800d422, 0xfca42e23, 0xfcb42c23, 0xfdc42503, 0x262337a5, 0x2783fea4, 0x2703fd84, 0x57b3fec4, 0x262300f7, 0x2783fef4, 0x8b85fec4, 0xfef42623, 0xfec42783, 0x50b2853e, 0x61455422, 0x11018082, 0x1000ce22, 0xfea42623, 0xfeb42423, 0xfec42223, 0xfec42783, 0x27030791, 0xc398fe84, 0xfec42783, 0xfe442703, 0x0001c398, 0x61054472, 0x11018082, 0x1000ce22, 0xfea42623, 0xfeb42423, 0xfec42223, 0xfec42783, 0xfe842703, 0x2783c398, 0x2703fec4, 0xc3d8fe44, 0x44720001, 0x80826105, 0xce221101, 0x26231000, 0x87aefea4, 0xfef405a3, 0x27830001, 0x439cfec4, 0x439c0791, 0xfbf58b85, 0xfec42783, 0x4703439c, 0xc398feb4, 0x44720001, 0x80826105, 0xce221101, 0x26231000, 0x2783fea4, 0x439cfec4, 0x439c0791, 0x4472853e, 0x80826105, 0xce061101, 0x1000cc22, 0xfea42623, 0x25030001, 0x3fc9fec4, 0xf71387aa, 0x47890027, 0xfef719e3, 0x00010001, 0x446240f2, 0x80826105, 0xce061101, 0x1000cc22, 0xfea42623, 0xfeb42423, 0xfec42223, 0xfec42503, 0xa8293f75, 0xfe842783, 0x00178713, 0xfee42423, 0x0007c783, 0x250385be, 0x3f89fec4, 0xfe442783, 0xfff78713, 0xfee42223, 0x0001fff1, 0x40f20001, 0x61054462, 0xf06f8082, 0x0093ae3f, 0x81060000, 0x82068186, 0x83068286, 0x84068386, 0x85068486, 0x86068586, 0x87068686, 0x88068786, 0x89068886, 0x8a068986, 0x8b068a86, 0x8c068b86, 0x8d068c86, 0x8e068d86, 0x8f068e86, 0xf1178f86, 0x01130001, 0x0d176f61, 0x0d130000, 0x0d97086d, 0x8d930000, 0x576308ed, 0x202301bd, 0x0d11000d, 0xffaddde3, 0x45814501, 0xf50ff0ef, 0x000202b7, 0x430502a1, 0x0062a023, 0x10500073, 0x0000bff5, 0x45435845, 0x4f495450, 0x2121214e, 0x0000000a, 0x3d3d3d3d, 0x3d3d3d3d, 0x3d3d3d3d, 0x0000000a, 0x4350454d, 0x2020203a, 0x00007830, 0x41434d0a, 0x3a455355, 0x00783020, 0x56544d0a, 0x203a4c41, 0x00783020, 0x00100000};
 
+#define RESERVED_MEM_BASE_ADDR      0x30000000
+#define RESERVED_MEM_SIZE           0x10000000
 
-#define PS_IO_ADDR              0x20140000000
-#define DEBUG_ADDR              0x201C0000000
-#define BASE_ADDR_IO_ADDR       0x20100000000
+#define PROG_OFFSET                 0x00000000
+#define RVFI_OFFSET                 0x01000000
+#define RVFI_CSR_OFFSET             0x04000000
 
-#define MEM_BASE_ADDR		0x01000000
+#define GPIO_BASE_ADDR              0x80000000
+#define GPIO_0_OFFSET               0x0
+#define GPIO_1_OFFSET               0x10000
+#define GPIO_2_OFFSET               0x20000
+#define GPIO_SIZE                   0x30000
 
-#define POLL_TIMEOUT_COUNTER    1000000U
+#define DEBUG_ADDR                  0x020100000000
 
-#define RVFI_ADDR		(MEM_BASE_ADDR + 0x00300000)
-#define RVFI_CSR_ADDR		(MEM_BASE_ADDR + 0x00500000)
-#define PROG_ADDR               (MEM_BASE_ADDR + 0x00700000)
+void * GPIO_mem;
+void * DEBUG_mem;
+void * reserved_mem;
 
-u32 ps_io = 0;
-XGpio Gpio;
-XGpio Gpio_base_addr;
-
-int init_gpio() {
-
-    if (XGpio_Initialize(&Gpio, PS_IO_ADDR) != XST_SUCCESS ||
-        XGpio_Initialize(&Gpio_base_addr, BASE_ADDR_IO_ADDR) != XST_SUCCESS) {
-            return XST_FAILURE;
-    }
-    return XST_SUCCESS;
+int setup_gpio_mem() {
+  GPIO_mem = (void*) GPIO_BASE_ADDR;
+  return 0;
 }
 
-void set_ps_rst() {
-  ps_io = ps_io & (~2);
-  /* Xil_Out32(PS_IO_ADDR, ps_io); */
-  XGpio_DiscreteWrite(&Gpio, 1, ps_io);
+int setup_reserved_mem() {
+  reserved_mem = (void*) RESERVED_MEM_BASE_ADDR;
+  return 0;
 }
 
-void unset_ps_rst() {
+int setup_debug_mem() {
+  DEBUG_mem = (void*) DEBUG_ADDR;
+  return 0;
+}
+
+unsigned int ps_io = 0;
+
+void write_psio() {
+  volatile uint32_t * virt_addr = (volatile uint32_t*) ((char*)GPIO_mem + GPIO_0_OFFSET);
+  *virt_addr = ps_io;
+}
+
+void ps_rst() {
+  ps_io = 0;
+  write_psio();
+}
+
+void ps_start() {
   ps_io = ps_io | 2;
-  /* Xil_Out32(PS_IO_ADDR, ps_io); */
-  XGpio_DiscreteWrite(&Gpio, 1, ps_io);
+  write_psio();
 }
 
-void ps_dont_end() {
-  ps_io = ps_io & (~1);
-  /* Xil_Out32(PS_IO_ADDR, ps_io); */
-  XGpio_DiscreteWrite(&Gpio, 1, ps_io);
-}
-
-void ps_end() {
+void ps_flush() {
   ps_io = ps_io | 1;
-  /* Xil_Out32(PS_IO_ADDR, ps_io); */
-  XGpio_DiscreteWrite(&Gpio, 1, ps_io);
+  write_psio();
 }
 
-void set_prog_base_addr() {
-  /* Xil_Out32(BASE_ADDR_IO_ADDR, PROG_ADDR); */
-  XGpio_DiscreteWrite(&Gpio_base_addr, 1, PROG_ADDR);
-
-  // printf("%lx\r\n",PS_IO_ADDR+0x0008);
-//   Xil_DCacheFlushRange(PS_IO_ADDR, 16);
+void set_addresses() {
+  volatile uint32_t * virt_addr;
+  virt_addr = (volatile uint32_t*) ((char*)GPIO_mem + GPIO_0_OFFSET + 8);
+  *virt_addr = RESERVED_MEM_BASE_ADDR + PROG_OFFSET;
+  virt_addr = (volatile uint32_t*) ((char*)GPIO_mem + GPIO_1_OFFSET);
+  *virt_addr = RESERVED_MEM_BASE_ADDR + RVFI_OFFSET;
+  virt_addr = (volatile uint32_t*) ((char*)GPIO_mem + GPIO_1_OFFSET + 8);
+  *virt_addr = RESERVED_MEM_BASE_ADDR + RVFI_CSR_OFFSET;
 }
 
 void set_prog() {
-  for (int i = 0; i < PROG_LEN; i ++){
-    Xil_Out32(PROG_ADDR+i*4, PROG[i]);
-  }
-  Xil_DCacheFlushRange(PROG_ADDR, PROG_LEN*4);
-}
-
-u32 check_prog() {
-  Xil_DCacheInvalidateRange(PROG_ADDR, PROG_LEN*4);
-  for (int i = 0; i < PROG_LEN; i ++){
-    if (PROG[i] != Xil_In32(PROG_ADDR+i*4)) {
-      return XST_FAILURE;
-    }
-  }
-  return XST_SUCCESS;
-}
-
-void print_rvfi_data() {
-  Xil_DCacheInvalidateRange((UINTPTR)RVFI_ADDR, 400);
-  printf("rvfi data\n");
-  for (int i = 0; i < 100; i ++) {
-    printf("%x, ", Xil_In32(RVFI_ADDR + i*4));
-  }
-  printf("\n\r");
-}
-
-void print_debug_data() {
-  for (int i = 0 ; i < 256; i ++) {
-    for (int j = 0; j < 8; j ++) {
-      u32 d = Xil_In32(DEBUG_ADDR + (i*8+j)*4);
-      for (int k = 0; k < 8; k ++) {
-	u8 x = (u8) ((d >> (k*4)) & ((1 << 4)-1));
-	printf("%x", x);
-      }
-    }
-    printf("\r\n");
+  volatile uint32_t * virt_addr;
+  virt_addr = (volatile uint32_t*) ((char*)reserved_mem + PROG_OFFSET);
+  for (int i = 0; i < PROG_LEN; i ++) {
+    virt_addr[i] = PROG[i];
   }
 }
 
+uint32_t get_rvfi_end_addr() {
+  volatile uint32_t * virt_addr;
+  virt_addr = (volatile uint32_t*) ((char*)GPIO_mem + GPIO_2_OFFSET);
+  return *virt_addr;
+}
 
-int main()
-{
-  init_platform();
+void print_rvfi(int len) {
+  volatile uint32_t * virt_addr;
+  virt_addr = (volatile uint32_t*) ((char*)reserved_mem + PROG_OFFSET);
+  for (int i = 0; i < len; i ++) {
+    printf("%d, ", virt_addr[i]);
+  }
+  printf("\n");
+}
 
-  init_gpio();
+void print_debug(int len) {
+  volatile uint32_t * virt_addr;
+  virt_addr = (volatile uint32_t*) ((char*)debug_mem + PROG_OFFSET);
+  for (int i = 0; i < len; i ++) {
+    printf("%d, ", virt_addr[i]);
+  }
+  printf("\n");
+}
 
-  set_ps_rst();
+int main() {
 
-  ps_dont_end();
+  if (setup_gpio_mem() || setup_reserved_mem() || setup_debug_mem()) {
+    return -1;
+  }
+  
+  ps_rst();
 
-  print_rvfi_data();
-
-  set_prog_base_addr();
+  set_addresses();
 
   set_prog();
 
-  if (check_prog() != XST_SUCCESS){
-    return XST_FAILURE;
-  }
+  ps_start();
 
-  unset_ps_rst();
+  while (get_rvfi_end_addr() < RESERVED_MEM_BASE_ADDR + RVFI_OFFSET + 0x1000) {}
 
-  printf("waiting\n");
+  ps_rst();
 
-  usleep(10000U);
+  print_rvfi(1024);
 
-  ps_end();
-
-  print_rvfi_data();
-
-  print_debug_data();
-
-  cleanup_platform();
-  return 0;
+  print_debug(1024);
 }

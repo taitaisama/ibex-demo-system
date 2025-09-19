@@ -70,7 +70,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>wrdata</spirit:logicalName>
+      <spirit:logicalName>wr_data</spirit:logicalName>
       <spirit:wire>
         <spirit:qualifier>
           <spirit:isData>true</spirit:isData>
@@ -88,7 +88,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>rdvalid</spirit:logicalName>
+      <spirit:logicalName>rd_valid</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -103,7 +103,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>rddata</spirit:logicalName>
+      <spirit:logicalName>rd_data</spirit:logicalName>
       <spirit:wire>
         <spirit:qualifier>
           <spirit:isData>true</spirit:isData>

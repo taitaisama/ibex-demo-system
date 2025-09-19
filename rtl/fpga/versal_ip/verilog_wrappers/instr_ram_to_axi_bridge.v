@@ -11,9 +11,9 @@ module instr_ram_to_axi_bridge
   input			   S_RAM_we,
   input [3:0]		   S_RAM_be,
   input [31:0]		   S_RAM_addr,
-  input [31:0]		   S_RAM_wrdata,
-  output		   S_RAM_rdvalid,
-  output [31:0]		   S_RAM_rddata,
+  input [31:0]		   S_RAM_wr_data,
+  output		   S_RAM_rd_valid,
+  output [31:0]		   S_RAM_rd_data,
   output		   S_RAM_gnt,
 
   output		   M_AXI_arvalid,
@@ -43,8 +43,8 @@ instr_ram_to_axi
    
    .s_req (S_RAM_req),
    .s_addr (S_RAM_addr),
-   .s_rvalid (S_RAM_rvalid),
-   .s_rdata (S_RAM_rdata),
+   .s_rvalid (S_RAM_rd_valid),
+   .s_rdata (S_RAM_rd_data),
    .s_gnt (S_RAM_gnt),
 
    .m_arvalid (M_AXI_arvalid),

@@ -11,18 +11,18 @@ module ibex_demo_system_wrapper
    output [3:0]	  ibex_ram_a_we,
    output [3:0]	  ibex_ram_a_be,
    output [31:0]  ibex_ram_a_addr,
-   output [31:0]  ibex_ram_a_wrdata,
-   input	  ibex_ram_a_rdvalid,
-   input [31:0]	  ibex_ram_a_rddata,
+   output [31:0]  ibex_ram_a_wr_data,
+   input	  ibex_ram_a_rd_valid,
+   input [31:0]	  ibex_ram_a_rd_data,
    input	  ibex_ram_a_gnt,
 
    output	  ibex_ram_b_req,
    output [3:0]	  ibex_ram_b_we,
    output [3:0]	  ibex_ram_b_be,
    output [31:0]  ibex_ram_b_addr,
-   output [31:0]  ibex_ram_b_wrdata,
-   input	  ibex_ram_b_rdvalid,
-   input [31:0]	  ibex_ram_b_rddata,
+   output [31:0]  ibex_ram_b_wr_data,
+   input	  ibex_ram_b_rd_valid,
+   input [31:0]	  ibex_ram_b_rd_data,
    input	  ibex_ram_b_gnt,
 
    output	  rvfi_valid,
@@ -40,8 +40,8 @@ module ibex_demo_system_wrapper
    output [319:0] rvfi_ext_mhpmcounters,
    output [319:0] rvfi_ext_mhpmcountersh,
    output	  rvfi_ext_ic_scr_key_valid,
-   
-   input	  force_stop
+
+   input	  rvfi_force_stop
 );
 
    wire [31:0] ibex_ram_a_addr_abs, ibex_ram_b_addr_abs;
@@ -73,18 +73,18 @@ module ibex_demo_system_wrapper
     .ibex_ram_a_we_o (ibex_ram_a_we),
     .ibex_ram_a_be_o (ibex_ram_a_be),
     .ibex_ram_a_addr_o (ibex_ram_a_addr_abs),
-    .ibex_ram_a_wdata_o (ibex_ram_a_wrdata),
-    .ibex_ram_a_rvalid_i (ibex_ram_a_rdvalid),
-    .ibex_ram_a_rdata_i (ibex_ram_a_rddata),
+    .ibex_ram_a_wdata_o (ibex_ram_a_wr_data),
+    .ibex_ram_a_rvalid_i (ibex_ram_a_rd_valid),
+    .ibex_ram_a_rdata_i (ibex_ram_a_rd_data),
     .ibex_ram_a_gnt_i (ibex_ram_a_gnt),
                               
     .ibex_ram_b_req_o (ibex_ram_b_req),
     .ibex_ram_b_we_o (ibex_ram_b_we),
     .ibex_ram_b_be_o (ibex_ram_b_be),
     .ibex_ram_b_addr_o (ibex_ram_b_addr_abs),
-    .ibex_ram_b_wdata_o (ibex_ram_b_wrdata),
-    .ibex_ram_b_rvalid_i (ibex_ram_b_rdvalid),
-    .ibex_ram_b_rdata_i (ibex_ram_b_rddata),
+    .ibex_ram_b_wdata_o (ibex_ram_b_wr_data),
+    .ibex_ram_b_rvalid_i (ibex_ram_b_rd_valid),
+    .ibex_ram_b_rdata_i (ibex_ram_b_rd_data),
     .ibex_ram_b_gnt_i (ibex_ram_b_gnt),
 
     .rvfi_valid (rvfi_valid),
@@ -103,7 +103,7 @@ module ibex_demo_system_wrapper
     .rvfi_ext_mhpmcountersh (rvfi_ext_mhpmcountersh),
     .rvfi_ext_ic_scr_key_valid (rvfi_ext_ic_scr_key_valid),
 
-    .force_stop (force_stop),
+    .force_stop (rvfi_force_stop),
 
     .trst_ni(1'b1),
     .tms_i  (1'b0),
