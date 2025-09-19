@@ -1,0 +1,36 @@
+CAPI=2:
+
+name: "::ibex_versal"
+description: "hello"
+filesets:
+  files_xilinx_versal:
+    files:
+      - rtl/fpga/versal_ip/rvfi_handler.sv
+      - rtl/fpga/versal_ip/rvfi_csr.sv
+      - rtl/fpga/versal_ip/rvfi_to_mem.sv
+      - rtl/fpga/versal_ip/read_ram_to_axi.sv
+      - rtl/fpga/versal_ip/write_ram_to_axi.sv
+      - rtl/fpga/versal_ip/data_ram_to_axi.sv
+      - rtl/fpga/versal_ip/instr_ram_to_axi.sv
+      - rtl/fpga/versal_ip/fifo_wrapper.sv
+      - rtl/fpga/versal_ip/datamover_cmd.sv
+      - rtl/fpga/versal_ip/verilog_wrappers/data_ram_to_axi_bridge.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/verilog_wrappers/instr_ram_to_axi_bridge.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/verilog_wrappers/rvfi_to_stream.v: {file_type: verilogSource}
+    file_type: systemVerilogSource
+
+  files_constraints_versal:
+    files:
+      - data/pins_versal.xdc
+    file_type: xdc
+
+targets:
+  synth_versal:
+    default_tool: vivado
+    filesets_append:
+      - files_xilinx_versal
+      - files_constraints_versal
+    toplevel: ps_subsystem_wrapper
+    tools:
+      vivado:
+        part: "xcve2302-sfva784-1LP-e-S"

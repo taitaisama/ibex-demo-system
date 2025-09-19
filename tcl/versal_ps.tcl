@@ -49,27 +49,9 @@ proc create_root_design { parentCell } {
    CONFIG.FREQ_HZ {200000000} \
    ] $sys
 
-  set PROG_ADDR [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 PROG_ADDR ]
-
-  set mdio [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mdio_rtl:1.0 mdio ]
-
-  set rgmii [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:rgmii_rtl:1.0 rgmii ]
-
-  set rvfi [ create_bd_intf_port -mode Slave -vlnv ibex:user:ibex_rvfi_rtl:1.0 rvfi ]
-
-  set ibex_ram_a [ create_bd_intf_port -mode Slave -vlnv ibex:user:ibex_ram_rtl:1.0 ibex_ram_a ]
-
-  set ibex_ram_b [ create_bd_intf_port -mode Slave -vlnv ibex:user:ibex_ram_rtl:1.0 ibex_ram_b ]
-
 
   # Create ports
-  set sys_clk [ create_bd_port -dir O -from 0 -to 0 -type clk sys_clk ]
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {} \
- ] $sys_clk
-  set phy_reset_n [ create_bd_port -dir O -from 0 -to 0 -type rst phy_reset_n ]
-  set sys_rstn [ create_bd_port -dir O -from 0 -to 0 sys_rstn ]
-  set force_stop [ create_bd_port -dir O force_stop ]
+  set led [ create_bd_port -dir O led ]
 
   # Create instance: versal_cips_0, and set properties
   set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips:3.4 versal_cips_0 ]
@@ -100,9 +82,10 @@ proc create_root_design { parentCell } {
       PMC_USE_PMC_NOC_AXI0 {1} \
       PS_BOARD_INTERFACE {Custom} \
       PS_CAN0_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 8 .. 9}}} \
+      PS_ENET0_MDIO {{ENABLE 1} {IO {PMC_MIO 50 .. 51}}} \
       PS_ENET0_PERIPHERAL {{ENABLE 1} {IO {PS_MIO 0 .. 11}}} \
-      PS_ENET1_MDIO {{ENABLE 1} {IO EMIO}} \
-      PS_ENET1_PERIPHERAL {{ENABLE 1} {IO EMIO}} \
+      PS_ENET1_MDIO {{ENABLE 0} {IO EMIO}} \
+      PS_ENET1_PERIPHERAL {{ENABLE 0} {IO EMIO}} \
       PS_GEN_IPI0_ENABLE {1} \
       PS_GEN_IPI1_ENABLE {1} \
       PS_GEN_IPI2_ENABLE {1} \
@@ -292,7 +275,7 @@ proc create_root_design { parentCell } {
     CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
     CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {100.000,300.000,100.000,100.000,100.000,100.000,100.000} \
     CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
-    CONFIG.CLKOUT_USED {true,true,false,false,false,false,false} \
+    CONFIG.CLKOUT_USED {true,false,false,false,false,false,false} \
     CONFIG.PHASESHIFT_MODE {LATENCY} \
   ] $clk_wizard_0
 
@@ -357,25 +340,6 @@ proc create_root_design { parentCell } {
   ] $axi_gpio_2
 
 
-  # Create instance: gmii_to_rgmii_0, and set properties
-  set gmii_to_rgmii_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:gmii_to_rgmii:4.1 gmii_to_rgmii_0 ]
-  set_property CONFIG.SupportLevel {Include_Shared_Logic_in_Core} $gmii_to_rgmii_0
-
-
-  # Create instance: rst_sys_clk_300M, and set properties
-  set rst_sys_clk_300M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_sys_clk_300M ]
-
-  # Create instance: rgmii_reset_0, and set properties
-  set block_name rgmii_reset
-  set block_cell_name rgmii_reset_0
-  if { [catch {set rgmii_reset_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $rgmii_reset_0 eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
   # Create instance: rvfi_to_stream_0, and set properties
   set block_name rvfi_to_stream
   set block_cell_name rvfi_to_stream_0
@@ -428,22 +392,22 @@ proc create_root_design { parentCell } {
   set_property CONFIG.C_SIZE {1} $ilvector_logic_0
 
 
+  # Create instance: ibex_demo_system_wra_0, and set properties
+  set ibex_demo_system_wra_0 [ create_bd_cell -type ip -vlnv user.org:user:ibex_demo_system_wrapper:1.0 ibex_demo_system_wra_0 ]
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_datamover_0_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/rvfi_sts]
   connect_bd_intf_net -intf_net axi_datamover_0_M_AXI_S2MM [get_bd_intf_pins axi_datamover_0/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S08_AXI]
   connect_bd_intf_net -intf_net axi_datamover_1_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_1/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_sts]
   connect_bd_intf_net -intf_net axi_datamover_1_M_AXI_S2MM [get_bd_intf_pins axi_datamover_1/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S09_AXI]
-  connect_bd_intf_net -intf_net axi_gpio_0_GPIO2 [get_bd_intf_ports PROG_ADDR] [get_bd_intf_pins axi_gpio_0/GPIO2]
   connect_bd_intf_net -intf_net axi_noc_0_CH0_DDR4_0 [get_bd_intf_ports DDR4] [get_bd_intf_pins axi_noc_0/CH0_DDR4_0]
   connect_bd_intf_net -intf_net axis_data_fifo_0_M_AXIS [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net axis_data_fifo_1_M_AXIS [get_bd_intf_pins axis_data_fifo_1/M_AXIS] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins axi_noc_0/S07_AXI]
-  connect_bd_intf_net -intf_net gmii_to_rgmii_0_MDIO_PHY [get_bd_intf_ports mdio] [get_bd_intf_pins gmii_to_rgmii_0/MDIO_PHY]
-  connect_bd_intf_net -intf_net gmii_to_rgmii_0_RGMII [get_bd_intf_ports rgmii] [get_bd_intf_pins gmii_to_rgmii_0/RGMII]
-  connect_bd_intf_net -intf_net ibex_ram_a_1 [get_bd_intf_ports ibex_ram_a] [get_bd_intf_pins data_ram_to_axi_brid_0/S_RAM]
-  connect_bd_intf_net -intf_net ibex_ram_b_1 [get_bd_intf_ports ibex_ram_b] [get_bd_intf_pins instr_ram_to_axi_bri_0/S_RAM]
+  connect_bd_intf_net -intf_net ibex_demo_system_wra_0_ibex_ram_a [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_a] [get_bd_intf_pins data_ram_to_axi_brid_0/S_RAM]
+  connect_bd_intf_net -intf_net ibex_demo_system_wra_0_ibex_ram_b [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_b] [get_bd_intf_pins instr_ram_to_axi_bri_0/S_RAM]
+  connect_bd_intf_net -intf_net ibex_demo_system_wra_0_rvfi [get_bd_intf_pins ibex_demo_system_wra_0/rvfi] [get_bd_intf_pins rvfi_to_stream_0/rvfi]
   connect_bd_intf_net -intf_net instr_ram_to_axi_bri_0_M_AXI [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins axi_noc_0/S06_AXI]
-  connect_bd_intf_net -intf_net rvfi_1 [get_bd_intf_ports rvfi] [get_bd_intf_pins rvfi_to_stream_0/rvfi]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_cmd [get_bd_intf_pins rvfi_to_stream_0/rvfi_cmd] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM_CMD]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_cmd [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_cmd] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM_CMD]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_stream [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_stream] [get_bd_intf_pins axis_data_fifo_0/S_AXIS]
@@ -456,13 +420,13 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_1 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_1] [get_bd_intf_pins axi_noc_0/S01_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_2 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_2] [get_bd_intf_pins axi_noc_0/S02_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_3 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_3] [get_bd_intf_pins axi_noc_0/S03_AXI]
-  connect_bd_intf_net -intf_net versal_cips_0_GEM1_GMII [get_bd_intf_pins versal_cips_0/GEM1_GMII] [get_bd_intf_pins gmii_to_rgmii_0/GMII]
-  connect_bd_intf_net -intf_net versal_cips_0_GEM1_MDIO [get_bd_intf_pins gmii_to_rgmii_0/MDIO_GEM] [get_bd_intf_pins versal_cips_0/GEM1_MDIO]
   connect_bd_intf_net -intf_net versal_cips_0_LPD_AXI_NOC_0 [get_bd_intf_pins versal_cips_0/LPD_AXI_NOC_0] [get_bd_intf_pins axi_noc_0/S04_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_M_AXI_LPD [get_bd_intf_pins versal_cips_0/M_AXI_LPD] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_PMC_NOC_AXI_0 [get_bd_intf_pins versal_cips_0/PMC_NOC_AXI_0] [get_bd_intf_pins axi_noc_0/S05_AXI]
 
   # Create port connections
+  connect_bd_net -net axi_gpio_0_gpio2_io_o  [get_bd_pins axi_gpio_0/gpio2_io_o] \
+  [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
   connect_bd_net -net axi_gpio_0_gpio_io_o  [get_bd_pins axi_gpio_0/gpio_io_o] \
   [get_bd_pins xlslice_0/Din] \
   [get_bd_pins xlslice_1/Din]
@@ -472,7 +436,6 @@ proc create_root_design { parentCell } {
   [get_bd_pins rvfi_to_stream_0/rvfi_start_addr]
   connect_bd_net -net clk_wizard_0_clk_out1  [get_bd_pins clk_wizard_0/clk_out1] \
   [get_bd_pins rst_sys_clk_100M/slowest_sync_clk] \
-  [get_bd_ports sys_clk] \
   [get_bd_pins axi_datamover_0/m_axi_s2mm_aclk] \
   [get_bd_pins axi_datamover_0/m_axis_s2mm_cmdsts_awclk] \
   [get_bd_pins axi_datamover_1/m_axi_s2mm_aclk] \
@@ -487,18 +450,15 @@ proc create_root_design { parentCell } {
   [get_bd_pins axi_gpio_2/s_axi_aclk] \
   [get_bd_pins rvfi_to_stream_0/clk] \
   [get_bd_pins instr_ram_to_axi_bri_0/clk] \
-  [get_bd_pins data_ram_to_axi_brid_0/clk]
-  connect_bd_net -net clk_wizard_0_clk_out2  [get_bd_pins clk_wizard_0/clk_out2] \
-  [get_bd_pins gmii_to_rgmii_0/clkin] \
-  [get_bd_pins rst_sys_clk_300M/slowest_sync_clk] \
-  [get_bd_pins rgmii_reset_0/clk]
+  [get_bd_pins data_ram_to_axi_brid_0/clk] \
+  [get_bd_pins ibex_demo_system_wra_0/sys_clk]
+  connect_bd_net -net ibex_demo_system_wra_0_led  [get_bd_pins ibex_demo_system_wra_0/led] \
+  [get_bd_ports led]
   connect_bd_net -net ilvector_logic_0_Res  [get_bd_pins ilvector_logic_0/Res] \
-  [get_bd_ports sys_rstn] \
   [get_bd_pins data_ram_to_axi_brid_0/rstn] \
   [get_bd_pins instr_ram_to_axi_bri_0/rstn] \
-  [get_bd_pins rvfi_to_stream_0/rstn]
-  connect_bd_net -net rgmii_reset_0_rstn_out  [get_bd_pins rgmii_reset_0/rstn_out] \
-  [get_bd_ports phy_reset_n]
+  [get_bd_pins rvfi_to_stream_0/rstn] \
+  [get_bd_pins ibex_demo_system_wra_0/sys_rstn]
   connect_bd_net -net rst_sys_clk_100M_peripheral_aresetn  [get_bd_pins rst_sys_clk_100M/peripheral_aresetn] \
   [get_bd_pins axi_datamover_0/m_axi_s2mm_aresetn] \
   [get_bd_pins axi_datamover_0/m_axis_s2mm_cmdsts_aresetn] \
@@ -511,11 +471,8 @@ proc create_root_design { parentCell } {
   [get_bd_pins axi_gpio_1/s_axi_aresetn] \
   [get_bd_pins axi_gpio_2/s_axi_aresetn] \
   [get_bd_pins ilvector_logic_0/Op2]
-  connect_bd_net -net rst_sys_clk_300M_peripheral_reset  [get_bd_pins rst_sys_clk_300M/peripheral_reset] \
-  [get_bd_pins gmii_to_rgmii_0/tx_reset] \
-  [get_bd_pins gmii_to_rgmii_0/rx_reset]
   connect_bd_net -net rvfi_to_stream_0_rvfi_busy  [get_bd_pins rvfi_to_stream_0/rvfi_busy] \
-  [get_bd_ports force_stop]
+  [get_bd_pins ibex_demo_system_wra_0/force_stop]
   connect_bd_net -net rvfi_to_stream_0_rvfi_csr_end_addr  [get_bd_pins rvfi_to_stream_0/rvfi_csr_end_addr] \
   [get_bd_pins axi_gpio_2/gpio2_io_i]
   connect_bd_net -net rvfi_to_stream_0_rvfi_end_addr  [get_bd_pins rvfi_to_stream_0/rvfi_end_addr] \
@@ -534,9 +491,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net versal_cips_0_lpd_axi_noc_clk  [get_bd_pins versal_cips_0/lpd_axi_noc_clk] \
   [get_bd_pins axi_noc_0/aclk4]
   connect_bd_net -net versal_cips_0_pl0_resetn  [get_bd_pins versal_cips_0/pl0_resetn] \
-  [get_bd_pins rst_sys_clk_100M/ext_reset_in] \
-  [get_bd_pins rst_sys_clk_300M/ext_reset_in] \
-  [get_bd_pins rgmii_reset_0/rstn_in]
+  [get_bd_pins rst_sys_clk_100M/ext_reset_in]
   connect_bd_net -net versal_cips_0_pmc_axi_noc_axi0_clk  [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] \
   [get_bd_pins axi_noc_0/aclk5]
   connect_bd_net -net xlslice_0_Dout  [get_bd_pins xlslice_0/Dout] \
@@ -563,12 +518,14 @@ proc create_root_design { parentCell } {
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 
   set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
   add_files $wrapper_file
   update_compile_order -fileset sources_1
 }
+
 
 proc create_fifo_design { parentCell depth width design_name } {
 
@@ -658,6 +615,7 @@ proc create_fifo_design { parentCell depth width design_name } {
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 
   set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
@@ -665,9 +623,11 @@ proc create_fifo_design { parentCell depth width design_name } {
   update_compile_order -fileset sources_1
 }
 
+set dir_path [lindex $argv 0]
+
 set_property source_mgmt_mode All [current_project]
 
-set_property  ip_repo_paths  /home/ritu/dev/work/ibex-demo-system/rtl/fpga/versal_ip/ip_repo [current_project]
+set_property  ip_repo_paths  [list "$dir_path/ibex_intf/ip_repo" "$dir_path/build/ip_repo"] [current_project]
 update_ip_catalog
 
 create_root_design ""
@@ -677,3 +637,5 @@ create_fifo_design "" 128 32 "fifo_32_128"
 create_fifo_design "" 128 40 "fifo_40_128"
 create_fifo_design "" 128 69 "fifo_69_128"
 create_fifo_design "" 16 832 "fifo_832_16"
+
+set_property top ps_subsystem_wrapper [current_fileset]

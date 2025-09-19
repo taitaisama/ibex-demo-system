@@ -1,0 +1,11 @@
+/include/ "system-conf.dtsi"
+/ {	
+    reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		reserved: buffer@0 {
+			reg = <0x0 0x30000000 0x0 0x10000000>; 
+		};
+	};
+};

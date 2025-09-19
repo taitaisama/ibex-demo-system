@@ -65,28 +65,13 @@ filesets:
       - rtl/fpga/top_artys7.sv
     file_type: systemVerilogSource
 
-  files_xilinx_versal:
+  files_xilinx_ibex_wrapper:
     depend:
       - lowrisc:ibex:rv_timer
       - lowrisc:ibex:fpga_xilinx_shared
     files:
-      - rtl/fpga/top_versal.sv
-      - rtl/fpga/versal_ip/rvfi_handler.sv
-      - rtl/fpga/versal_ip/rvfi_csr.sv
-      - rtl/fpga/versal_ip/rvfi_to_mem.sv
-      - rtl/fpga/versal_ip/read_ram_to_axi.sv
-      - rtl/fpga/versal_ip/write_ram_to_axi.sv
-      - rtl/fpga/versal_ip/data_ram_to_axi.sv
-      - rtl/fpga/versal_ip/instr_ram_to_axi.sv
-      - rtl/fpga/versal_ip/fifo_wrapper.sv
-      - rtl/fpga/versal_ip/datamover_cmd.sv
-      - rtl/fpga/versal_ip/verilog_wrappers/rgmii_reset.v: {file_type: verilogSource}
-      - rtl/fpga/versal_ip/verilog_wrappers/data_ram_to_axi_bridge.v: {file_type: verilogSource}
-      - rtl/fpga/versal_ip/verilog_wrappers/ibex_demo_system_wrapper.v: {file_type: verilogSource}
-      - rtl/fpga/versal_ip/verilog_wrappers/instr_ram_to_axi_bridge.v: {file_type: verilogSource}
-      - rtl/fpga/versal_ip/verilog_wrappers/rvfi_to_stream.v: {file_type: verilogSource}
-      - tcl/versal_ps.tcl: {file_type: tclSource}
-    file_type: systemVerilogSource
+      - rtl/fpga/ibex_demo_system_wrapper.v
+    file_type: verilogSource
 
   files_sonata:
     depend:
@@ -146,11 +131,6 @@ filesets:
   files_constraints_artys7:
     files:
       - data/pins_artys7.xdc
-    file_type: xdc
-
-  files_constraints_versal:
-    files:
-      - data/pins_versal.xdc
     file_type: xdc
 
   files_constraints_sonata:
@@ -273,18 +253,14 @@ targets:
     parameters:
       - SRAMInitFile
       - PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
-  synth_versal:
+
+  synth_ibex_wrapper:
     <<: *default_target
     default_tool: vivado
     filesets_append:
-      - files_xilinx_versal
-      - files_constraints_versal
-    toplevel: top_versal
-    tools:
-      vivado:
-        part: "xcve2302-sfva784-1LP-e-S"
+      - files_xilinx_ibex_wrapper
+    toplevel: ibex_demo_system_wrapper
     parameters:
-      - SRAMInitFile
       - PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
   synth_artys7-50:
     <<: *default_target
