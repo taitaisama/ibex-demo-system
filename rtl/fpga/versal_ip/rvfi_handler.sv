@@ -1,16 +1,18 @@
 module rvfi_handler #(
-   parameter FULL_OUT_WIDTH = 256,
-   parameter FULL_CSR_WIDTH = 128,
-  parameter int	OUT_WIDTH = 208,
-  parameter int	CSR_WIDTH = 104)
+   parameter	 FULL_OUT_WIDTH = 256,
+   parameter	 FULL_CSR_WIDTH = 128,
+   parameter int OUT_WIDTH = 208,
+   parameter int CSR_WIDTH = 104)
 ( 
   input logic			      clk,
   input logic			      rstn,
 
   input logic [31:0]		      rvfi_start_addr,
   input logic [31:0]		      rvfi_csr_start_addr,
-  output logic [31:0]		      rvfi_end_addr,
-  output logic [31:0]		      rvfi_csr_end_addr,
+  input logic [31:0]		      rvfi_end_addr,
+  input logic [31:0]		      rvfi_csr_end_addr,
+  output logic [31:0]		      rvfi_curr_addr,
+  output logic [31:0]		      rvfi_csr_curr_addr,
 
   input logic			      rvfi_valid_i,
   input logic			      rvfi_trap_i,
@@ -55,6 +57,11 @@ module rvfi_handler #(
   output logic			      sts_csr_ready_i,
 
   input logic			      flush,
+  
+  output logic			      rvfi_full,
+  output logic			      rvfi_csr_full,
+  input logic			      rvfi_rst_addr,	 // when this goes from 0 to 1 or 1 to 0, we reset once
+  input logic			      rvfi_csr_rst_addr, // when this goes from 0 to 1 or 1 to 0, we reset once
 
   output logic			      rvfi_busy_o
 );
@@ -103,7 +110,9 @@ module rvfi_handler #(
    logic        rvfi_to_mem_ready;
    logic        rvfi_to_mem_valid;
 
-   always_comb rvfi_to_mem_valid = rvfi_fifo_data_valid && rvfi_to_mem_ready;
+   always_comb begin
+      rvfi_to_mem_valid = rvfi_fifo_data_valid && rvfi_to_mem_ready;
+   end
 
    fifo_wrapper #(.WIDTH(832), .DEPTH(16))
    u_rvfi_fifo (
@@ -156,6 +165,8 @@ module rvfi_handler #(
       .rvfi_csr_start_addr,
       .rvfi_end_addr,
       .rvfi_csr_end_addr,
+      .rvfi_curr_addr,
+      .rvfi_csr_curr_addr,
 
       .valid_i (rvfi_to_mem_valid),
       .rvfi_mcycle (rvfi_out_mcycle),
@@ -163,6 +174,10 @@ module rvfi_handler #(
       .rvfi_csr (rvfi_out_csr),
       .wready_o (rvfi_to_mem_ready),
       .flush (flush),
+      .rvfi_full (rvfi_full),
+      .rvfi_csr_full (rvfi_csr_full),
+      .rvfi_rst_addr (rvfi_rst_addr),
+      .rvfi_csr_rst_addr (rvfi_csr_rst_addr),
 
       .fifo_data_o (fifo_data_o[FULL_OUT_WIDTH-1 -: OUT_WIDTH]),
       .fifo_valid_o,

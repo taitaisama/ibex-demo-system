@@ -8,8 +8,10 @@ module rvfi_to_mem #(
 
  input logic [31:0]	      rvfi_start_addr,
  input logic [31:0]	      rvfi_csr_start_addr,
- output logic [31:0]	      rvfi_end_addr,
- output logic [31:0]	      rvfi_csr_end_addr,
+ input logic [31:0]	      rvfi_end_addr,
+ input logic [31:0]	      rvfi_csr_end_addr,
+ output logic [31:0]	      rvfi_curr_addr,
+ output logic [31:0]	      rvfi_csr_curr_addr,
 
  input logic		      clk,
  input logic		      rstn,
@@ -19,6 +21,10 @@ module rvfi_to_mem #(
  input [31:0]		      rvfi_csr [NUM_CSR_WORDS],
  output logic		      wready_o,
  input logic		      flush,
+ output logic		      rvfi_full,
+ output logic		      rvfi_csr_full,
+ input logic		      rvfi_rst_addr,	 // when this goes from 0 to 1 or 1 to 0, we reset once
+ input logic		      rvfi_csr_rst_addr, // when this goes from 0 to 1 or 1 to 0, we reset once
 
  output logic [OUT_WIDTH-1:0] fifo_data_o,
  output logic		      fifo_valid_o,
@@ -52,12 +58,6 @@ module rvfi_to_mem #(
    logic [7:0]    csr_addr;
    logic          csr_ready, csr_valid;
    
-   always_ff @(posedge clk) begin
-      if (valid_i) begin
-         mcycle <= rvfi_mcycle;
-      end
-   end
-   
    assign csr_addr[7:$clog2(NUM_CSR_WORDS+1)] = '0;
 
    rvfi_csr #(.NUM_WORDS (NUM_CSR_WORDS), .WIDTH (32)) 
@@ -88,8 +88,11 @@ module rvfi_to_mem #(
       .rstn (rstn),
       .start_addr (rvfi_start_addr),
       .end_addr (rvfi_end_addr),
+      .curr_addr (rvfi_curr_addr),
       .fifo_write (fifo_valid_o && fifo_ready_i),
       .flush (flush),
+      .full (rvfi_full),
+      .rst_addr_parity (rvfi_rst_addr),
       .m_axis_cmd_tdata (cmd_data_o),
       .m_axis_cmd_tvalid (cmd_valid_o),
       .m_axis_cmd_tready (cmd_ready_i),
@@ -106,8 +109,11 @@ module rvfi_to_mem #(
       .rstn (rstn),
       .start_addr (rvfi_csr_start_addr),
       .end_addr (rvfi_csr_end_addr),
+      .curr_addr (rvfi_csr_curr_addr),
       .fifo_write (fifo_csr_valid_o && fifo_csr_ready_i),
       .flush (flush),
+      .full (rvfi_csr_full),
+      .rst_addr_parity (rvfi_csr_rst_addr),
       .m_axis_cmd_tdata (cmd_csr_data_o),
       .m_axis_cmd_tvalid (cmd_csr_valid_o),
       .m_axis_cmd_tready (cmd_csr_ready_i),
