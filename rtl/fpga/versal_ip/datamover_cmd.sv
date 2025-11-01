@@ -2,7 +2,7 @@ module datamover_cmd #(
     parameter		   DATA_WIDTH = 8,
     parameter		   ADDR_WIDTH = 32,
     parameter		   THRESHOLD = 32,
-    parameter logic [31:0] BUFFER_SIZE = 0x100000,
+    parameter logic [31:0] BUFFER_SIZE = 32'h100000,
     parameter int	   NUM_BUFFERS = 4
 )(
     input logic				   clk,

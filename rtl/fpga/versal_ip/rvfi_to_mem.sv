@@ -4,7 +4,7 @@ module rvfi_to_mem #(
      parameter int	    IN_WIDTH = 144,
      parameter int	    OUT_WIDTH = 208,
      parameter int	    CSR_WIDTH = 104,
-     parameter logic [31:0] BUFFER_SIZE = 0x100000,
+     parameter logic [31:0] BUFFER_SIZE = 32'h100000,
      parameter int	    NUM_BUFFERS = 4)
 (
 

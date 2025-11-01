@@ -12,23 +12,16 @@
 #define BUFFER_SIZE                 0x100000
 #define BUFFER_NUM                  0x4
 
-// #define RVFI_START_OFFSET           0x100000
-// #define RVFI_END_OFFSET             0x200000
-// #define RVFI_CSR_START_OFFSET       0x200000
-// #define RVFI_CSR_END_OFFSET         0x300000
+#define PROG_ADDR_OFFSET            0x10008
+#define PS_FLUSH_RST_OFFSET         0x10000
 
-// #define PROG_ADDR_OFFSET            0x10008
-// #define PS_FLUSH_RST_OFFSET         0x10000
-// #define RVFI_START_ADDR_OFFSET      0x40000
-// #define RVFI_CSR_START_ADDR_OFFSET  0x40008
-// #define RVFI_END_ADDR_OFFSET        0x30000
-// #define RVFI_CSR_END_ADDR_OFFSET    0x30008
-// #define RVFI_CURR_ADDR_OFFSET       0x20000
-// #define RVFI_CSR_CURR_ADDR_OFFSET   0x20008
-// #define RVFI_HW_IDX_OFFSET          0x50008
-// #define RVFI_CSR_HW_IDX_OFFSET      0x00008
-// #define RVFI_SW_IDX_OFFSET          0x50000
-// #define RVFI_CSR_SW_IDX_OFFSET      0x00000
+#define RVFI_HW_IDX_OFFSET          0x20000
+#define RVFI_BASE_ADDR_OFFSET       0x30000
+#define RVFI_HW_IDX_OFFSET          0x40000
+
+#define RVFI_CSR_HW_IDX_OFFSET      0x20008
+#define RVFI_CSR_BASE_ADDR_OFFSET   0x30008
+#define RVFI_CSR_HW_IDX_OFFSET      0x40008
 
 // when write pointer reaches end of a buffer, hw_idx is incremented
 // when  read pointer reaches end of a buffer, sw_idx is incremented
@@ -38,7 +31,6 @@
 // sw: I can read as long as I am not going ahead of hw_idx
 //     so when incrementing sw_idx, if sw_idx + 1 == hw_idx,     I stop
 // need > 2 buffers for this to work
-
 
 enum STREAMS {
   RVFI_STREAM = 0,
@@ -68,6 +60,10 @@ struct mem_ptr_t {
     phys_addr += 4;
   }
 
+  uint32_t get_abs() const {
+    return phys_addr;
+  }
+
   mem_ptr_t& operator=(const uint32_t of) {
     phys_addr = of;
     return *this;
@@ -75,6 +71,12 @@ struct mem_ptr_t {
 
   bool operator>=(const mem_ptr_t &other) const {
     return phys_addr >= other.phys_addr;
+  }
+
+  mem_ptr_t operator+(const uint32_t add) {
+    mem_ptr_t x;
+    x.phys_addr = this->phys_addr + add;
+    return x;
   }
 };
 
@@ -104,56 +106,44 @@ struct gpio_ptr_t {
 
 struct stream_ctrl {
 
+  mem_ptr_t base_addr;
   mem_ptr_t next_read_addr;
-  mem_ptr_t last_curr_addr;
 
-  mem_ptr_t start_addr;
-  mem_ptr_t end_addr;
+  bits_t    sw_idx;
 
-  gpio_ptr_t start_addr_ptr;
-  gpio_ptr_t end_addr_ptr;
-  gpio_ptr_t curr_addr_ptr; // you cannot read at curr_addr, you can read before curr_addr
+  gpio_ptr_t sw_idx_ptr;
+  gpio_ptr_t hw_idx_ptr;
+  gpio_ptr_t base_addr_ptr;
 
-  bits_t  reset;
-  gpio_ptr_t reset_ptr;
-  gpio_ptr_t is_full_ptr;
-
-  stream_ctrl (uint32_t sap, uint32_t eap, uint32_t cap,
-	       uint32_t rp, uint32_t ifp, uint32_t sa, uint32_t ea) :
+  stream_ctrl (uint32_t sip, uint32_t hip, uint32_t bap, uint32_t sa) :
+    base_addr(sa),
     next_read_addr(sa),
-    last_curr_addr(sa),
-    start_addr(sa),
-    end_addr(ea),
-    start_addr_ptr(sap),
-    end_addr_ptr(eap),
-    curr_addr_ptr(cap),
-    reset(0),
-    reset_ptr(rp),
-    is_full_ptr(ifp)
+    sw_idx_ptr(sip),
+    hw_idx_ptr(hip),
+    base_addr_ptr(bap)
   { }
 
   void set_addrs() {
-    start_addr_ptr.out(start_addr);
-    end_addr_ptr.out(end_addr);
+    base_addr_ptr.out(base_addr.get_abs());
   }
 
-  bool is_full() {
-    return (bool) is_full_ptr.in();
+  mem_ptr_t curr_buff_end_addr() {
+    return base_addr + (sw_idx+1) * BUFFER_SIZE;
   }
 
-  void reset() {
-    // is_full() should be true
-    reset ^= 1;
-    reset_ptr.out(reset);
-    last_curr_addr = start_addr;
-    next_read_addr = start_addr;
+  mem_ptr_t curr_buff_start_addr() {
+    return base_addr + sw_idx * BUFFER_SIZE;
   }
 
   std::optional<uint32_t> in() {
-    if (next_read_addr >= last_curr_addr) {
-      last_curr_addr = curr_addr_ptr.in();
-      if (next_read_addr >= last_curr_addr) {
+    if (next_read_addr >= curr_buff_end_addr()) {
+      // increase sw_idx, if cant return nullopt
+      if (hw_idx_ptr.in() == sw_idx + 1) {
 	return std::nullopt;
+      } else {
+	sw_idx += 1;
+	sw_idx_ptr.out(sw_idx);
+	next_read_addr = curr_buff_start_addr();
       }
     }
     uint32_t ret = next_read_addr.in();

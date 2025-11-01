@@ -1,9 +1,9 @@
 module rvfi_to_stream
  #(
-   parameter		  OUT_WIDTH = 256,
-   parameter		  CSR_WIDTH = 128,
-   parameter logic [31:0] BUFFER_SIZE = 0x100000,
-   parameter int	  NUM_BUFFERS = 4)
+   parameter OUT_WIDTH = 256,
+   parameter CSR_WIDTH = 128,
+   parameter BUFFER_SIZE = 32'h100000,
+   parameter NUM_BUFFERS = 4)
 ( 
   input					 clk,
   input					 rstn,

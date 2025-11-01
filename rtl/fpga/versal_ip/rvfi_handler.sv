@@ -3,7 +3,7 @@ module rvfi_handler #(
    parameter		  FULL_CSR_WIDTH = 128,
    parameter int	  OUT_WIDTH = 208,
    parameter int	  CSR_WIDTH = 104,
-   parameter logic [31:0] BUFFER_SIZE = 0x100000,
+   parameter logic [31:0] BUFFER_SIZE = 32'h100000,
    parameter int	  NUM_BUFFERS = 4)
 ( 
   input logic				 clk,
