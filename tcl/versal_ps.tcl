@@ -1,255 +1,209 @@
-set devicePart "xcve2302-sfva784-1LP-e-s"
+
+################################################################
+# This is a generated script based on design: ps_subsystem
+#
+# Though there are limitations about the generated script,
+# the main purpose of this utility is to make learning
+# IP Integrator Tcl commands easier.
+################################################################
+
+namespace eval _tcl {
+proc get_script_folder {} {
+   set script_path [file normalize [info script]]
+   set script_folder [file dirname $script_path]
+   return $script_folder
+}
+}
+variable script_folder
+set script_folder [_tcl::get_script_folder]
+
+################################################################
+# Check if script is running in correct Vivado version.
+################################################################
+set scripts_vivado_version 2025.1
+set current_vivado_version [version -short]
+
+if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
+   puts ""
+   if { [string compare $scripts_vivado_version $current_vivado_version] > 0 } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2042 -severity "ERROR" " This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Sourcing the script failed since it was created with a future version of Vivado."}
+
+   } else {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2041 -severity "ERROR" "This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Please run the script in Vivado <$scripts_vivado_version> then open the design in Vivado <$current_vivado_version>. Upgrade the design by running \"Tools => Report => Report IP Status...\", then run write_bd_tcl to create an updated script."}
+
+   }
+
+   return 1
+}
+
+################################################################
+# START
+################################################################
+
+# To test this script, run the following commands from Vivado Tcl console:
+# source ps_subsystem_script.tcl
+
+
+# The design that will be created by this Tcl script contains the following 
+# module references:
+# rvfi_to_stream, data_ram_to_axi_bridge, instr_ram_to_axi_bridge, ps_io_wrapper
+
+# Please add the sources of those modules before sourcing this Tcl script.
+
+# If there is no project opened, this script will create a
+# project, but make sure you do not have an existing project
+# <./myproj/project_1.xpr> in the current working folder.
 
 set list_projs [get_projects -quiet]
 if { $list_projs eq "" } {
-    catch {common::send_gid_msg -ssname BD::TCL -id 2042 -severity "ERROR" "This script should be run inside an opened project"}
+   create_project project_1 myproj -part xcve2302-sfva784-1LP-e-S
 }
 
 
-proc create_ps_io_design { parentCell } {
+# CHANGE DESIGN NAME HERE
+variable design_name
+set design_name ps_subsystem
 
-  variable design_name
+# If you do not already have an existing IP Integrator design open,
+# you can create a design using the following command:
+#    create_bd_design $design_name
 
-  set design_name ps_io
-  create_bd_design $design_name
-  current_bd_design $design_name
+# Creating design if needed
+set errMsg ""
+set nRet 0
 
-  if { $parentCell eq "" } {
-     set parentCell [get_bd_cells /]
-  }
+set cur_design [current_bd_design -quiet]
+set list_cells [get_bd_cells -quiet]
 
-  # Get object for parentCell
-  set parentObj [get_bd_cells $parentCell]
-  if { $parentObj == "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
-     return
-  }
+if { ${design_name} eq "" } {
+   # USE CASES:
+   #    1) Design_name not set
 
-  # Make sure parentObj is hier blk
-  set parentType [get_property TYPE $parentObj]
-  if { $parentType ne "hier" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
-     return
-  }
+   set errMsg "Please set the variable <design_name> to a non-empty value."
+   set nRet 1
 
-  # Save current instance; Restore later
-  set oldCurInst [current_bd_instance .]
+} elseif { ${cur_design} ne "" && ${list_cells} eq "" } {
+   # USE CASES:
+   #    2): Current design opened AND is empty AND names same.
+   #    3): Current design opened AND is empty AND names diff; design_name NOT in project.
+   #    4): Current design opened AND is empty AND names diff; design_name exists in project.
 
-  # Set parent object as current
-  current_bd_instance $parentObj
+   if { $cur_design ne $design_name } {
+      common::send_gid_msg -ssname BD::TCL -id 2001 -severity "INFO" "Changing value of <design_name> from <$design_name> to <$cur_design> since current design is empty."
+      set design_name [get_property NAME $cur_design]
+   }
+   common::send_gid_msg -ssname BD::TCL -id 2002 -severity "INFO" "Constructing design in IPI design <$cur_design>..."
 
+} elseif { ${cur_design} ne "" && $list_cells ne "" && $cur_design eq $design_name } {
+   # USE CASES:
+   #    5) Current design opened AND has components AND same names.
 
-  # Create interface ports
-  set S_AXI [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI ]
-  set_property -dict [ list \
-   CONFIG.ADDR_WIDTH {32} \
-   CONFIG.ARUSER_WIDTH {16} \
-   CONFIG.AWUSER_WIDTH {16} \
-   CONFIG.BUSER_WIDTH {0} \
-   CONFIG.DATA_WIDTH {128} \
-   CONFIG.HAS_BRESP {1} \
-   CONFIG.HAS_BURST {1} \
-   CONFIG.HAS_CACHE {1} \
-   CONFIG.HAS_LOCK {1} \
-   CONFIG.HAS_PROT {1} \
-   CONFIG.HAS_QOS {1} \
-   CONFIG.HAS_REGION {1} \
-   CONFIG.HAS_RRESP {1} \
-   CONFIG.HAS_WSTRB {1} \
-   CONFIG.ID_WIDTH {16} \
-   CONFIG.MAX_BURST_LENGTH {256} \
-   CONFIG.NUM_READ_OUTSTANDING {1} \
-   CONFIG.NUM_READ_THREADS {1} \
-   CONFIG.NUM_WRITE_OUTSTANDING {1} \
-   CONFIG.NUM_WRITE_THREADS {1} \
-   CONFIG.PROTOCOL {AXI4} \
-   CONFIG.READ_WRITE_MODE {READ_WRITE} \
-   CONFIG.RUSER_BITS_PER_BYTE {0} \
-   CONFIG.RUSER_WIDTH {0} \
-   CONFIG.SUPPORTS_NARROW_BURST {1} \
-   CONFIG.WUSER_BITS_PER_BYTE {0} \
-   CONFIG.WUSER_WIDTH {0} \
-   ] $S_AXI
+   set errMsg "Design <$design_name> already exists in your project, please set the variable <design_name> to another value."
+   set nRet 1
+} elseif { [get_files -quiet ${design_name}.bd] ne "" } {
+   # USE CASES: 
+   #    6) Current opened design, has components, but diff names, design_name exists in project.
+   #    7) No opened design, design_name exists in project.
 
+   set errMsg "Design <$design_name> already exists in your project, please set the variable <design_name> to another value."
+   set nRet 2
 
-  # Create ports
-  set clk [ create_bd_port -dir I -type clk -freq_hz 100000000 clk ]
-  set rstn [ create_bd_port -dir I -type rst rstn ]
-  set flush_rvfi [ create_bd_port -dir O -from 0 -to 0 flush_rvfi ]
-  set rvfi_full [ create_bd_port -dir I rvfi_full ]
-  set ps_rstn [ create_bd_port -dir O -from 0 -to 0 ps_rstn ]
-  set rvfi_rst_addr [ create_bd_port -dir O -from 0 -to 0 rvfi_rst_addr ]
-  set rvfi_start_addr [ create_bd_port -dir O -from 31 -to 0 rvfi_start_addr ]
-  set rvfi_csr_start_addr [ create_bd_port -dir O -from 31 -to 0 rvfi_csr_start_addr ]
-  set rvfi_end_addr [ create_bd_port -dir O -from 31 -to 0 rvfi_end_addr ]
-  set rvfi_csr_end_addr [ create_bd_port -dir O -from 31 -to 0 rvfi_csr_end_addr ]
-  set prog_addr [ create_bd_port -dir O -from 31 -to 0 prog_addr ]
-  set rvfi_curr_addr [ create_bd_port -dir I -from 31 -to 0 rvfi_curr_addr ]
-  set rvfi_csr_curr_addr [ create_bd_port -dir I -from 31 -to 0 rvfi_csr_curr_addr ]
-  set rvfi_csr_full [ create_bd_port -dir I rvfi_csr_full ]
-  set rvfi_csr_rst_addr [ create_bd_port -dir O -from 0 -to 0 rvfi_csr_rst_addr ]
+} else {
+   # USE CASES:
+   #    8) No opened design, design_name not in project.
+   #    9) Current opened design, has components, but diff names, design_name not in project.
 
-  # Create instance: smartconnect_0, and set properties
-  set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
-  set_property -dict [list \
-    CONFIG.NUM_MI {6} \
-    CONFIG.NUM_SI {1} \
-  ] $smartconnect_0
+   common::send_gid_msg -ssname BD::TCL -id 2003 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
 
+   create_bd_design $design_name
 
-  # Create instance: ibex_ctrl, and set properties
-  set ibex_ctrl [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 ibex_ctrl ]
-  set_property -dict [list \
-    CONFIG.C_ALL_INPUTS_2 {0} \
-    CONFIG.C_ALL_OUTPUTS {1} \
-    CONFIG.C_ALL_OUTPUTS_2 {1} \
-    CONFIG.C_GPIO2_WIDTH {32} \
-    CONFIG.C_GPIO_WIDTH {2} \
-    CONFIG.C_IS_DUAL {1} \
-  ] $ibex_ctrl
+   common::send_gid_msg -ssname BD::TCL -id 2004 -severity "INFO" "Making design <$design_name> as current_bd_design."
+   current_bd_design $design_name
 
-
-  # Create instance: rvfi_start_addrs, and set properties
-  set rvfi_start_addrs [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 rvfi_start_addrs ]
-  set_property -dict [list \
-    CONFIG.C_ALL_OUTPUTS {1} \
-    CONFIG.C_ALL_OUTPUTS_2 {1} \
-    CONFIG.C_GPIO_WIDTH {32} \
-    CONFIG.C_IS_DUAL {1} \
-  ] $rvfi_start_addrs
-
-
-  # Create instance: rvfi_end_addrs, and set properties
-  set rvfi_end_addrs [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 rvfi_end_addrs ]
-  set_property -dict [list \
-    CONFIG.C_ALL_OUTPUTS {1} \
-    CONFIG.C_ALL_OUTPUTS_2 {1} \
-    CONFIG.C_GPIO_WIDTH {32} \
-    CONFIG.C_IS_DUAL {1} \
-  ] $rvfi_end_addrs
-
-
-  # Create instance: rvfi_curr_addrs, and set properties
-  set rvfi_curr_addrs [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 rvfi_curr_addrs ]
-  set_property -dict [list \
-    CONFIG.C_ALL_INPUTS {1} \
-    CONFIG.C_ALL_INPUTS_2 {1} \
-    CONFIG.C_GPIO_WIDTH {32} \
-    CONFIG.C_IS_DUAL {1} \
-  ] $rvfi_curr_addrs
-
-
-  # Create instance: ilslice_0, and set properties
-  set ilslice_0 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilslice:1.0 ilslice_0 ]
-  set_property CONFIG.DIN_WIDTH {2} $ilslice_0
-
-
-  # Create instance: ilslice_1, and set properties
-  set ilslice_1 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilslice:1.0 ilslice_1 ]
-  set_property -dict [list \
-    CONFIG.DIN_FROM {1} \
-    CONFIG.DIN_TO {1} \
-    CONFIG.DIN_WIDTH {2} \
-  ] $ilslice_1
-
-
-  # Create instance: rvfi_csr_ctrl, and set properties
-  set rvfi_csr_ctrl [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 rvfi_csr_ctrl ]
-  set_property -dict [list \
-    CONFIG.C_ALL_INPUTS_2 {1} \
-    CONFIG.C_ALL_OUTPUTS {1} \
-    CONFIG.C_GPIO2_WIDTH {1} \
-    CONFIG.C_GPIO_WIDTH {1} \
-    CONFIG.C_IS_DUAL {1} \
-  ] $rvfi_csr_ctrl
-
-
-  # Create instance: rvfi_ctrl, and set properties
-  set rvfi_ctrl [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 rvfi_ctrl ]
-  set_property -dict [list \
-    CONFIG.C_ALL_INPUTS_2 {1} \
-    CONFIG.C_ALL_OUTPUTS {1} \
-    CONFIG.C_GPIO2_WIDTH {1} \
-    CONFIG.C_GPIO_WIDTH {1} \
-    CONFIG.C_IS_DUAL {1} \
-  ] $rvfi_ctrl
-
-
-  # Create interface connections
-  connect_bd_intf_net -intf_net S_AXI_1 [get_bd_intf_ports S_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins ibex_ctrl/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins smartconnect_0/M01_AXI] [get_bd_intf_pins rvfi_curr_addrs/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M02_AXI [get_bd_intf_pins smartconnect_0/M02_AXI] [get_bd_intf_pins rvfi_end_addrs/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M03_AXI [get_bd_intf_pins smartconnect_0/M03_AXI] [get_bd_intf_pins rvfi_start_addrs/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M04_AXI [get_bd_intf_pins smartconnect_0/M04_AXI] [get_bd_intf_pins rvfi_csr_ctrl/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M05_AXI [get_bd_intf_pins smartconnect_0/M05_AXI] [get_bd_intf_pins rvfi_ctrl/S_AXI]
-
-  # Create port connections
-  connect_bd_net -net clk_1  [get_bd_ports clk] \
-  [get_bd_pins smartconnect_0/aclk] \
-  [get_bd_pins rvfi_curr_addrs/s_axi_aclk] \
-  [get_bd_pins ibex_ctrl/s_axi_aclk] \
-  [get_bd_pins rvfi_end_addrs/s_axi_aclk] \
-  [get_bd_pins rvfi_start_addrs/s_axi_aclk] \
-  [get_bd_pins rvfi_csr_ctrl/s_axi_aclk] \
-  [get_bd_pins rvfi_ctrl/s_axi_aclk]
-  connect_bd_net -net ibex_ctrl1_gpio_io_o  [get_bd_pins rvfi_csr_ctrl/gpio_io_o] \
-  [get_bd_ports rvfi_csr_rst_addr]
-  connect_bd_net -net ibex_ctrl_gpio2_io_o  [get_bd_pins ibex_ctrl/gpio2_io_o] \
-  [get_bd_ports prog_addr]
-  connect_bd_net -net ilslice_0_Dout  [get_bd_pins ilslice_0/Dout] \
-  [get_bd_ports flush_rvfi]
-  connect_bd_net -net ilslice_1_Dout  [get_bd_pins ilslice_1/Dout] \
-  [get_bd_ports ps_rstn]
-  connect_bd_net -net ps_ctrl_gpio_io_o  [get_bd_pins ibex_ctrl/gpio_io_o] \
-  [get_bd_pins ilslice_0/Din] \
-  [get_bd_pins ilslice_1/Din]
-  connect_bd_net -net rstn_1  [get_bd_ports rstn] \
-  [get_bd_pins smartconnect_0/aresetn] \
-  [get_bd_pins rvfi_start_addrs/s_axi_aresetn] \
-  [get_bd_pins rvfi_end_addrs/s_axi_aresetn] \
-  [get_bd_pins rvfi_curr_addrs/s_axi_aresetn] \
-  [get_bd_pins ibex_ctrl/s_axi_aresetn] \
-  [get_bd_pins rvfi_csr_ctrl/s_axi_aresetn] \
-  [get_bd_pins rvfi_ctrl/s_axi_aresetn]
-  connect_bd_net -net rvfi_csr_curr_addr_1  [get_bd_ports rvfi_csr_curr_addr] \
-  [get_bd_pins rvfi_curr_addrs/gpio2_io_i]
-  connect_bd_net -net rvfi_csr_full_1  [get_bd_ports rvfi_csr_full] \
-  [get_bd_pins rvfi_csr_ctrl/gpio2_io_i]
-  connect_bd_net -net rvfi_ctrl_gpio_io_o  [get_bd_pins rvfi_ctrl/gpio_io_o] \
-  [get_bd_ports rvfi_rst_addr]
-  connect_bd_net -net rvfi_curr_addr_1  [get_bd_ports rvfi_curr_addr] \
-  [get_bd_pins rvfi_curr_addrs/gpio_io_i]
-  connect_bd_net -net rvfi_end_addrs_gpio2_io_o  [get_bd_pins rvfi_end_addrs/gpio2_io_o] \
-  [get_bd_ports rvfi_csr_end_addr]
-  connect_bd_net -net rvfi_end_addrs_gpio_io_o  [get_bd_pins rvfi_end_addrs/gpio_io_o] \
-  [get_bd_ports rvfi_end_addr]
-  connect_bd_net -net rvfi_full_1  [get_bd_ports rvfi_full] \
-  [get_bd_pins rvfi_ctrl/gpio2_io_i]
-  connect_bd_net -net rvfi_start_addrs_gpio2_io_o  [get_bd_pins rvfi_start_addrs/gpio2_io_o] \
-  [get_bd_ports rvfi_csr_start_addr]
-  connect_bd_net -net rvfi_start_addrs_gpio_io_o  [get_bd_pins rvfi_start_addrs/gpio_io_o] \
-  [get_bd_ports rvfi_start_addr]
-
-  # Create address segments
-  assign_bd_address -offset 0x80010000 -range 0x00010000 -with_name SEG_ps_ctrl_Reg -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs ibex_ctrl/S_AXI/Reg] -force
-  assign_bd_address -offset 0x80000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs rvfi_csr_ctrl/S_AXI/Reg] -force
-  assign_bd_address -offset 0x80050000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs rvfi_ctrl/S_AXI/Reg] -force
-  assign_bd_address -offset 0x80020000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs rvfi_curr_addrs/S_AXI/Reg] -force
-  assign_bd_address -offset 0x80030000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs rvfi_end_addrs/S_AXI/Reg] -force
-  assign_bd_address -offset 0x80040000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs rvfi_start_addrs/S_AXI/Reg] -force
-
-
-  # Restore current instance
-  current_bd_instance $oldCurInst
-
-  save_bd_design
-  
-  set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
-  add_files $wrapper_file
-  update_compile_order -fileset sources_1
 }
-# End of create_root_design()
+
+common::send_gid_msg -ssname BD::TCL -id 2005 -severity "INFO" "Currently the variable <design_name> is equal to \"$design_name\"."
+
+if { $nRet != 0 } {
+   catch {common::send_gid_msg -ssname BD::TCL -id 2006 -severity "ERROR" $errMsg}
+   return $nRet
+}
+
+set bCheckIPsPassed 1
+##################################################################
+# CHECK IPs
+##################################################################
+set bCheckIPs 1
+if { $bCheckIPs == 1 } {
+   set list_check_ips "\ 
+xilinx.com:ip:versal_cips:3.4\
+xilinx.com:ip:axi_noc:1.1\
+xilinx.com:ip:proc_sys_reset:5.0\
+xilinx.com:ip:util_ds_buf:2.2\
+xilinx.com:ip:clk_wizard:1.0\
+xilinx.com:ip:axis_data_fifo:2.0\
+xilinx.com:ip:axi_datamover:5.1\
+xilinx.com:inline_hdl:ilvector_logic:1.0\
+user.org:user:ibex_demo_system_wrapper:1.0\
+user.org:user:debug_module_wrapper:1.0\
+xilinx.com:ip:axi_bram_ctrl:4.1\
+xilinx.com:ip:emb_mem_gen:1.0\
+xilinx.com:inline_hdl:ilconstant:1.0\
+"
+
+   set list_ips_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
+
+   foreach ip_vlnv $list_check_ips {
+      set ip_obj [get_ipdefs -all $ip_vlnv]
+      if { $ip_obj eq "" } {
+         lappend list_ips_missing $ip_vlnv
+      }
+   }
+
+   if { $list_ips_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
+      set bCheckIPsPassed 0
+   }
+
+}
+
+##################################################################
+# CHECK Modules
+##################################################################
+set bCheckModules 1
+if { $bCheckModules == 1 } {
+   set list_check_mods "\ 
+rvfi_to_stream\
+data_ram_to_axi_bridge\
+instr_ram_to_axi_bridge\
+ps_io_wrapper\
+"
+
+   set list_mods_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2020 -severity "INFO" "Checking if the following modules exist in the project's sources: $list_check_mods ."
+
+   foreach mod_vlnv $list_check_mods {
+      if { [can_resolve_reference $mod_vlnv] == 0 } {
+         lappend list_mods_missing $mod_vlnv
+      }
+   }
+
+   if { $list_mods_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2021 -severity "ERROR" "The following module(s) are not found in the project: $list_mods_missing" }
+      common::send_gid_msg -ssname BD::TCL -id 2022 -severity "INFO" "Please add source files for the missing module(s) above."
+      set bCheckIPsPassed 0
+   }
+}
+
+if { $bCheckIPsPassed != 1 } {
+  common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
+  return 3
+}
+
+##################################################################
+# DESIGN PROCs
+##################################################################
 
 
 
@@ -257,11 +211,8 @@ proc create_ps_io_design { parentCell } {
 # procedure reusable. If parentCell is "", will use root.
 proc create_root_design { parentCell } {
 
+  variable script_folder
   variable design_name
-
-  set design_name ps_subsystem
-  create_bd_design $design_name
-  current_bd_design $design_name
 
   if { $parentCell eq "" } {
      set parentCell [get_bd_cells /]
@@ -649,16 +600,15 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets ibex_demo_system_wra_0_ibex_ram_
   connect_bd_intf_net -intf_net ibex_demo_system_wra_0_ibex_ram_b [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_b] [get_bd_intf_pins instr_ram_to_axi_bri_0/S_RAM]
 connect_bd_intf_net -intf_net [get_bd_intf_nets ibex_demo_system_wra_0_ibex_ram_b] [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_b] [get_bd_intf_pins debug_module_wrapper_0/S_RAM_INSTR]
   connect_bd_intf_net -intf_net ibex_demo_system_wra_0_rvfi [get_bd_intf_pins ibex_demo_system_wra_0/rvfi] [get_bd_intf_pins rvfi_to_stream_0/rvfi_in]
+connect_bd_intf_net -intf_net [get_bd_intf_nets ibex_demo_system_wra_0_rvfi] [get_bd_intf_pins ibex_demo_system_wra_0/rvfi] [get_bd_intf_pins debug_module_wrapper_0/rvfi]
   connect_bd_intf_net -intf_net instr_ram_to_axi_bri_0_M_AXI [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins axi_noc_0/S06_AXI]
 connect_bd_intf_net -intf_net [get_bd_intf_nets instr_ram_to_axi_bri_0_M_AXI] [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins debug_module_wrapper_0/M_AXI_INSTR]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_cmd [get_bd_intf_pins rvfi_to_stream_0/rvfi_cmd] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM_CMD]
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_cmd] [get_bd_intf_pins rvfi_to_stream_0/rvfi_cmd] [get_bd_intf_pins debug_module_wrapper_0/rvfi_cmd]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_cmd [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_cmd] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM_CMD]
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_csr_cmd] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_cmd] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_cmd]
-  connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_ctrl [get_bd_intf_pins ps_io_wrapper_0/rvfi_csr] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_ctrl]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_stream [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_stream] [get_bd_intf_pins axis_data_fifo_0/S_AXIS]
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_csr_stream] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_stream] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_stream]
-  connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_ctrl [get_bd_intf_pins ps_io_wrapper_0/rvfi] [get_bd_intf_pins rvfi_to_stream_0/rvfi_ctrl]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_stream [get_bd_intf_pins rvfi_to_stream_0/rvfi_stream] [get_bd_intf_pins axis_data_fifo_1/S_AXIS]
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [get_bd_intf_pins rvfi_to_stream_0/rvfi_stream] [get_bd_intf_pins debug_module_wrapper_0/rvfi_stream]
   connect_bd_intf_net -intf_net sys_1 [get_bd_intf_ports sys] [get_bd_intf_pins util_ds_buf_0/CLK_IN_D]
@@ -705,6 +655,18 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
   connect_bd_net -net ps_io_wrapper_0_ps_rstn  [get_bd_pins ps_io_wrapper_0/ps_rstn] \
   [get_bd_pins ilvector_logic_0/Op1]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_end_addr  [get_bd_pins ps_io_wrapper_0/rvfi_csr_end_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_csr_ctrl_end_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_rst_addr  [get_bd_pins ps_io_wrapper_0/rvfi_csr_rst_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_csr_ctrl_rst_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_start_addr  [get_bd_pins ps_io_wrapper_0/rvfi_csr_start_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_csr_ctrl_start_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_end_addr  [get_bd_pins ps_io_wrapper_0/rvfi_end_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_ctrl_end_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_rst_addr  [get_bd_pins ps_io_wrapper_0/rvfi_rst_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_ctrl_rst_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_start_addr  [get_bd_pins ps_io_wrapper_0/rvfi_start_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_ctrl_start_addr]
   connect_bd_net -net rst_sys_clk_100M_peripheral_aresetn  [get_bd_pins rst_sys_clk_100M/peripheral_aresetn] \
   [get_bd_pins axi_datamover_0/m_axi_s2mm_aresetn] \
   [get_bd_pins axi_datamover_0/m_axis_s2mm_cmdsts_aresetn] \
@@ -715,6 +677,14 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   [get_bd_pins ilvector_logic_0/Op2] \
   [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] \
   [get_bd_pins ps_io_wrapper_0/rstn]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_csr_ctrl_curr_addr  [get_bd_pins rvfi_to_stream_0/rvfi_csr_ctrl_curr_addr] \
+  [get_bd_pins ps_io_wrapper_0/rvfi_csr_curr_addr]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_csr_ctrl_full  [get_bd_pins rvfi_to_stream_0/rvfi_csr_ctrl_full] \
+  [get_bd_pins ps_io_wrapper_0/rvfi_csr_full]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_ctrl_curr_addr  [get_bd_pins rvfi_to_stream_0/rvfi_ctrl_curr_addr] \
+  [get_bd_pins ps_io_wrapper_0/rvfi_curr_addr]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_ctrl_full  [get_bd_pins rvfi_to_stream_0/rvfi_ctrl_full] \
+  [get_bd_pins ps_io_wrapper_0/rvfi_full]
   connect_bd_net -net util_ds_buf_0_IBUF_OUT  [get_bd_pins util_ds_buf_0/IBUF_OUT] \
   [get_bd_pins clk_wizard_0/clk_in1] \
   [get_bd_pins axi_noc_0/sys_clk0]
@@ -754,123 +724,14 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
 
   validate_bd_design
   save_bd_design
-
-  set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
-  add_files $wrapper_file
-  update_compile_order -fileset sources_1
 }
+# End of create_root_design()
 
 
-proc create_fifo_design { parentCell depth width design_name } {
+##################################################################
+# MAIN FLOW
+##################################################################
 
-  create_bd_design $design_name
-  current_bd_design $design_name
-
-  if { $parentCell eq "" } {
-     set parentCell [get_bd_cells /]
-  }
-
-  # Get object for parentCell
-  set parentObj [get_bd_cells $parentCell]
-  if { $parentObj == "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
-     return
-  }
-
-  # Make sure parentObj is hier blk
-  set parentType [get_property TYPE $parentObj]
-  if { $parentType ne "hier" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
-     return
-  }
-
-  # Save current instance; Restore later
-  set oldCurInst [current_bd_instance .]
-
-  # Set parent object as current
-  current_bd_instance $parentObj
-
-
-  # Create interface ports
-  set fifo_read [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:fifo_read_rtl:1.0 fifo_read ]
-
-  set fifo_write [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:fifo_write_rtl:1.0 fifo_write ]
-
-
-  # Create ports
-  set clk [ create_bd_port -dir I -type clk -freq_hz 150000000 clk ]
-  set rst [ create_bd_port -dir I -type rst rst ]
-  set_property -dict [ list \
-   CONFIG.POLARITY {ACTIVE_HIGH} \
- ] $rst
-  set data_valid [ create_bd_port -dir O data_valid ]
-  set fifo_wr_busy [ create_bd_port -dir O fifo_wr_busy ]
-  set fifo_almost_full [ create_bd_port -dir O fifo_almost_full ]
-
-  set full_thresh [expr {$depth - 5}]
-
-  # Create instance: emb_fifo_gen_0, and set properties
-  set emb_fifo_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:emb_fifo_gen:1.0 emb_fifo_gen_0 ]
-  set_property -dict [list \
-    CONFIG.ENABLE_ALMOST_EMPTY {false} \
-    CONFIG.ENABLE_ALMOST_FULL {false} \
-    CONFIG.ENABLE_DATA_COUNT {false} \
-    CONFIG.ENABLE_OVERFLOW {false} \
-    CONFIG.ENABLE_PROGRAMMABLE_EMPTY {false} \
-    CONFIG.ENABLE_PROGRAMMABLE_FULL {true} \
-    CONFIG.ENABLE_UNDERFLOW {false} \
-    CONFIG.ENABLE_WRITE_ACK {false} \
-    CONFIG.FIFO_WRITE_DEPTH $depth \
-    CONFIG.PROG_FULL_THRESH $full_thresh \
-    CONFIG.READ_MODE {FWFT} \
-    CONFIG.WRITE_DATA_WIDTH $width \
-  ] $emb_fifo_gen_0
-
-
-  # Create interface connections
-  connect_bd_intf_net -intf_net fifo_read_1 [get_bd_intf_ports fifo_read] [get_bd_intf_pins emb_fifo_gen_0/FIFO_READ]
-  connect_bd_intf_net -intf_net fifo_write_1 [get_bd_intf_ports fifo_write] [get_bd_intf_pins emb_fifo_gen_0/FIFO_WRITE]
-
-  # Create port connections
-  connect_bd_net -net clk_1  [get_bd_ports clk] \
-  [get_bd_pins emb_fifo_gen_0/wr_clk]
-  connect_bd_net -net emb_fifo_gen_0_data_valid  [get_bd_pins emb_fifo_gen_0/data_valid] \
-  [get_bd_ports data_valid]
-  connect_bd_net -net emb_fifo_gen_0_prog_full  [get_bd_pins emb_fifo_gen_0/prog_full] \
-  [get_bd_ports fifo_almost_full]
-  connect_bd_net -net emb_fifo_gen_0_wr_rst_busy  [get_bd_pins emb_fifo_gen_0/wr_rst_busy] \
-  [get_bd_ports fifo_wr_busy]
-  connect_bd_net -net rst_1  [get_bd_ports rst] \
-  [get_bd_pins emb_fifo_gen_0/rst]
-
-  # Create address segments
-
-
-  # Restore current instance
-  current_bd_instance $oldCurInst
-
-  validate_bd_design
-  save_bd_design
-
-  set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
-  add_files $wrapper_file
-  update_compile_order -fileset sources_1
-}
-
-set dir_path [lindex $argv 0]
-
-set_property source_mgmt_mode All [current_project]
-
-set_property  ip_repo_paths  [list "$dir_path/rtl/fpga/versal_ip/intf_ip" "$dir_path/build/ip_repo" "$dir_path/rtl/fpga/versal_ip/debug_ip"] [current_project]
-update_ip_catalog
-
-create_ps_io_design ""
 create_root_design ""
-create_fifo_design "" 128 4 "fifo_4_128"
-create_fifo_design "" 128 6 "fifo_6_128"
-create_fifo_design "" 128 32 "fifo_32_128"
-create_fifo_design "" 128 40 "fifo_40_128"
-create_fifo_design "" 128 69 "fifo_69_128"
-create_fifo_design "" 16 832 "fifo_832_16"
 
-set_property top ps_subsystem_wrapper [current_fileset]
+
