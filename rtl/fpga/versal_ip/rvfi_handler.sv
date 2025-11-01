@@ -1,69 +1,67 @@
 module rvfi_handler #(
-   parameter	 FULL_OUT_WIDTH = 256,
-   parameter	 FULL_CSR_WIDTH = 128,
-   parameter int OUT_WIDTH = 208,
-   parameter int CSR_WIDTH = 104)
+   parameter		  FULL_OUT_WIDTH = 256,
+   parameter		  FULL_CSR_WIDTH = 128,
+   parameter int	  OUT_WIDTH = 208,
+   parameter int	  CSR_WIDTH = 104,
+   parameter logic [31:0] BUFFER_SIZE = 0x100000,
+   parameter int	  NUM_BUFFERS = 4)
 ( 
-  input logic			      clk,
-  input logic			      rstn,
+  input logic				 clk,
+  input logic				 rstn,
 
-  input logic [31:0]		      rvfi_start_addr,
-  input logic [31:0]		      rvfi_csr_start_addr,
-  input logic [31:0]		      rvfi_end_addr,
-  input logic [31:0]		      rvfi_csr_end_addr,
-  output logic [31:0]		      rvfi_curr_addr,
-  output logic [31:0]		      rvfi_csr_curr_addr,
+  input logic [31:0]			 rvfi_base_addr,
+  input logic [$clog2(NUM_BUFFERS)-1:0]	 rvfi_sw_idx,
+  output logic [$clog2(NUM_BUFFERS)-1:0] rvfi_hw_idx,
 
-  input logic			      rvfi_valid_i,
-  input logic			      rvfi_trap_i,
-  input logic [ 4:0]		      rvfi_rd_addr_i,
-  input logic [31:0]		      rvfi_rd_wdata_i,
-  input logic [31:0]		      rvfi_pc_rdata_i,
-  input logic [31:0]		      rvfi_ext_pre_mip_i,
-  input logic [31:0]		      rvfi_ext_post_mip_i,
-  input logic			      rvfi_ext_nmi_i,
-  input logic			      rvfi_ext_nmi_int_i,
-  input logic			      rvfi_ext_debug_req_i,
-  input logic			      rvfi_ext_rf_wr_suppress_i,
-  input logic [63:0]		      rvfi_ext_mcycle_i,
-  input logic [319:0]		      rvfi_ext_mhpmcounters_i, 
-  input logic [319:0]		      rvfi_ext_mhpmcountersh_i,
-  input logic			      rvfi_ext_ic_scr_key_valid_i,
+  input logic [31:0]			 rvfi_csr_base_addr,
+  input logic [$clog2(NUM_BUFFERS)-1:0]	 rvfi_csr_sw_idx,
+  output logic [$clog2(NUM_BUFFERS)-1:0] rvfi_csr_hw_idx,
 
-  output logic [FULL_OUT_WIDTH-1:0]   fifo_data_o,
-  output logic			      fifo_valid_o,
-  input logic			      fifo_ready_i,
-  output logic [FULL_OUT_WIDTH/8-1:0] fifo_keep_o,
+  input logic				 rvfi_valid_i,
+  input logic				 rvfi_trap_i,
+  input logic [ 4:0]			 rvfi_rd_addr_i,
+  input logic [31:0]			 rvfi_rd_wdata_i,
+  input logic [31:0]			 rvfi_pc_rdata_i,
+  input logic [31:0]			 rvfi_ext_pre_mip_i,
+  input logic [31:0]			 rvfi_ext_post_mip_i,
+  input logic				 rvfi_ext_nmi_i,
+  input logic				 rvfi_ext_nmi_int_i,
+  input logic				 rvfi_ext_debug_req_i,
+  input logic				 rvfi_ext_rf_wr_suppress_i,
+  input logic [63:0]			 rvfi_ext_mcycle_i,
+  input logic [319:0]			 rvfi_ext_mhpmcounters_i, 
+  input logic [319:0]			 rvfi_ext_mhpmcountersh_i,
+  input logic				 rvfi_ext_ic_scr_key_valid_i,
+
+  output logic [FULL_OUT_WIDTH-1:0]	 fifo_data_o,
+  output logic				 fifo_valid_o,
+  input logic				 fifo_ready_i,
+  output logic [FULL_OUT_WIDTH/8-1:0]	 fifo_keep_o,
   
-  output logic [71:0]		      cmd_data_o,
-  output logic			      cmd_valid_o,
-  input logic			      cmd_ready_i,
+  output logic [71:0]			 cmd_data_o,
+  output logic				 cmd_valid_o,
+  input logic				 cmd_ready_i,
 
-  input logic [7:0]		      sts_data_o,
-  input logic			      sts_valid_o,
-  output logic			      sts_ready_i,
+  input logic [7:0]			 sts_data_o,
+  input logic				 sts_valid_o,
+  output logic				 sts_ready_i,
 
-  output logic [FULL_CSR_WIDTH-1:0]   fifo_data_csr_o,
-  output logic			      fifo_valid_csr_o,
-  input logic			      fifo_ready_csr_i,
-  output logic [FULL_CSR_WIDTH/8-1:0] fifo_keep_csr_o,
+  output logic [FULL_CSR_WIDTH-1:0]	 fifo_data_csr_o,
+  output logic				 fifo_valid_csr_o,
+  input logic				 fifo_ready_csr_i,
+  output logic [FULL_CSR_WIDTH/8-1:0]	 fifo_keep_csr_o,
 
-  output logic [71:0]		      cmd_csr_data_o,
-  output logic			      cmd_csr_valid_o,
-  input logic			      cmd_csr_ready_i,
+  output logic [71:0]			 cmd_csr_data_o,
+  output logic				 cmd_csr_valid_o,
+  input logic				 cmd_csr_ready_i,
 
-  input logic [7:0]		      sts_csr_data_o,
-  input logic			      sts_csr_valid_o,
-  output logic			      sts_csr_ready_i,
+  input logic [7:0]			 sts_csr_data_o,
+  input logic				 sts_csr_valid_o,
+  output logic				 sts_csr_ready_i,
 
-  input logic			      flush,
-  
-  output logic			      rvfi_full,
-  output logic			      rvfi_csr_full,
-  input logic			      rvfi_rst_addr,	 // when this goes from 0 to 1 or 1 to 0, we reset once
-  input logic			      rvfi_csr_rst_addr, // when this goes from 0 to 1 or 1 to 0, we reset once
+  input logic				 flush,
 
-  output logic			      rvfi_busy_o
+  output logic				 rvfi_busy_o
 );
 
    typedef struct packed {
@@ -161,12 +159,13 @@ module rvfi_handler #(
       .clk (clk),
       .rstn (rstn),
 
-      .rvfi_start_addr,
-      .rvfi_csr_start_addr,
-      .rvfi_end_addr,
-      .rvfi_csr_end_addr,
-      .rvfi_curr_addr,
-      .rvfi_csr_curr_addr,
+      .rvfi_base_addr,
+      .rvfi_sw_idx,
+      .rvfi_hw_idx,
+
+      .rvfi_csr_base_addr,
+      .rvfi_csr_sw_idx,
+      .rvfi_csr_hw_idx,
 
       .valid_i (rvfi_to_mem_valid),
       .rvfi_mcycle (rvfi_out_mcycle),
@@ -174,10 +173,6 @@ module rvfi_handler #(
       .rvfi_csr (rvfi_out_csr),
       .wready_o (rvfi_to_mem_ready),
       .flush (flush),
-      .rvfi_full (rvfi_full),
-      .rvfi_csr_full (rvfi_csr_full),
-      .rvfi_rst_addr (rvfi_rst_addr),
-      .rvfi_csr_rst_addr (rvfi_csr_rst_addr),
 
       .fifo_data_o (fifo_data_o[FULL_OUT_WIDTH-1 -: OUT_WIDTH]),
       .fifo_valid_o,

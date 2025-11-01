@@ -1,54 +1,53 @@
 
 module rvfi_to_mem #(
-     parameter int NUM_CSR_WORDS = 20,
-     parameter int IN_WIDTH = 144,
-     parameter int OUT_WIDTH = 208,
-     parameter int CSR_WIDTH = 104) 
+     parameter int	    NUM_CSR_WORDS = 20,
+     parameter int	    IN_WIDTH = 144,
+     parameter int	    OUT_WIDTH = 208,
+     parameter int	    CSR_WIDTH = 104,
+     parameter logic [31:0] BUFFER_SIZE = 0x100000,
+     parameter int	    NUM_BUFFERS = 4)
 (
 
- input logic [31:0]	      rvfi_start_addr,
- input logic [31:0]	      rvfi_csr_start_addr,
- input logic [31:0]	      rvfi_end_addr,
- input logic [31:0]	      rvfi_csr_end_addr,
- output logic [31:0]	      rvfi_curr_addr,
- output logic [31:0]	      rvfi_csr_curr_addr,
+ input logic [31:0]			rvfi_base_addr,
+ input logic [$clog2(NUM_BUFFERS)-1:0]	rvfi_sw_idx,
+ output logic [$clog2(NUM_BUFFERS)-1:0]	rvfi_hw_idx,
 
- input logic		      clk,
- input logic		      rstn,
- input logic		      valid_i,
- input [63:0]		      rvfi_mcycle,
- input [IN_WIDTH-1:0]	      rvfi,
- input [31:0]		      rvfi_csr [NUM_CSR_WORDS],
- output logic		      wready_o,
- input logic		      flush,
- output logic		      rvfi_full,
- output logic		      rvfi_csr_full,
- input logic		      rvfi_rst_addr,	 // when this goes from 0 to 1 or 1 to 0, we reset once
- input logic		      rvfi_csr_rst_addr, // when this goes from 0 to 1 or 1 to 0, we reset once
+ input logic [31:0]			rvfi_csr_base_addr,
+ input logic [$clog2(NUM_BUFFERS)-1:0]	rvfi_csr_sw_idx,
+ output logic [$clog2(NUM_BUFFERS)-1:0]	rvfi_csr_hw_idx,
 
- output logic [OUT_WIDTH-1:0] fifo_data_o,
- output logic		      fifo_valid_o,
- input logic		      fifo_ready_i,
+ input logic				clk,
+ input logic				rstn,
+ input logic				valid_i,
+ input [63:0]				rvfi_mcycle,
+ input [IN_WIDTH-1:0]			rvfi,
+ input [31:0]				rvfi_csr [NUM_CSR_WORDS],
+ output logic				wready_o,
+ input logic				flush,
+
+ output logic [OUT_WIDTH-1:0]		fifo_data_o,
+ output logic				fifo_valid_o,
+ input logic				fifo_ready_i,
      
- output logic [71:0]	      cmd_data_o,
- output logic		      cmd_valid_o,
- input logic		      cmd_ready_i,
+ output logic [71:0]			cmd_data_o,
+ output logic				cmd_valid_o,
+ input logic				cmd_ready_i,
 
- input logic [7:0]	      sts_data_o,
- input logic		      sts_valid_o,
- output logic		      sts_ready_i,
+ input logic [7:0]			sts_data_o,
+ input logic				sts_valid_o,
+ output logic				sts_ready_i,
 
- output logic [CSR_WIDTH-1:0] fifo_data_csr_o,
- output logic		      fifo_valid_csr_o,
- input logic		      fifo_ready_csr_i,
+ output logic [CSR_WIDTH-1:0]		fifo_data_csr_o,
+ output logic				fifo_valid_csr_o,
+ input logic				fifo_ready_csr_i,
      
- output logic [71:0]	      cmd_csr_data_o,
- output logic		      cmd_csr_valid_o,
- input logic		      cmd_csr_ready_i,
+ output logic [71:0]			cmd_csr_data_o,
+ output logic				cmd_csr_valid_o,
+ input logic				cmd_csr_ready_i,
 
- input logic [7:0]	      sts_csr_data_o,
- input logic		      sts_csr_valid_o,
- output logic		      sts_csr_ready_i
+ input logic [7:0]			sts_csr_data_o,
+ input logic				sts_csr_valid_o,
+ output logic				sts_csr_ready_i
 
  );
 
@@ -81,18 +80,18 @@ module rvfi_to_mem #(
    end
 
    datamover_cmd
-     #(.DATA_WIDTH (OUT_WIDTH)
+     #(.DATA_WIDTH (OUT_WIDTH),
+       .BUFFER_SIZE (BUFFER_SIZE),
+       .NUM_BUFFERS (NUM_BUFFERS)
        ) u_dmc
      (
       .clk (clk),
       .rstn (rstn),
-      .start_addr (rvfi_start_addr),
-      .end_addr (rvfi_end_addr),
-      .curr_addr (rvfi_curr_addr),
+      .base_addr (rvfi_base_addr),
+      .hw_idx (rvfi_hw_idx),
+      .sw_idx (rvfi_sw_idx),
       .fifo_write (fifo_valid_o && fifo_ready_i),
       .flush (flush),
-      .full (rvfi_full),
-      .rst_addr_parity (rvfi_rst_addr),
       .m_axis_cmd_tdata (cmd_data_o),
       .m_axis_cmd_tvalid (cmd_valid_o),
       .m_axis_cmd_tready (cmd_ready_i),
@@ -102,18 +101,18 @@ module rvfi_to_mem #(
       );
    
    datamover_cmd
-     #(.DATA_WIDTH (CSR_WIDTH)
+     #(.DATA_WIDTH (CSR_WIDTH),
+       .BUFFER_SIZE (BUFFER_SIZE),
+       .NUM_BUFFERS (NUM_BUFFERS)
        ) u_dmc_csr
      (
       .clk (clk),
       .rstn (rstn),
-      .start_addr (rvfi_csr_start_addr),
-      .end_addr (rvfi_csr_end_addr),
-      .curr_addr (rvfi_csr_curr_addr),
+      .base_addr (rvfi_csr_base_addr),
+      .hw_idx (rvfi_csr_hw_idx),
+      .sw_idx (rvfi_csr_sw_idx),
       .fifo_write (fifo_csr_valid_o && fifo_csr_ready_i),
       .flush (flush),
-      .full (rvfi_csr_full),
-      .rst_addr_parity (rvfi_csr_rst_addr),
       .m_axis_cmd_tdata (cmd_csr_data_o),
       .m_axis_cmd_tvalid (cmd_csr_valid_o),
       .m_axis_cmd_tready (cmd_csr_ready_i),

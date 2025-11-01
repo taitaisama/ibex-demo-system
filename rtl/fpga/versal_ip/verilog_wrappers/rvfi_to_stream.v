@@ -1,67 +1,65 @@
 module rvfi_to_stream
  #(
-   parameter OUT_WIDTH = 256,
-   parameter CSR_WIDTH = 128)
+   parameter		  OUT_WIDTH = 256,
+   parameter		  CSR_WIDTH = 128,
+   parameter logic [31:0] BUFFER_SIZE = 0x100000,
+   parameter int	  NUM_BUFFERS = 4)
 ( 
-  input			   clk,
-  input			   rstn,
+  input					 clk,
+  input					 rstn,
 
-  input			   rvfi_in_valid,
-  input			   rvfi_in_trap,
-  input [ 4:0]		   rvfi_in_rd_addr,
-  input [31:0]		   rvfi_in_rd_wdata,
-  input [31:0]		   rvfi_in_pc_rdata,
-  input [31:0]		   rvfi_in_ext_pre_mip,
-  input [31:0]		   rvfi_in_ext_post_mip,
-  input			   rvfi_in_ext_nmi,
-  input			   rvfi_in_ext_nmi_int,
-  input			   rvfi_in_ext_debug_req,
-  input			   rvfi_in_ext_rf_wr_suppress,
-  input [63:0]		   rvfi_in_ext_mcycle,
-  input [319:0]		   rvfi_in_ext_mhpmcounters, 
-  input [319:0]		   rvfi_in_ext_mhpmcountersh,
-  input			   rvfi_in_ext_ic_scr_key_valid,
-  output		   rvfi_in_force_stop,
+  input					 rvfi_in_valid,
+  input					 rvfi_in_trap,
+  input [ 4:0]				 rvfi_in_rd_addr,
+  input [31:0]				 rvfi_in_rd_wdata,
+  input [31:0]				 rvfi_in_pc_rdata,
+  input [31:0]				 rvfi_in_ext_pre_mip,
+  input [31:0]				 rvfi_in_ext_post_mip,
+  input					 rvfi_in_ext_nmi,
+  input					 rvfi_in_ext_nmi_int,
+  input					 rvfi_in_ext_debug_req,
+  input					 rvfi_in_ext_rf_wr_suppress,
+  input [63:0]				 rvfi_in_ext_mcycle,
+  input [319:0]				 rvfi_in_ext_mhpmcounters, 
+  input [319:0]				 rvfi_in_ext_mhpmcountersh,
+  input					 rvfi_in_ext_ic_scr_key_valid,
+  output				 rvfi_in_force_stop,
 
-  output [OUT_WIDTH-1:0]   rvfi_stream_tdata,
-  output		   rvfi_stream_tvalid,
-  input			   rvfi_stream_tready,
-  output [OUT_WIDTH/8-1:0] rvfi_stream_tkeep,
+  output [OUT_WIDTH-1:0]		 rvfi_stream_tdata,
+  output				 rvfi_stream_tvalid,
+  input					 rvfi_stream_tready,
+  output [OUT_WIDTH/8-1:0]		 rvfi_stream_tkeep,
   
-  output [71:0]		   rvfi_cmd_tdata,
-  output		   rvfi_cmd_tvalid,
-  input			   rvfi_cmd_tready,
+  output [71:0]				 rvfi_cmd_tdata,
+  output				 rvfi_cmd_tvalid,
+  input					 rvfi_cmd_tready,
 
-  input [7:0]		   rvfi_sts_tdata,
-  input			   rvfi_sts_tvalid,
-  output		   rvfi_sts_tready,
+  input [7:0]				 rvfi_sts_tdata,
+  input					 rvfi_sts_tvalid,
+  output				 rvfi_sts_tready,
 
-  output [CSR_WIDTH-1:0]   rvfi_csr_stream_tdata,
-  output		   rvfi_csr_stream_tvalid,
-  input			   rvfi_csr_stream_tready,
-  output [CSR_WIDTH/8-1:0] rvfi_csr_stream_tkeep,
+  output [CSR_WIDTH-1:0]		 rvfi_csr_stream_tdata,
+  output				 rvfi_csr_stream_tvalid,
+  input					 rvfi_csr_stream_tready,
+  output [CSR_WIDTH/8-1:0]		 rvfi_csr_stream_tkeep,
 
-  output [71:0]		   rvfi_csr_cmd_tdata,
-  output		   rvfi_csr_cmd_tvalid,
-  input			   rvfi_csr_cmd_tready,
+  output [71:0]				 rvfi_csr_cmd_tdata,
+  output				 rvfi_csr_cmd_tvalid,
+  input					 rvfi_csr_cmd_tready,
 
-  input [7:0]		   rvfi_csr_sts_tdata,
-  input			   rvfi_csr_sts_tvalid,
-  output		   rvfi_csr_sts_tready,
+  input [7:0]				 rvfi_csr_sts_tdata,
+  input					 rvfi_csr_sts_tvalid,
+  output				 rvfi_csr_sts_tready,
 
-  input			   flush,
+  input					 flush,
 
-  input [31:0]		   rvfi_ctrl_start_addr,
-  input [31:0]		   rvfi_ctrl_end_addr,
-  output [31:0]		   rvfi_ctrl_curr_addr,
-  output		   rvfi_ctrl_full,
-  input			   rvfi_ctrl_rst_addr,
-  
-  input [31:0]		   rvfi_csr_ctrl_start_addr,
-  input [31:0]		   rvfi_csr_ctrl_end_addr,
-  output [31:0]		   rvfi_csr_ctrl_curr_addr,
-  output		   rvfi_csr_ctrl_full,
-  input			   rvfi_csr_ctrl_rst_addr
+  input logic [31:0]			 rvfi_base_addr,
+  input logic [$clog2(NUM_BUFFERS)-1:0]	 rvfi_sw_idx,
+  output logic [$clog2(NUM_BUFFERS)-1:0] rvfi_hw_idx,
+
+  input logic [31:0]			 rvfi_csr_base_addr,
+  input logic [$clog2(NUM_BUFFERS)-1:0]	 rvfi_csr_sw_idx,
+  output logic [$clog2(NUM_BUFFERS)-1:0] rvfi_csr_hw_idx
 );
 
 
@@ -73,13 +71,14 @@ module rvfi_to_stream
      (
       .clk (clk),
       .rstn (rstn),
-   
-      .rvfi_start_addr (rvfi_ctrl_start_addr),
-      .rvfi_csr_start_addr (rvfi_csr_ctrl_start_addr),
-      .rvfi_end_addr (rvfi_ctrl_end_addr),
-      .rvfi_csr_end_addr (rvfi_csr_ctrl_end_addr),
-      .rvfi_curr_addr (rvfi_ctrl_curr_addr),
-      .rvfi_csr_curr_addr (rvfi_csr_ctrl_curr_addr),
+
+      .rvfi_base_addr (rvfi_base_addr),
+      .rvfi_sw_idx (rvfi_sw_idx),
+      .rvfi_hw_idx (rvfi_hw_idx),
+
+      .rvfi_csr_base_addr (rvfi_csr_base_addr),
+      .rvfi_csr_sw_idx (rvfi_csr_sw_idx),
+      .rvfi_csr_hw_idx (rvfi_csr_hw_idx),
       
       .rvfi_valid_i (rvfi_in_valid),
       .rvfi_trap_i (rvfi_in_trap),
@@ -118,10 +117,6 @@ module rvfi_to_stream
       .sts_csr_ready_i (rvfi_csr_sts_tready),
       
       .flush (flush),
-      .rvfi_full (rvfi_ctrl_full),
-      .rvfi_csr_full (rvfi_csr_ctrl_full),
-      .rvfi_rst_addr (rvfi_ctrl_rst_addr),
-      .rvfi_csr_rst_addr (rvfi_csr_ctrl_rst_addr)
 
   );
    

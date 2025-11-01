@@ -8,23 +8,37 @@
 #define MEM_BASE_PHYS_ADDR          0x30000000
 
 #define PROG_OFFSET                 0x000000
-#define RVFI_START_OFFSET           0x100000
-#define RVFI_END_OFFSET             0x200000
-#define RVFI_CSR_START_OFFSET       0x200000
-#define RVFI_CSR_END_OFFSET         0x300000
 
-#define PROG_ADDR_OFFSET            0x10008
-#define PS_FLUSH_RST_OFFSET         0x10000
-#define RVFI_RST_OFFSET             0x50000
-#define RVFI_CSR_RST_OFFSET         0x00000
-#define RVFI_START_ADDR_OFFSET      0x40000
-#define RVFI_CSR_START_ADDR_OFFSET  0x40008
-#define RVFI_END_ADDR_OFFSET        0x30000
-#define RVFI_CSR_END_ADDR_OFFSET    0x30008
-#define RVFI_CURR_ADDR_OFFSET       0x20000
-#define RVFI_CSR_CURR_ADDR_OFFSET   0x20008
-#define RVFI_FULL_OFFSET            0x50008
-#define RVFI_CSR_FULL_OFFSET        0x00008
+#define BUFFER_SIZE                 0x100000
+#define BUFFER_NUM                  0x4
+
+// #define RVFI_START_OFFSET           0x100000
+// #define RVFI_END_OFFSET             0x200000
+// #define RVFI_CSR_START_OFFSET       0x200000
+// #define RVFI_CSR_END_OFFSET         0x300000
+
+// #define PROG_ADDR_OFFSET            0x10008
+// #define PS_FLUSH_RST_OFFSET         0x10000
+// #define RVFI_START_ADDR_OFFSET      0x40000
+// #define RVFI_CSR_START_ADDR_OFFSET  0x40008
+// #define RVFI_END_ADDR_OFFSET        0x30000
+// #define RVFI_CSR_END_ADDR_OFFSET    0x30008
+// #define RVFI_CURR_ADDR_OFFSET       0x20000
+// #define RVFI_CSR_CURR_ADDR_OFFSET   0x20008
+// #define RVFI_HW_IDX_OFFSET          0x50008
+// #define RVFI_CSR_HW_IDX_OFFSET      0x00008
+// #define RVFI_SW_IDX_OFFSET          0x50000
+// #define RVFI_CSR_SW_IDX_OFFSET      0x00000
+
+// when write pointer reaches end of a buffer, hw_idx is incremented
+// when  read pointer reaches end of a buffer, sw_idx is incremented
+// let n be the number of buffers
+// hw: I can write as long as I am not writing over somthing not read
+//     so when incrementing hw_idx, if hw_idx + 1 == sw_idx + n, I stop
+// sw: I can read as long as I am not going ahead of hw_idx
+//     so when incrementing sw_idx, if sw_idx + 1 == hw_idx,     I stop
+// need > 2 buffers for this to work
+
 
 enum STREAMS {
   RVFI_STREAM = 0,
@@ -131,6 +145,8 @@ struct stream_ctrl {
     // is_full() should be true
     reset ^= 1;
     reset_ptr.out(reset);
+    last_curr_addr = start_addr;
+    next_read_addr = start_addr;
   }
 
   std::optional<uint32_t> in() {
@@ -149,7 +165,7 @@ struct stream_ctrl {
 
 struct ps_io_ctrl {
 
-  bits_t rst_fulsh_bits;
+  bits_t rst_flush_bits;
   gpio_ptr_t rst_flush_bits_ptr;
 
   mem_ptr_t prog_base_addr;
@@ -158,7 +174,7 @@ struct ps_io_ctrl {
   stream_ctrl streams[NUM_OUTPUT_STREAMS];
 
   ps_io_ctrl() :
-    rst_fulsh_bits(0),
+    rst_flush_bits(0),
     rst_flush_bits_ptr(PS_FLUSH_RST_OFFSET),
     prog_base_addr(PROG_OFFSET),
     prog_base_addr_ptr(PROG_ADDR_OFFSET),
@@ -177,6 +193,19 @@ struct ps_io_ctrl {
 				 RVFI_CSR_START_OFFSET,
 				 RVFI_CSR_END_OFFSET): 
     { }
+
+  using check_stream = std::function<void(uint32_t)>;
+
+  static void run_check(const check_stream& check,
+			const stream_ctrl& stream ) {
+    auto a = stream.in();
+    if (a) {
+      check(*a);
+    } else if (stream.is_full()) {
+      stream.reset();
+    }
+  }
+		  
   
 };
 
