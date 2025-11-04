@@ -1,0 +1,43 @@
+
+
+1. make ibex_wrapper_ip -> this makes a wrapper project of the ibex processor so we can make a module out of this which can then put in the block diagram and connect signals with it.
+
+   there are some interfaces in rtl/fpga/versal_ip/intrf_ip which are defined by me, these are used in the block diagram to connect signals
+
+   there is an interface for ram access by ibex and an interface for rvfi, the rvfi interface is output by the ibex processor and written to ram.
+
+2. make versal_bd -> this makesthe pblock design and connects ibbex with other things. we use the script tcl/versal_ps.tcl to make this, along with the rtl files in rtl/fpga/versal_ip
+
+   after running this you can go to build/ibex_versal_0/synth_versal-vivado and type vivado ibex_versal_0.xpr. This will open the project
+
+   in the sources tab, under Design Sources, there will be the "ps_subsystem_wrapper" in bold, expanding it would have ps_subsystem_i block design beneath it
+
+   double click to open that and you will see the block design of the system
+
+   the ibex_demo_system_wrapper block in the diagram is the processor, it has two ram interface ports and one rvfi output port
+
+   the debug_module is just for debugging, you can ignore that
+
+   there is a ps_io_wrapper block, this is made from the tcl script at tcl/versal_ps.tcl in "proc create_ps_io_design". This is basically just a way for the arm processor (not the ibex riscv one, programed on the fpga, but the one one the same chip as the fpga) can communicate with the ibex processor. the work for the software which controls this isn't complete yet, but I'm writing it at sw/versal/ps_io.cpp
+
+   basically in ps_io_wrapper we can write to "rvfi_base_addr", "rvfi_csr_base_addr", "rvfi_sw_idx", "rvfi_csr_sw_idx" and read from "rvfi_hw_idx", "rvfi_csr_hw_idx"
+
+   there are two output streams of data from ibex, rvfi and rvfi_csr. these are written to the ddr memory which is common between the fpga (on which ibex is there) and the arm cpu, and we can communicate how much/where it is being written using the above signals via ps_io_wrapper.
+
+   we also send data to ibex, which is the riscv program it has to run. the program itself is in ddr, and the starting address of the program is also communicated via ps_io through the signal prog_addr.
+
+   you can also see the block rvfi_to_stream in the block design, which converts the rvfi output from the ibex processor into streamable output which can then be written to ddr easily
+
+   we use the datamover ip to convert the axi_stream data to normal axi data which can then be written to the ddr easily
+
+   there are two ram ports in ibex, one for data_ram and one for instr_ram, which actually share an address space
+
+   to make it so that these ports can read data from the ddr I'm using the blocks data_ram_to_axi_bridge and instr_ram_to_axi_bridge
+
+   these just convert the ram access signals to axi signals, which can then be given to the NOC which can access the DDR for us
+
+   you can find the rtl code for the ram_to_axi_bridges, and the rvfi_to_stream module in rtl/fpga/versal_ip, along with the submodules as well
+
+3. make harware -> this makes an XSA image of the project, which can then be used with vitis to run software on the arm chip along with the hardware programmed on the fpga
+
+   I'll add details of how to do this later, along with a simple program to run with the xsa image (would have to complete the software for the ps_io first)

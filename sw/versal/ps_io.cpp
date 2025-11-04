@@ -15,13 +15,16 @@
 #define PROG_ADDR_OFFSET            0x10008
 #define PS_FLUSH_RST_OFFSET         0x10000
 
+#define RVFI_START_ADDR             0x100000
+#define RVFI_CSR_START_ADDR         0x400000
+
 #define RVFI_HW_IDX_OFFSET          0x20000
 #define RVFI_BASE_ADDR_OFFSET       0x30000
-#define RVFI_HW_IDX_OFFSET          0x40000
+#define RVFI_SW_IDX_OFFSET          0x40000
 
 #define RVFI_CSR_HW_IDX_OFFSET      0x20008
 #define RVFI_CSR_BASE_ADDR_OFFSET   0x30008
-#define RVFI_CSR_HW_IDX_OFFSET      0x40008
+#define RVFI_CSR_SW_IDX_OFFSET      0x40008
 
 // when write pointer reaches end of a buffer, hw_idx is incremented
 // when  read pointer reaches end of a buffer, sw_idx is incremented
@@ -138,10 +141,11 @@ struct stream_ctrl {
   std::optional<uint32_t> in() {
     if (next_read_addr >= curr_buff_end_addr()) {
       // increase sw_idx, if cant return nullopt
-      if (hw_idx_ptr.in() == sw_idx + 1) {
+      uint32_t next_sw_idx = sw_idx == BUFFER_NUM-1 ? 0 : sw_idx + 1;
+      if (hw_idx_ptr.in() == next_sw_idx) {
 	return std::nullopt;
       } else {
-	sw_idx += 1;
+	sw_idx = next_sw_idx;
 	sw_idx_ptr.out(sw_idx);
 	next_read_addr = curr_buff_start_addr();
       }
@@ -168,34 +172,15 @@ struct ps_io_ctrl {
     rst_flush_bits_ptr(PS_FLUSH_RST_OFFSET),
     prog_base_addr(PROG_OFFSET),
     prog_base_addr_ptr(PROG_ADDR_OFFSET),
-    stream_ctrl[RVFI_STREAM](RVFI_START_ADDR_OFFSET,
-			     RVFI_END_ADDR_OFFSET,
-			     RVFI_CURR_ADDR_OFFSET,
-			     RVFI_RST_OFFSET,
-			     RVFI_FULL_OFFSET,
-			     RVFI_START_OFFSET,
-			     RVFI_END_OFFSET),
-    stream_ctrl[RVFI_CSR_STREAM](RVFI_CSR_START_ADDR_OFFSET,
-				 RVFI_CSR_END_ADDR_OFFSET,
-				 RVFI_CSR_CURR_ADDR_OFFSET,
-				 RVFI_CSR_RST_OFFSET,
-				 RVFI_CSR_FULL_OFFSET,
-				 RVFI_CSR_START_OFFSET,
-				 RVFI_CSR_END_OFFSET): 
-    { }
-
-  using check_stream = std::function<void(uint32_t)>;
-
-  static void run_check(const check_stream& check,
-			const stream_ctrl& stream ) {
-    auto a = stream.in();
-    if (a) {
-      check(*a);
-    } else if (stream.is_full()) {
-      stream.reset();
-    }
-  }
-		  
+    stream_ctrl[RVFI_STREAM](RVFI_START_ADDR,
+			     RVFI_HW_IDX_OFFSET,
+			     RVFI_BASE_ADDR_OFFSET,
+			     RVFI_SW_IDX_OFFSET),
+    stream_ctrl[RVFI_CSR_STREAM](RVFI_CSR_START_ADDR,
+				 RVFI_CSR_HW_IDX_OFFSET,
+				 RVFI_CSR_BASE_ADDR_OFFSET,
+				 RVFI_CSR_SW_IDX_OFFSET): 
+    { }		  
   
 };
 
