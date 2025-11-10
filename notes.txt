@@ -38,6 +38,44 @@
 
    you can find the rtl code for the ram_to_axi_bridges, and the rvfi_to_stream module in rtl/fpga/versal_ip, along with the submodules as well
 
+   to edit tcl/versal_ps.tcl, you can export the tcl file from the main block design and then copy paste the function "create_root_design", replacing the current implementation. note that I've added some extra stuff at the beggining and end of this function in versal_ps.tcl which needs to be kept (this is just stuff like creating a wrapper module etc).
+
 3. make harware -> this makes an XSA image of the project, which can then be used with vitis to run software on the arm chip along with the hardware programmed on the fpga
 
-   I'll add details of how to do this later, along with a simple program to run with the xsa image (would have to complete the software for the ps_io first)
+  to make the XSA image yourself you can open the vivado project (by vivado build/ibex_versal_0/synth_versal-vivado/ibex_versal_0.xpr), run generate Device image on the leftmost taskbar and then file -> export -> export Hardware
+
+4. make vitis -> this constructs the vitis workspace with dummy hello world project
+
+   Connections with versal: UART and JTAG
+
+   Now to run vitis you can:
+
+     1. in terminal do:
+        sudo chmod 666 /dev/ttyUSB0
+	sudo chmod 666 /dev/ttyUSB1
+        PATH=$PATH:/opt/amd/2025.1/Vitis/bin/
+     2. open vitis by just typing vitis
+     3. in vitis select Set Workspace (under Get Started)
+     4. navigate to ibex-demo-system/build/vitis, select that
+     5. in the top bar select Vitis -> Serial Monitor
+     6. select /dev/ttyUSB0 or /dev/ttyUSB1, whichever says (Silicon Labs)
+     7. select the hello_world app under Vitis components
+     8. under flow, press build and then press debug
+     9. in the left hand bar press the debug icon (play symbol with a bug at the bottom left)
+     10. press the play button in the newly opened debug section
+     11. under the /dev/ttyUSB0 (Silicon labs) tab you'll see the output
+
+   To make the platform component and the hello_world app from scratch (without the script), you can:
+
+     1. select "create platform component" under embedded development
+     2. choose a directory
+     3. choose the xsa (build/hardware/top_versal.xsa)
+     4. click next and then finish
+     5. when tha platform is created, select examples in the left hand bar
+     6. find "Hello World" under Emedded Software Examples
+     7. select "Create application Component from Template"
+     8. click next, choose the platform and then finish 
+
+   You can make changes to hello_world.c (under hello_world -> Sources), which can also interact with the hardware
+
+
