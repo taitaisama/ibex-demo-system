@@ -1,8 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
+extern "C" {
+#include "xil_printf.h"
 #include "sleep.h"
 #include "platform.h"
-#include "xil_printf.h"
+}
 
 #define GPIO_BASE_PHYS_ADDR         0x80000000
 #define MEM_BASE_PHYS_ADDR          0x30000000
@@ -41,8 +43,8 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 // need > 2 buffers for this to work
 
 
-extern uint32_t MEM_VIRT_ADDR;
-extern uint32_t GPIO_VIRT_ADDR;
+uint32_t MEM_VIRT_ADDR = 0;
+uint32_t GPIO_VIRT_ADDR = 0;
 
 typedef uint32_t bits_t;
 
@@ -190,7 +192,6 @@ struct ps_io_ctrl {
     prog_base_addr_ptr.out(prog_base_addr.get_abs());
     rvfi_stream.set_addrs();
     csr_stream.set_addrs();
-    sleep(10);
     rst_flush_ptr.out(0);
   }
   
@@ -198,22 +199,17 @@ struct ps_io_ctrl {
     for (uint32_t i = 0; i < iters; i ++) {
       uint32_t input;
       if (rvfi_stream.in(input)) {
-        xil_printf("rvfi: %d\n", input);
+        xil_printf("rvfi: %x\n", input);
       }
       if (csr_stream.in(input)) {
-        xil_printf("csr: %d\n", input);
+        xil_printf("csr: %x\n", input);
       }
     }
   }
 };
 
-
-int main()
-{
-    init_platform();
+void run() {
     ps_io_ctrl ctrl;
     ctrl.start(PROG, PROG_LEN);
     ctrl.run_for(100);
-    cleanup_platform();
-    return 0;
 }
