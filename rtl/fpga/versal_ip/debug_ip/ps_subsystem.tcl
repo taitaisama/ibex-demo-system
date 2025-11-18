@@ -1,0 +1,849 @@
+
+################################################################
+# This is a generated script based on design: ps_subsystem
+#
+# Though there are limitations about the generated script,
+# the main purpose of this utility is to make learning
+# IP Integrator Tcl commands easier.
+################################################################
+
+namespace eval _tcl {
+proc get_script_folder {} {
+   set script_path [file normalize [info script]]
+   set script_folder [file dirname $script_path]
+   return $script_folder
+}
+}
+variable script_folder
+set script_folder [_tcl::get_script_folder]
+
+################################################################
+# Check if script is running in correct Vivado version.
+################################################################
+set scripts_vivado_version 2025.1
+set current_vivado_version [version -short]
+
+if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
+   puts ""
+   if { [string compare $scripts_vivado_version $current_vivado_version] > 0 } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2042 -severity "ERROR" " This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Sourcing the script failed since it was created with a future version of Vivado."}
+
+   } else {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2041 -severity "ERROR" "This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Please run the script in Vivado <$scripts_vivado_version> then open the design in Vivado <$current_vivado_version>. Upgrade the design by running \"Tools => Report => Report IP Status...\", then run write_bd_tcl to create an updated script."}
+
+   }
+
+   return 1
+}
+
+################################################################
+# START
+################################################################
+
+# To test this script, run the following commands from Vivado Tcl console:
+# source ps_subsystem_script.tcl
+
+
+# The design that will be created by this Tcl script contains the following 
+# module references:
+# rvfi_to_stream, data_ram_to_axi_bridge, instr_ram_to_axi_bridge, ps_io_wrapper, my_ram_wrapper
+
+# Please add the sources of those modules before sourcing this Tcl script.
+
+# If there is no project opened, this script will create a
+# project, but make sure you do not have an existing project
+# <./myproj/project_1.xpr> in the current working folder.
+
+set list_projs [get_projects -quiet]
+if { $list_projs eq "" } {
+   create_project project_1 myproj -part xcve2302-sfva784-1LP-e-S
+}
+
+
+# CHANGE DESIGN NAME HERE
+variable design_name
+set design_name ps_subsystem
+
+# If you do not already have an existing IP Integrator design open,
+# you can create a design using the following command:
+#    create_bd_design $design_name
+
+# Creating design if needed
+set errMsg ""
+set nRet 0
+
+set cur_design [current_bd_design -quiet]
+set list_cells [get_bd_cells -quiet]
+
+if { ${design_name} eq "" } {
+   # USE CASES:
+   #    1) Design_name not set
+
+   set errMsg "Please set the variable <design_name> to a non-empty value."
+   set nRet 1
+
+} elseif { ${cur_design} ne "" && ${list_cells} eq "" } {
+   # USE CASES:
+   #    2): Current design opened AND is empty AND names same.
+   #    3): Current design opened AND is empty AND names diff; design_name NOT in project.
+   #    4): Current design opened AND is empty AND names diff; design_name exists in project.
+
+   if { $cur_design ne $design_name } {
+      common::send_gid_msg -ssname BD::TCL -id 2001 -severity "INFO" "Changing value of <design_name> from <$design_name> to <$cur_design> since current design is empty."
+      set design_name [get_property NAME $cur_design]
+   }
+   common::send_gid_msg -ssname BD::TCL -id 2002 -severity "INFO" "Constructing design in IPI design <$cur_design>..."
+
+} elseif { ${cur_design} ne "" && $list_cells ne "" && $cur_design eq $design_name } {
+   # USE CASES:
+   #    5) Current design opened AND has components AND same names.
+
+   set errMsg "Design <$design_name> already exists in your project, please set the variable <design_name> to another value."
+   set nRet 1
+} elseif { [get_files -quiet ${design_name}.bd] ne "" } {
+   # USE CASES: 
+   #    6) Current opened design, has components, but diff names, design_name exists in project.
+   #    7) No opened design, design_name exists in project.
+
+   set errMsg "Design <$design_name> already exists in your project, please set the variable <design_name> to another value."
+   set nRet 2
+
+} else {
+   # USE CASES:
+   #    8) No opened design, design_name not in project.
+   #    9) Current opened design, has components, but diff names, design_name not in project.
+
+   common::send_gid_msg -ssname BD::TCL -id 2003 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
+
+   create_bd_design $design_name
+
+   common::send_gid_msg -ssname BD::TCL -id 2004 -severity "INFO" "Making design <$design_name> as current_bd_design."
+   current_bd_design $design_name
+
+}
+
+common::send_gid_msg -ssname BD::TCL -id 2005 -severity "INFO" "Currently the variable <design_name> is equal to \"$design_name\"."
+
+if { $nRet != 0 } {
+   catch {common::send_gid_msg -ssname BD::TCL -id 2006 -severity "ERROR" $errMsg}
+   return $nRet
+}
+
+set bCheckIPsPassed 1
+##################################################################
+# CHECK IPs
+##################################################################
+set bCheckIPs 1
+if { $bCheckIPs == 1 } {
+   set list_check_ips "\ 
+xilinx.com:ip:versal_cips:3.4\
+xilinx.com:ip:axi_noc:1.1\
+xilinx.com:ip:proc_sys_reset:5.0\
+xilinx.com:ip:util_ds_buf:2.2\
+xilinx.com:ip:clk_wizard:1.0\
+xilinx.com:ip:axis_data_fifo:2.0\
+xilinx.com:ip:axi_datamover:5.1\
+xilinx.com:inline_hdl:ilvector_logic:1.0\
+user.org:user:ibex_demo_system_wrapper:1.0\
+xilinx.com:ip:axi_bram_ctrl:4.1\
+xilinx.com:ip:emb_mem_gen:1.0\
+xilinx.com:inline_hdl:ilconstant:1.0\
+xilinx.com:ip:c_addsub:12.0\
+user.org:user:debug_module_wrapper:1.0\
+xilinx.com:ip:fit_timer:2.0\
+"
+
+   set list_ips_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
+
+   foreach ip_vlnv $list_check_ips {
+      set ip_obj [get_ipdefs -all $ip_vlnv]
+      if { $ip_obj eq "" } {
+         lappend list_ips_missing $ip_vlnv
+      }
+   }
+
+   if { $list_ips_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
+      set bCheckIPsPassed 0
+   }
+
+}
+
+##################################################################
+# CHECK Modules
+##################################################################
+set bCheckModules 1
+if { $bCheckModules == 1 } {
+   set list_check_mods "\ 
+rvfi_to_stream\
+data_ram_to_axi_bridge\
+instr_ram_to_axi_bridge\
+ps_io_wrapper\
+my_ram_wrapper\
+"
+
+   set list_mods_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2020 -severity "INFO" "Checking if the following modules exist in the project's sources: $list_check_mods ."
+
+   foreach mod_vlnv $list_check_mods {
+      if { [can_resolve_reference $mod_vlnv] == 0 } {
+         lappend list_mods_missing $mod_vlnv
+      }
+   }
+
+   if { $list_mods_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2021 -severity "ERROR" "The following module(s) are not found in the project: $list_mods_missing" }
+      common::send_gid_msg -ssname BD::TCL -id 2022 -severity "INFO" "Please add source files for the missing module(s) above."
+      set bCheckIPsPassed 0
+   }
+}
+
+if { $bCheckIPsPassed != 1 } {
+  common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
+  return 3
+}
+
+##################################################################
+# DESIGN PROCs
+##################################################################
+
+
+
+# Procedure to create entire design; Provide argument to make
+# procedure reusable. If parentCell is "", will use root.
+proc create_root_design { parentCell } {
+
+  variable script_folder
+  variable design_name
+
+  if { $parentCell eq "" } {
+     set parentCell [get_bd_cells /]
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+
+  # Create interface ports
+  set DDR4 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddr4_rtl:1.0 DDR4 ]
+
+  set sys [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 sys ]
+  set_property -dict [ list \
+   CONFIG.FREQ_HZ {200000000} \
+   ] $sys
+
+
+  # Create ports
+  set led [ create_bd_port -dir O led ]
+
+  # Create instance: versal_cips_0, and set properties
+  set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips:3.4 versal_cips_0 ]
+  set_property -dict [list \
+    CONFIG.BOOT_MODE {Custom} \
+    CONFIG.DDR_MEMORY_MODE {Custom} \
+    CONFIG.DESIGN_MODE {1} \
+    CONFIG.IO_CONFIG_MODE {Custom} \
+    CONFIG.PS_PL_CONNECTIVITY_MODE {Custom} \
+    CONFIG.PS_PMC_CONFIG { \
+      BOOT_MODE {Custom} \
+      DDR_MEMORY_MODE {Connectivity to DDR via NOC} \
+      DESIGN_MODE {1} \
+      IO_CONFIG_MODE {Custom} \
+      PMC_GPIO_EMIO_PERIPHERAL_ENABLE {0} \
+      PMC_I2CPMC_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 2 .. 3}}} \
+      PMC_QSPI_FBCLK {{ENABLE 1} {IO {PMC_MIO 6}}} \
+      PMC_QSPI_PERIPHERAL_DATA_MODE {x4} \
+      PMC_QSPI_PERIPHERAL_ENABLE {1} \
+      PMC_QSPI_PERIPHERAL_MODE {Dual Parallel} \
+      PMC_REF_CLK_FREQMHZ {33.333333} \
+      PMC_SD0_DATA_TRANSFER_MODE {8Bit} \
+      PMC_SD0_PERIPHERAL {{CLK_100_SDR_OTAP_DLY 0x00} {CLK_200_SDR_OTAP_DLY 0x2} {CLK_50_DDR_ITAP_DLY 0x1E} {CLK_50_DDR_OTAP_DLY 0x5} {CLK_50_SDR_ITAP_DLY 0x2C} {CLK_50_SDR_OTAP_DLY 0x5} {ENABLE 1} {IO\
+{PMC_MIO 37 .. 49}}} \
+      PMC_SD0_SLOT_TYPE {eMMC} \
+      PMC_SD1_PERIPHERAL {{CLK_100_SDR_OTAP_DLY 0x00} {CLK_200_SDR_OTAP_DLY 0x00} {CLK_50_DDR_ITAP_DLY 0x00} {CLK_50_DDR_OTAP_DLY 0x00} {CLK_50_SDR_ITAP_DLY 0x2C} {CLK_50_SDR_OTAP_DLY 0x4} {ENABLE 1} {IO\
+{PMC_MIO 26 .. 36}}} \
+      PMC_USE_PMC_NOC_AXI0 {1} \
+      PS_BOARD_INTERFACE {Custom} \
+      PS_CAN0_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 8 .. 9}}} \
+      PS_ENET0_MDIO {{ENABLE 1} {IO {PMC_MIO 50 .. 51}}} \
+      PS_ENET0_PERIPHERAL {{ENABLE 1} {IO {PS_MIO 0 .. 11}}} \
+      PS_ENET1_MDIO {{ENABLE 0} {IO {PMC_MIO 50 .. 51}}} \
+      PS_ENET1_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 38 .. 49}}} \
+      PS_GEN_IPI0_ENABLE {1} \
+      PS_GEN_IPI1_ENABLE {1} \
+      PS_GEN_IPI2_ENABLE {1} \
+      PS_GEN_IPI3_ENABLE {1} \
+      PS_GEN_IPI4_ENABLE {1} \
+      PS_GEN_IPI5_ENABLE {1} \
+      PS_GEN_IPI6_ENABLE {1} \
+      PS_GPIO_EMIO_PERIPHERAL_ENABLE {0} \
+      PS_I2C0_PERIPHERAL {{ENABLE 0} {IO {PS_MIO 2 .. 3}}} \
+      PS_I2C1_PERIPHERAL {{ENABLE 0} {IO {PS_MIO 0 .. 1}}} \
+      PS_NUM_FABRIC_RESETS {1} \
+      PS_PL_CONNECTIVITY_MODE {Custom} \
+      PS_TTC0_PERIPHERAL_ENABLE {1} \
+      PS_TTC1_PERIPHERAL_ENABLE {1} \
+      PS_TTC2_PERIPHERAL_ENABLE {1} \
+      PS_TTC3_PERIPHERAL_ENABLE {1} \
+      PS_UART0_PERIPHERAL {{ENABLE 1} {IO {PS_MIO 16 .. 17}}} \
+      PS_USB3_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 13 .. 25}}} \
+      PS_USE_FPD_CCI_NOC {1} \
+      PS_USE_FPD_CCI_NOC0 {1} \
+      PS_USE_M_AXI_LPD {1} \
+      PS_USE_NOC_LPD_AXI0 {1} \
+      PS_USE_PMCPL_CLK0 {0} \
+      PS_USE_PMCPL_CLK1 {0} \
+      PS_USE_PMCPL_CLK2 {0} \
+      PS_USE_PMCPL_CLK3 {0} \
+      SMON_ALARMS {Set_Alarms_On} \
+      SMON_ENABLE_TEMP_AVERAGING {0} \
+      SMON_TEMP_AVERAGING_SAMPLES {0} \
+    } \
+  ] $versal_cips_0
+
+
+  # Create instance: axi_noc_0, and set properties
+  set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_0 ]
+  set_property -dict [list \
+    CONFIG.CONTROLLERTYPE {DDR4_SDRAM} \
+    CONFIG.MC_CASLATENCY {22} \
+    CONFIG.MC_CHAN_REGION1 {NONE} \
+    CONFIG.MC_COMPONENT_WIDTH {x16} \
+    CONFIG.MC_ECC_SCRUB_SIZE {4096} \
+    CONFIG.MC_F1_TFAW {30000} \
+    CONFIG.MC_F1_TFAWMIN {30000} \
+    CONFIG.MC_F1_TRCD {13750} \
+    CONFIG.MC_F1_TRCDMIN {13750} \
+    CONFIG.MC_F1_TRRD_L {11} \
+    CONFIG.MC_F1_TRRD_L_MIN {11} \
+    CONFIG.MC_F1_TRRD_S {9} \
+    CONFIG.MC_F1_TRRD_S_MIN {9} \
+    CONFIG.MC_INPUTCLK0_PERIOD {5000} \
+    CONFIG.MC_MEMORY_SPEEDGRADE {DDR4-3200AA(22-22-22)} \
+    CONFIG.MC_SYSTEM_CLOCK {No_Buffer} \
+    CONFIG.MC_TFAW {30000} \
+    CONFIG.MC_TFAWMIN {30000} \
+    CONFIG.MC_TRC {45750} \
+    CONFIG.MC_TRCD {13750} \
+    CONFIG.MC_TRCDMIN {13750} \
+    CONFIG.MC_TRCMIN {45750} \
+    CONFIG.MC_TRP {13750} \
+    CONFIG.MC_TRPMIN {13750} \
+    CONFIG.MC_TRRD_L {11} \
+    CONFIG.MC_TRRD_L_MIN {11} \
+    CONFIG.MC_TRRD_S {9} \
+    CONFIG.MC_TRRD_S_MIN {9} \
+    CONFIG.MC_USER_DEFINED_ADDRESS_MAP {16RA-2BA-1BG-10CA} \
+    CONFIG.MI_SIDEBAND_PINS { ,0} \
+    CONFIG.NUM_CLKS {7} \
+    CONFIG.NUM_MC {1} \
+    CONFIG.NUM_MCP {4} \
+    CONFIG.NUM_MI {2} \
+    CONFIG.NUM_SI {10} \
+    CONFIG.SI_SIDEBAND_PINS { ,0,0,0,0,0,0,0,0} \
+  ] $axi_noc_0
+
+
+  set_property -dict [ list \
+   CONFIG.APERTURES {{0x201_0000_0000 1G}} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/M00_AXI]
+
+  set_property -dict [ list \
+   CONFIG.APERTURES {{0x201_8000_0000 1G}} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/M01_AXI]
+
+  set_property -dict [ list \
+   CONFIG.REGION {0} \
+   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {true}} M01_AXI {read_bw {5} write_bw {5}}} \
+   CONFIG.DEST_IDS {M00_AXI:0x140:M01_AXI:0xc0} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {ps_cci} \
+ ] [get_bd_intf_pins /axi_noc_0/S00_AXI]
+
+  set_property -dict [ list \
+   CONFIG.REGION {0} \
+   CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {ps_cci} \
+ ] [get_bd_intf_pins /axi_noc_0/S01_AXI]
+
+  set_property -dict [ list \
+   CONFIG.REGION {0} \
+   CONFIG.CONNECTIONS {MC_0 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {ps_cci} \
+ ] [get_bd_intf_pins /axi_noc_0/S02_AXI]
+
+  set_property -dict [ list \
+   CONFIG.REGION {0} \
+   CONFIG.CONNECTIONS {MC_1 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {ps_cci} \
+ ] [get_bd_intf_pins /axi_noc_0/S03_AXI]
+
+  set_property -dict [ list \
+   CONFIG.REGION {0} \
+   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
+   CONFIG.DEST_IDS {M00_AXI:0x140} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {ps_rpu} \
+ ] [get_bd_intf_pins /axi_noc_0/S04_AXI]
+
+  set_property -dict [ list \
+   CONFIG.REGION {0} \
+   CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {true}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {ps_pmc} \
+ ] [get_bd_intf_pins /axi_noc_0/S05_AXI]
+
+  set_property -dict [ list \
+   CONFIG.CONNECTIONS {MC_0 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
+   CONFIG.DEST_IDS {M01_AXI:0xc0} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/S06_AXI]
+
+  set_property -dict [ list \
+   CONFIG.CONNECTIONS {M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_1 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
+   CONFIG.DEST_IDS {M01_AXI:0xc0} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/S07_AXI]
+
+  set_property -dict [ list \
+   CONFIG.R_TRAFFIC_CLASS {BEST_EFFORT} \
+   CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/S08_AXI]
+
+  set_property -dict [ list \
+   CONFIG.CONNECTIONS {MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} \
+   CONFIG.NOC_PARAMS {} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/S09_AXI]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S00_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk0]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S01_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk1]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S02_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk2]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S03_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk3]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S04_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk4]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S05_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk5]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {M00_AXI:M01_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI} \
+ ] [get_bd_pins /axi_noc_0/aclk6]
+
+  # Create instance: rst_sys_clk_100M, and set properties
+  set rst_sys_clk_100M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_sys_clk_100M ]
+
+  # Create instance: util_ds_buf_0, and set properties
+  set util_ds_buf_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_0 ]
+
+  # Create instance: clk_wizard_0, and set properties
+  set clk_wizard_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wizard:1.0 clk_wizard_0 ]
+  set_property -dict [list \
+    CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
+    CONFIG.CLKOUT_DYN_PS {None,None,None,None,None,None,None} \
+    CONFIG.CLKOUT_GROUPING {Auto,Auto,Auto,Auto,Auto,Auto,Auto} \
+    CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
+    CONFIG.CLKOUT_PORT {clk_out1,clk_out2,clk_out3,clk_out4,clk_out5,clk_out6,clk_out7} \
+    CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
+    CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {100.000,300.000,100.000,100.000,100.000,100.000,100.000} \
+    CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
+    CONFIG.CLKOUT_USED {true,false,false,false,false,false,false} \
+    CONFIG.PHASESHIFT_MODE {LATENCY} \
+  ] $clk_wizard_0
+
+
+  # Create instance: axis_data_fifo_0, and set properties
+  set axis_data_fifo_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:2.0 axis_data_fifo_0 ]
+
+  # Create instance: axis_data_fifo_1, and set properties
+  set axis_data_fifo_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:2.0 axis_data_fifo_1 ]
+
+  # Create instance: axi_datamover_0, and set properties
+  set axi_datamover_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_datamover:5.1 axi_datamover_0 ]
+  set_property -dict [list \
+    CONFIG.c_dummy {1} \
+    CONFIG.c_enable_mm2s {0} \
+  ] $axi_datamover_0
+
+
+  # Create instance: axi_datamover_1, and set properties
+  set axi_datamover_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_datamover:5.1 axi_datamover_1 ]
+  set_property -dict [list \
+    CONFIG.c_dummy {1} \
+    CONFIG.c_enable_mm2s {0} \
+  ] $axi_datamover_1
+
+
+  # Create instance: rvfi_to_stream_0, and set properties
+  set block_name rvfi_to_stream
+  set block_cell_name rvfi_to_stream_0
+  if { [catch {set rvfi_to_stream_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $rvfi_to_stream_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: data_ram_to_axi_brid_0, and set properties
+  set block_name data_ram_to_axi_bridge
+  set block_cell_name data_ram_to_axi_brid_0
+  if { [catch {set data_ram_to_axi_brid_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $data_ram_to_axi_brid_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: instr_ram_to_axi_bri_0, and set properties
+  set block_name instr_ram_to_axi_bridge
+  set block_cell_name instr_ram_to_axi_bri_0
+  if { [catch {set instr_ram_to_axi_bri_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $instr_ram_to_axi_bri_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: ilvector_logic_0, and set properties
+  set ilvector_logic_0 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic:1.0 ilvector_logic_0 ]
+  set_property CONFIG.C_SIZE {1} $ilvector_logic_0
+
+
+  # Create instance: ibex_demo_system_wra_0, and set properties
+  set ibex_demo_system_wra_0 [ create_bd_cell -type ip -vlnv user.org:user:ibex_demo_system_wrapper:1.0 ibex_demo_system_wra_0 ]
+
+  # Create instance: axi_bram_ctrl_0, and set properties
+  set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_0 ]
+  set_property -dict [list \
+    CONFIG.DATA_WIDTH {128} \
+    CONFIG.SINGLE_PORT_BRAM {1} \
+  ] $axi_bram_ctrl_0
+
+
+  # Create instance: debug_mem, and set properties
+  set debug_mem [ create_bd_cell -type ip -vlnv xilinx.com:ip:emb_mem_gen:1.0 debug_mem ]
+  set_property CONFIG.MEMORY_TYPE {True_Dual_Port_RAM} $debug_mem
+
+
+  # Create instance: ilconstant_0, and set properties
+  set ilconstant_0 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant:1.0 ilconstant_0 ]
+
+  # Create instance: ps_io_wrapper_0, and set properties
+  set block_name ps_io_wrapper
+  set block_cell_name ps_io_wrapper_0
+  if { [catch {set ps_io_wrapper_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $ps_io_wrapper_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: axi_bram_ctrl_1, and set properties
+  set axi_bram_ctrl_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_1 ]
+  set_property CONFIG.SINGLE_PORT_BRAM {1} $axi_bram_ctrl_1
+
+
+  # Create instance: ilconstant_1, and set properties
+  set ilconstant_1 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant:1.0 ilconstant_1 ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {0} \
+    CONFIG.CONST_WIDTH {32} \
+  ] $ilconstant_1
+
+
+  # Create instance: c_addsub_0, and set properties
+  set c_addsub_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:c_addsub:12.0 c_addsub_0 ]
+  set_property -dict [list \
+    CONFIG.A_Width {64} \
+    CONFIG.B_Constant {true} \
+    CONFIG.B_Value {0000000000000000000000100000000110000000000000000000000000000000} \
+    CONFIG.B_Width {64} \
+    CONFIG.CE {false} \
+    CONFIG.Latency {0} \
+    CONFIG.Out_Width {64} \
+  ] $c_addsub_0
+
+
+  # Create instance: c_addsub_1, and set properties
+  set c_addsub_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:c_addsub:12.0 c_addsub_1 ]
+  set_property -dict [list \
+    CONFIG.A_Width {64} \
+    CONFIG.B_Constant {true} \
+    CONFIG.B_Value {0000000000000000000000100000000110000000000000000000000000000000} \
+    CONFIG.B_Width {64} \
+    CONFIG.CE {false} \
+    CONFIG.Latency {0} \
+    CONFIG.Out_Width {64} \
+  ] $c_addsub_1
+
+
+  # Create instance: c_addsub_2, and set properties
+  set c_addsub_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:c_addsub:12.0 c_addsub_2 ]
+  set_property -dict [list \
+    CONFIG.A_Width {64} \
+    CONFIG.B_Constant {true} \
+    CONFIG.B_Value {0000000000000000000000100000000110000000000000000000000000000000} \
+    CONFIG.B_Width {64} \
+    CONFIG.CE {false} \
+    CONFIG.Latency {0} \
+    CONFIG.Out_Width {64} \
+  ] $c_addsub_2
+
+
+  # Create instance: debug_module_wrapper_0, and set properties
+  set debug_module_wrapper_0 [ create_bd_cell -type ip -vlnv user.org:user:debug_module_wrapper:1.0 debug_module_wrapper_0 ]
+
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {rvfi_cmd:rvfi_csr_cmd:rvfi_csr_stream:rvfi_csr_sts:rvfi_stream:rvfi_sts:M_AXI_DATA:M_AXI_INSTR} \
+ ] [get_bd_pins /debug_module_wrapper_0/sys_clk]
+
+  # Create instance: fit_timer_0, and set properties
+  set fit_timer_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:fit_timer:2.0 fit_timer_0 ]
+  set_property -dict [list \
+    CONFIG.C_INACCURACY {10} \
+    CONFIG.C_NO_CLOCKS {10000} \
+  ] $fit_timer_0
+
+
+  # Create instance: ilvector_logic_1, and set properties
+  set ilvector_logic_1 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic:1.0 ilvector_logic_1 ]
+  set_property -dict [list \
+    CONFIG.C_OPERATION {not} \
+    CONFIG.C_SIZE {1} \
+  ] $ilvector_logic_1
+
+
+  # Create instance: my_ram_wrapper_0, and set properties
+  set block_name my_ram_wrapper
+  set block_cell_name my_ram_wrapper_0
+  if { [catch {set my_ram_wrapper_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $my_ram_wrapper_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create interface connections
+  connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA] [get_bd_intf_pins debug_mem/BRAM_PORTA]
+  connect_bd_intf_net -intf_net axi_datamover_0_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/rvfi_sts]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_0_M_AXIS_S2MM_STS] [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_sts]
+  connect_bd_intf_net -intf_net axi_datamover_0_M_AXI_S2MM [get_bd_intf_pins axi_datamover_0/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S08_AXI]
+  connect_bd_intf_net -intf_net axi_datamover_1_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_1/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_sts]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_1_M_AXIS_S2MM_STS] [get_bd_intf_pins axi_datamover_1/M_AXIS_S2MM_STS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_sts]
+  connect_bd_intf_net -intf_net axi_datamover_1_M_AXI_S2MM [get_bd_intf_pins axi_datamover_1/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S09_AXI]
+  connect_bd_intf_net -intf_net axi_noc_0_CH0_DDR4_0 [get_bd_intf_ports DDR4] [get_bd_intf_pins axi_noc_0/CH0_DDR4_0]
+  connect_bd_intf_net -intf_net axi_noc_0_M00_AXI [get_bd_intf_pins axi_noc_0/M00_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
+  connect_bd_intf_net -intf_net axi_noc_0_M01_AXI [get_bd_intf_pins axi_bram_ctrl_1/S_AXI] [get_bd_intf_pins axi_noc_0/M01_AXI]
+  connect_bd_intf_net -intf_net axis_data_fifo_0_M_AXIS [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM]
+  connect_bd_intf_net -intf_net axis_data_fifo_1_M_AXIS [get_bd_intf_pins axis_data_fifo_1/M_AXIS] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM]
+  connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins axi_noc_0/S07_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets data_ram_to_axi_brid_0_M_AXI] [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins debug_module_wrapper_0/M_AXI_DATA]
+  connect_bd_intf_net -intf_net debug_module_wrapper_0_DEBUG [get_bd_intf_pins debug_module_wrapper_0/DEBUG] [get_bd_intf_pins debug_mem/BRAM_PORTB]
+  connect_bd_intf_net -intf_net ibex_demo_system_wra_0_ibex_ram_a [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_a] [get_bd_intf_pins data_ram_to_axi_brid_0/S_RAM]
+connect_bd_intf_net -intf_net [get_bd_intf_nets ibex_demo_system_wra_0_ibex_ram_a] [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_a] [get_bd_intf_pins debug_module_wrapper_0/S_RAM_DATA]
+  connect_bd_intf_net -intf_net ibex_demo_system_wra_0_ibex_ram_b [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_b] [get_bd_intf_pins instr_ram_to_axi_bri_0/S_RAM]
+connect_bd_intf_net -intf_net [get_bd_intf_nets ibex_demo_system_wra_0_ibex_ram_b] [get_bd_intf_pins ibex_demo_system_wra_0/ibex_ram_b] [get_bd_intf_pins debug_module_wrapper_0/S_RAM_INSTR]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_intf_nets ibex_demo_system_wra_0_ibex_ram_b]
+  connect_bd_intf_net -intf_net ibex_demo_system_wra_0_rvfi [get_bd_intf_pins ibex_demo_system_wra_0/rvfi] [get_bd_intf_pins rvfi_to_stream_0/rvfi_in]
+connect_bd_intf_net -intf_net [get_bd_intf_nets ibex_demo_system_wra_0_rvfi] [get_bd_intf_pins ibex_demo_system_wra_0/rvfi] [get_bd_intf_pins debug_module_wrapper_0/rvfi]
+  connect_bd_intf_net -intf_net instr_ram_to_axi_bri_0_M_AXI [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins axi_noc_0/S06_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets instr_ram_to_axi_bri_0_M_AXI] [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins debug_module_wrapper_0/M_AXI_INSTR]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_intf_nets instr_ram_to_axi_bri_0_M_AXI]
+  connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_cmd [get_bd_intf_pins rvfi_to_stream_0/rvfi_cmd] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM_CMD]
+connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_cmd] [get_bd_intf_pins rvfi_to_stream_0/rvfi_cmd] [get_bd_intf_pins debug_module_wrapper_0/rvfi_cmd]
+  connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_cmd [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_cmd] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM_CMD]
+connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_csr_cmd] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_cmd] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_cmd]
+  connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_csr_stream [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_stream] [get_bd_intf_pins axis_data_fifo_0/S_AXIS]
+connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_csr_stream] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_stream] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_stream]
+  connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_stream [get_bd_intf_pins rvfi_to_stream_0/rvfi_stream] [get_bd_intf_pins axis_data_fifo_1/S_AXIS]
+connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [get_bd_intf_pins rvfi_to_stream_0/rvfi_stream] [get_bd_intf_pins debug_module_wrapper_0/rvfi_stream]
+  connect_bd_intf_net -intf_net sys_1 [get_bd_intf_ports sys] [get_bd_intf_pins util_ds_buf_0/CLK_IN_D]
+  connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_0 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_0] [get_bd_intf_pins axi_noc_0/S00_AXI]
+  connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_1 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_1] [get_bd_intf_pins axi_noc_0/S01_AXI]
+  connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_2 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_2] [get_bd_intf_pins axi_noc_0/S02_AXI]
+  connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_3 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_3] [get_bd_intf_pins axi_noc_0/S03_AXI]
+  connect_bd_intf_net -intf_net versal_cips_0_LPD_AXI_NOC_0 [get_bd_intf_pins versal_cips_0/LPD_AXI_NOC_0] [get_bd_intf_pins axi_noc_0/S04_AXI]
+  connect_bd_intf_net -intf_net versal_cips_0_M_AXI_LPD [get_bd_intf_pins versal_cips_0/M_AXI_LPD] [get_bd_intf_pins ps_io_wrapper_0/S_AXI]
+  connect_bd_intf_net -intf_net versal_cips_0_PMC_NOC_AXI_0 [get_bd_intf_pins versal_cips_0/PMC_NOC_AXI_0] [get_bd_intf_pins axi_noc_0/S05_AXI]
+
+  # Create port connections
+  connect_bd_net -net axi_bram_ctrl_1_bram_addr_a  [get_bd_pins axi_bram_ctrl_1/bram_addr_a] \
+  [get_bd_pins my_ram_wrapper_0/addr]
+  connect_bd_net -net axi_bram_ctrl_1_bram_clk_a  [get_bd_pins axi_bram_ctrl_1/bram_clk_a] \
+  [get_bd_pins my_ram_wrapper_0/clk]
+  connect_bd_net -net c_addsub_0_S  [get_bd_pins c_addsub_0/S] \
+  [get_bd_pins axi_noc_0/S06_AXI_araddr]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_nets c_addsub_0_S]
+  connect_bd_net -net c_addsub_1_S  [get_bd_pins c_addsub_1/S] \
+  [get_bd_pins axi_noc_0/S07_AXI_awaddr]
+  connect_bd_net -net c_addsub_2_S  [get_bd_pins c_addsub_2/S] \
+  [get_bd_pins axi_noc_0/S07_AXI_araddr]
+  connect_bd_net -net clk_wizard_0_clk_out1  [get_bd_pins clk_wizard_0/clk_out1] \
+  [get_bd_pins rst_sys_clk_100M/slowest_sync_clk] \
+  [get_bd_pins axi_datamover_0/m_axi_s2mm_aclk] \
+  [get_bd_pins axi_datamover_0/m_axis_s2mm_cmdsts_awclk] \
+  [get_bd_pins axi_datamover_1/m_axi_s2mm_aclk] \
+  [get_bd_pins axi_datamover_1/m_axis_s2mm_cmdsts_awclk] \
+  [get_bd_pins axis_data_fifo_0/s_axis_aclk] \
+  [get_bd_pins axis_data_fifo_1/s_axis_aclk] \
+  [get_bd_pins axi_noc_0/aclk6] \
+  [get_bd_pins versal_cips_0/m_axi_lpd_aclk] \
+  [get_bd_pins rvfi_to_stream_0/clk] \
+  [get_bd_pins instr_ram_to_axi_bri_0/clk] \
+  [get_bd_pins data_ram_to_axi_brid_0/clk] \
+  [get_bd_pins ibex_demo_system_wra_0/sys_clk] \
+  [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] \
+  [get_bd_pins ps_io_wrapper_0/clk] \
+  [get_bd_pins axi_bram_ctrl_1/s_axi_aclk] \
+  [get_bd_pins debug_module_wrapper_0/sys_clk] \
+  [get_bd_pins fit_timer_0/Clk]
+  connect_bd_net -net data_ram_to_axi_brid_0_M_AXI_araddr  [get_bd_pins data_ram_to_axi_brid_0/M_AXI_araddr] \
+  [get_bd_pins c_addsub_2/A]
+  connect_bd_net -net data_ram_to_axi_brid_0_M_AXI_awaddr  [get_bd_pins data_ram_to_axi_brid_0/M_AXI_awaddr] \
+  [get_bd_pins c_addsub_1/A]
+  connect_bd_net -net fit_timer_0_Interrupt  [get_bd_pins fit_timer_0/Interrupt] \
+  [get_bd_pins ilvector_logic_1/Op1]
+  connect_bd_net -net ibex_demo_system_wra_0_led  [get_bd_pins ibex_demo_system_wra_0/led] \
+  [get_bd_ports led]
+  connect_bd_net -net ilconstant_0_dout  [get_bd_pins ilconstant_0/dout] \
+  [get_bd_pins debug_mem/regcea] \
+  [get_bd_pins debug_mem/regceb]
+  connect_bd_net -net ilconstant_1_dout  [get_bd_pins ilconstant_1/dout] \
+  [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
+  connect_bd_net -net ilvector_logic_0_Res  [get_bd_pins ilvector_logic_0/Res] \
+  [get_bd_pins data_ram_to_axi_brid_0/rstn] \
+  [get_bd_pins instr_ram_to_axi_bri_0/rstn] \
+  [get_bd_pins rvfi_to_stream_0/rstn] \
+  [get_bd_pins ibex_demo_system_wra_0/sys_rstn] \
+  [get_bd_pins debug_module_wrapper_0/sys_rstn]
+  connect_bd_net -net ilvector_logic_1_Res  [get_bd_pins ilvector_logic_1/Res] \
+  [get_bd_pins ilvector_logic_0/Op1]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_nets ilvector_logic_1_Res]
+  connect_bd_net -net instr_ram_to_axi_bri_0_M_AXI_araddr  [get_bd_pins instr_ram_to_axi_bri_0/M_AXI_araddr] \
+  [get_bd_pins c_addsub_0/A]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_nets instr_ram_to_axi_bri_0_M_AXI_araddr]
+  connect_bd_net -net my_ram_wrapper_0_dout  [get_bd_pins my_ram_wrapper_0/dout] \
+  [get_bd_pins axi_bram_ctrl_1/bram_rddata_a]
+  connect_bd_net -net ps_io_wrapper_0_flush_rvfi  [get_bd_pins ps_io_wrapper_0/flush_rvfi] \
+  [get_bd_pins rvfi_to_stream_0/flush]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_base_addr  [get_bd_pins ps_io_wrapper_0/rvfi_base_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_base_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_base_addr  [get_bd_pins ps_io_wrapper_0/rvfi_csr_base_addr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_csr_base_addr]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_sw_idx  [get_bd_pins ps_io_wrapper_0/rvfi_csr_sw_idx] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_csr_sw_idx]
+  connect_bd_net -net ps_io_wrapper_0_rvfi_sw_idx  [get_bd_pins ps_io_wrapper_0/rvfi_sw_idx] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_sw_idx]
+  connect_bd_net -net rst_sys_clk_100M_peripheral_aresetn  [get_bd_pins rst_sys_clk_100M/peripheral_aresetn] \
+  [get_bd_pins axi_datamover_0/m_axi_s2mm_aresetn] \
+  [get_bd_pins axi_datamover_0/m_axis_s2mm_cmdsts_aresetn] \
+  [get_bd_pins axi_datamover_1/m_axis_s2mm_cmdsts_aresetn] \
+  [get_bd_pins axi_datamover_1/m_axi_s2mm_aresetn] \
+  [get_bd_pins axis_data_fifo_0/s_axis_aresetn] \
+  [get_bd_pins axis_data_fifo_1/s_axis_aresetn] \
+  [get_bd_pins ilvector_logic_0/Op2] \
+  [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] \
+  [get_bd_pins ps_io_wrapper_0/rstn] \
+  [get_bd_pins axi_bram_ctrl_1/s_axi_aresetn] \
+  [get_bd_pins fit_timer_0/Rst]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_csr_hw_idx  [get_bd_pins rvfi_to_stream_0/rvfi_csr_hw_idx] \
+  [get_bd_pins ps_io_wrapper_0/rvfi_csr_hw_idx]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_hw_idx  [get_bd_pins rvfi_to_stream_0/rvfi_hw_idx] \
+  [get_bd_pins ps_io_wrapper_0/rvfi_hw_idx]
+  connect_bd_net -net util_ds_buf_0_IBUF_OUT  [get_bd_pins util_ds_buf_0/IBUF_OUT] \
+  [get_bd_pins clk_wizard_0/clk_in1] \
+  [get_bd_pins axi_noc_0/sys_clk0]
+  connect_bd_net -net versal_cips_0_fpd_cci_noc_axi0_clk  [get_bd_pins versal_cips_0/fpd_cci_noc_axi0_clk] \
+  [get_bd_pins axi_noc_0/aclk0]
+  connect_bd_net -net versal_cips_0_fpd_cci_noc_axi1_clk  [get_bd_pins versal_cips_0/fpd_cci_noc_axi1_clk] \
+  [get_bd_pins axi_noc_0/aclk1]
+  connect_bd_net -net versal_cips_0_fpd_cci_noc_axi2_clk  [get_bd_pins versal_cips_0/fpd_cci_noc_axi2_clk] \
+  [get_bd_pins axi_noc_0/aclk2]
+  connect_bd_net -net versal_cips_0_fpd_cci_noc_axi3_clk  [get_bd_pins versal_cips_0/fpd_cci_noc_axi3_clk] \
+  [get_bd_pins axi_noc_0/aclk3]
+  connect_bd_net -net versal_cips_0_lpd_axi_noc_clk  [get_bd_pins versal_cips_0/lpd_axi_noc_clk] \
+  [get_bd_pins axi_noc_0/aclk4]
+  connect_bd_net -net versal_cips_0_pl0_resetn  [get_bd_pins versal_cips_0/pl0_resetn] \
+  [get_bd_pins rst_sys_clk_100M/ext_reset_in]
+  connect_bd_net -net versal_cips_0_pmc_axi_noc_axi0_clk  [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] \
+  [get_bd_pins axi_noc_0/aclk5]
+
+  # Create address segments
+  assign_bd_address -offset 0x020100000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x020180000000 -range 0x00002000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_1/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_noc_0/S00_AXI/C3_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_1] [get_bd_addr_segs axi_noc_0/S01_AXI/C2_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_2] [get_bd_addr_segs axi_noc_0/S02_AXI/C0_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_3] [get_bd_addr_segs axi_noc_0/S03_AXI/C1_DDR_LOW0] -force
+  assign_bd_address -offset 0x020100000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW0] -force
+  assign_bd_address -offset 0x80000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_LPD] [get_bd_addr_segs ps_io_wrapper_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_datamover_0/Data_S2MM] [get_bd_addr_segs axi_noc_0/S08_AXI/C2_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_datamover_1/Data_S2MM] [get_bd_addr_segs axi_noc_0/S09_AXI/C3_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces data_ram_to_axi_brid_0/M_AXI] [get_bd_addr_segs axi_noc_0/S07_AXI/C1_DDR_LOW0] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces instr_ram_to_axi_bri_0/M_AXI] [get_bd_addr_segs axi_noc_0/S06_AXI/C0_DDR_LOW0] -force
+
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+
+  validate_bd_design
+  save_bd_design
+}
+# End of create_root_design()
+
+
+##################################################################
+# MAIN FLOW
+##################################################################
+
+create_root_design ""
+
+
