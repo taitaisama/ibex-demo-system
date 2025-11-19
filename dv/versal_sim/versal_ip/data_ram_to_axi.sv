@@ -1,3 +1,4 @@
+`default_nettype none
 module data_ram_to_axi
 # (
    parameter int READ_BURST_BITS = 2,

@@ -1,3 +1,5 @@
+`default_nettype none
+
 module ibex_demo_system_wrapper
   (
    input	  sys_clk,

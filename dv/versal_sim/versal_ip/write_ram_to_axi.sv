@@ -1,3 +1,4 @@
+`default_nettype none
 // assuming no writes to same address while prev write is pending
 // handled outside
 module write_ram_to_axi

@@ -1,3 +1,4 @@
+`default_nettype none
 module fifo_wrapper
   # (
      parameter int WIDTH,

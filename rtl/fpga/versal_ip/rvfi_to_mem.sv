@@ -1,9 +1,10 @@
+`default_nettype none
 
 module rvfi_to_mem #(
      parameter int	    NUM_CSR_WORDS = 20,
-     parameter int	    IN_WIDTH = 144,
-     parameter int	    OUT_WIDTH = 208,
-     parameter int	    CSR_WIDTH = 104,
+     parameter int	    IN_WIDTH = 208,
+     parameter int	    OUT_WIDTH = 232,
+     parameter int	    CSR_WIDTH = 64,
      parameter logic [31:0] BUFFER_SIZE = 32'h100000,
      parameter int	    NUM_BUFFERS = 4)
 (
@@ -19,7 +20,7 @@ module rvfi_to_mem #(
  input logic				clk,
  input logic				rstn,
  input logic				valid_i,
- input [63:0]				rvfi_mcycle,
+ input [23:0]				rvfi_counter,
  input [IN_WIDTH-1:0]			rvfi,
  input [31:0]				rvfi_csr [NUM_CSR_WORDS],
  output logic				wready_o,
@@ -51,13 +52,19 @@ module rvfi_to_mem #(
 
  );
 
-   logic [63:0]   mcycle;
+   logic [23:0]   rvfi_counter_store;
 
    logic [31:0]   csr_data;
    logic [7:0]    csr_addr;
    logic          csr_ready, csr_valid;
    
    assign csr_addr[7:$clog2(NUM_CSR_WORDS+1)] = '0;
+
+   always_ff @(posedge clk) begin
+      if (valid_i) begin
+         rvfi_counter_store <= rvfi_counter;
+      end
+   end
 
    rvfi_csr #(.NUM_WORDS (NUM_CSR_WORDS), .WIDTH (32)) 
    u_csr (
@@ -74,9 +81,9 @@ module rvfi_to_mem #(
    always_comb begin
       wready_o = csr_ready && fifo_ready_i && fifo_ready_csr_i;
       fifo_valid_o = valid_i;
-      fifo_data_o  = {rvfi_mcycle, rvfi};
+      fifo_data_o  = {rvfi_counter, rvfi};
       fifo_valid_csr_o = csr_valid;
-      fifo_data_csr_o <= {mcycle, csr_addr, csr_data};   
+      fifo_data_csr_o = {rvfi_counter_store, csr_addr, csr_data};   
    end
 
    datamover_cmd
@@ -111,7 +118,7 @@ module rvfi_to_mem #(
       .base_addr (rvfi_csr_base_addr),
       .hw_idx (rvfi_csr_hw_idx),
       .sw_idx (rvfi_csr_sw_idx),
-      .fifo_write (fifo_csr_valid_o && fifo_csr_ready_i),
+      .fifo_write (fifo_valid_csr_o && fifo_ready_i),
       .flush (flush),
       .m_axis_cmd_tdata (cmd_csr_data_o),
       .m_axis_cmd_tvalid (cmd_csr_valid_o),

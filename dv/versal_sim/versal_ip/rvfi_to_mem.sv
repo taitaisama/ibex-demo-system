@@ -1,3 +1,4 @@
+`default_nettype none
 
 module rvfi_to_mem #(
      parameter int NUM_CSR_WORDS = 20,

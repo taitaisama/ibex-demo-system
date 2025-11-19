@@ -1,3 +1,5 @@
+`default_nettype none
+
 module fifo_wrapper
   # (
      parameter int WIDTH,
@@ -89,9 +91,9 @@ module fifo_wrapper
 	 .fifo_write_wr_en (fifo_write_wr_en)
 	 ); 
 
-   end else if (WIDTH == 832 && DEPTH == 16) begin : g_fifo_832_16
+   end else if (WIDTH == 856 && DEPTH == 16) begin : g_fifo_856_16
 
-      fifo_832_16_wrapper u_fifo 
+      fifo_856_16_wrapper u_fifo 
 	(
 	 .clk(clk),
 	 .rst (rst),

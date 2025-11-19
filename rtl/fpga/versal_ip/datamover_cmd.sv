@@ -1,3 +1,5 @@
+`default_nettype none
+
 module datamover_cmd #(
     parameter		   DATA_WIDTH = 8,
     parameter		   ADDR_WIDTH = 32,

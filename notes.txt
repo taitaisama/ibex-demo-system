@@ -88,3 +88,7 @@
 
    note UVM DV regression requires VCS or something, can be skipped
 
+6. TODO:
+
+reduce size of fifos, add almost full which you can use in rvfi CSR to make sure that you don't overwrite
+stuff is more fixed now hopefully

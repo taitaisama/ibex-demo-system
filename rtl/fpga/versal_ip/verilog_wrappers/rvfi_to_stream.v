@@ -1,7 +1,9 @@
+`default_nettype none
+
 module rvfi_to_stream
  #(
    parameter OUT_WIDTH = 256,
-   parameter CSR_WIDTH = 128,
+   parameter CSR_WIDTH = 64,
    parameter BUFFER_SIZE = 32'h100000,
    parameter NUM_BUFFERS = 4)
 ( 

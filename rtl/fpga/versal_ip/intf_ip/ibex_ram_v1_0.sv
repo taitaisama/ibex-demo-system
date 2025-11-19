@@ -1,3 +1,4 @@
+`default_nettype none
 // (c) Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // (c) Copyright 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 // 

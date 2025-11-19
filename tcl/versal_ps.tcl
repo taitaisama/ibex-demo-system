@@ -841,6 +841,6 @@ create_fifo_design "" 128 6 "fifo_6_128"
 create_fifo_design "" 128 32 "fifo_32_128"
 create_fifo_design "" 128 40 "fifo_40_128"
 create_fifo_design "" 128 69 "fifo_69_128"
-create_fifo_design "" 16 832 "fifo_832_16"
+create_fifo_design "" 16 856 "fifo_856_16"
 
 set_property top ps_subsystem_wrapper [current_fileset]

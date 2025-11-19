@@ -1,3 +1,5 @@
+`default_nettype none
+
 module debug_module
   # (
      parameter int OUTPUT_WIDTH = 128,

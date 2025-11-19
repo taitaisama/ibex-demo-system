@@ -1,3 +1,5 @@
+`default_nettype none
+
 module debug_module_wrapper
   # (
      parameter OUTPUT_WIDTH = 128,

@@ -1,3 +1,4 @@
+`default_nettype none
 
 module rvfi_csr #(parameter int NUM_WORDS, parameter int WIDTH)
 (

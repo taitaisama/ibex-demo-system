@@ -1,8 +1,10 @@
+`default_nettype none
+
 module rvfi_handler #(
    parameter		  FULL_OUT_WIDTH = 256,
-   parameter		  FULL_CSR_WIDTH = 128,
-   parameter int	  OUT_WIDTH = 208,
-   parameter int	  CSR_WIDTH = 104,
+   parameter		  FULL_CSR_WIDTH = 64,
+   parameter int	  OUT_WIDTH = 232,
+   parameter int	  CSR_WIDTH = 64,
    parameter logic [31:0] BUFFER_SIZE = 32'h100000,
    parameter int	  NUM_BUFFERS = 4)
 ( 
@@ -65,6 +67,7 @@ module rvfi_handler #(
 );
 
    typedef struct packed {
+      logic [23:0] counter;
       logic [63:0] rvfi_ext_mcycle;
       logic        rvfi_trap;
       logic [ 4:0] rvfi_rd_addr;
@@ -84,7 +87,20 @@ module rvfi_handler #(
    rvfi_data_t fifo_input_rvfi;
    rvfi_data_t fifo_output_rvfi;
 
+   logic [23:0] rvfi_counter;
+
+   always_ff @(posedge clk or negedge rstn) begin
+      if (!rstn) begin
+         rvfi_counter     <= '0;
+      end else begin
+         if (rvfi_valid_i) begin
+            rvfi_counter  <= rvfi_counter + 1;
+         end
+      end
+   end
+
    always_comb begin
+      fifo_input_rvfi.counter = rvfi_counter;
       fifo_input_rvfi.rvfi_trap = rvfi_trap_i;
       fifo_input_rvfi.rvfi_rd_addr = rvfi_rd_addr_i;
       fifo_input_rvfi.rvfi_rd_wdata = rvfi_rd_wdata_i;
@@ -112,7 +128,7 @@ module rvfi_handler #(
       rvfi_to_mem_valid = rvfi_fifo_data_valid && rvfi_to_mem_ready;
    end
 
-   fifo_wrapper #(.WIDTH(832), .DEPTH(16))
+   fifo_wrapper #(.WIDTH(856), .DEPTH(16))
    u_rvfi_fifo (
       .clk (clk),
       .rst (~rstn),
@@ -127,14 +143,16 @@ module rvfi_handler #(
 
    always_comb rvfi_busy_o = rvfi_fifo_almost_full || rvfi_fifo_busy;
 
-   logic [63:0]  rvfi_out_mcycle;
-   logic [143:0] rvfi_out_data;
+   logic [23:0]  rvfi_out_counter;
+   logic [207:0] rvfi_out_data;
    logic [31:0]  rvfi_out_csr [20];
 
    always_comb begin
-      rvfi_out_mcycle = fifo_output_rvfi.rvfi_ext_mcycle;
 
-      rvfi_out_data = {fifo_output_rvfi.rvfi_rd_wdata,
+      rvfi_out_counter = fifo_output_rvfi.counter;
+
+      rvfi_out_data = {fifo_output_rvfi.rvfi_ext_mcycle,
+                       fifo_output_rvfi.rvfi_rd_wdata,
                        fifo_output_rvfi.rvfi_pc_rdata,
                        fifo_output_rvfi.rvfi_ext_pre_mip,
                        fifo_output_rvfi.rvfi_ext_post_mip,
@@ -182,7 +200,7 @@ module rvfi_handler #(
       .rvfi_csr_hw_idx,
 
       .valid_i (rvfi_to_mem_valid),
-      .rvfi_mcycle (rvfi_out_mcycle),
+      .rvfi_counter (rvfi_out_counter),
       .rvfi (rvfi_out_data),
       .rvfi_csr (rvfi_out_csr),
       .wready_o (rvfi_to_mem_ready),

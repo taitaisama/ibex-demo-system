@@ -1,3 +1,4 @@
+`default_nettype none
 module rvfi_handler #(
   localparam int OUT_WIDTH = 208,
   localparam int CSR_WIDTH = 104) 

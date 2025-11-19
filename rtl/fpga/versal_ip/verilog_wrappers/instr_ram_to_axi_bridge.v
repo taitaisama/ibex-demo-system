@@ -1,3 +1,5 @@
+`default_nettype none
+
 module instr_ram_to_axi_bridge
 # (
    parameter NUM_ID_BITS = 4,

@@ -1,5 +1,7 @@
 // assuming no writes to same address while prev write is pending
 // handled outside
+`default_nettype none
+
 module write_ram_to_axi
 # (
    parameter int NUM_ID_BITS = 4,
