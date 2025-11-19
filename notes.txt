@@ -79,3 +79,12 @@
    You can make changes to hello_world.c (under hello_world -> Sources), which can also interact with the hardware
 
 
+5. ibex cosim
+
+   have to fiddle around with versions of verilator for this one
+   what worked for me was verilator version 5.031, which can be made from the commit : 676fd3163590dc62c9121d0966857c2c4397251f
+
+   after this you just have to follow https://ibex-core.readthedocs.io/en/latest/03_reference/cosim.html
+
+   note UVM DV regression requires VCS or something, can be skipped
+

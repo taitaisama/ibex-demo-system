@@ -133,7 +133,19 @@ module rvfi_handler #(
 
    always_comb begin
       rvfi_out_mcycle = fifo_output_rvfi.rvfi_ext_mcycle;
-      rvfi_out_data = {fifo_output_rvfi.rvfi_trap, fifo_output_rvfi.rvfi_rd_addr, fifo_output_rvfi.rvfi_rd_wdata, fifo_output_rvfi.rvfi_pc_rdata, fifo_output_rvfi.rvfi_ext_pre_mip, fifo_output_rvfi.rvfi_ext_post_mip, fifo_output_rvfi.rvfi_ext_nmi, fifo_output_rvfi.rvfi_ext_nmi_int, fifo_output_rvfi.rvfi_ext_debug_req, fifo_output_rvfi.rvfi_ext_rf_wr_suppress, fifo_output_rvfi.rvfi_ext_ic_scr_key_valid};
+
+      rvfi_out_data = {fifo_output_rvfi.rvfi_rd_wdata,
+                       fifo_output_rvfi.rvfi_pc_rdata,
+                       fifo_output_rvfi.rvfi_ext_pre_mip,
+                       fifo_output_rvfi.rvfi_ext_post_mip,
+                       fifo_output_rvfi.rvfi_rd_addr,
+                       fifo_output_rvfi.rvfi_ext_nmi,
+                       fifo_output_rvfi.rvfi_ext_nmi_int,
+                       fifo_output_rvfi.rvfi_ext_debug_req,
+                       fifo_output_rvfi.rvfi_ext_rf_wr_suppress,
+                       fifo_output_rvfi.rvfi_ext_ic_scr_key_valid,
+                       fifo_output_rvfi.rvfi_trap,
+                       5'b0};
       for (int i = 0; i < 10; i ++) begin
          rvfi_out_csr[i] = fifo_output_rvfi.rvfi_ext_mhpmcounters[i*32 +: 32];
          rvfi_out_csr[10+i] = fifo_output_rvfi.rvfi_ext_mhpmcountersh[i*32 +: 32];
@@ -145,6 +157,8 @@ module rvfi_handler #(
       fifo_data_csr_o[FULL_CSR_WIDTH-CSR_WIDTH-1:0] = '0;
       fifo_keep_o = {(FULL_OUT_WIDTH/8){1'b1}};
       fifo_keep_csr_o = {(FULL_CSR_WIDTH/8){1'b1}};
+      // fifo_keep_o = {{(OUT_WIDTH/8){1'b1}}, {(FULL_OUT_WIDTH-OUT_WIDTH/8){1'b0}}};
+      // fifo_keep_csr_o = {{(CSR_WIDTH/8){1'b1}}, {(FULL_CSR_WIDTH-CSR_WIDTH/8){1'b0}}};
    end
 
    
