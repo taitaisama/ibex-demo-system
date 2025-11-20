@@ -1,4 +1,4 @@
-`default_nettype none
+
 
 module fifo_wrapper
   # (
@@ -6,15 +6,15 @@ module fifo_wrapper
      parameter int DEPTH
      )
 (
-  input logic		   clk,
-  input logic		   rst,
+  input wire		   clk,
+  input wire		   rst,
   output logic		   data_valid,
   output logic		   fifo_wr_busy,
   output logic		   fifo_almost_full,
   output logic [WIDTH-1:0] fifo_read_rd_data,
-  input logic		   fifo_read_rd_en,
-  input logic [WIDTH-1:0]  fifo_write_wr_data,
-  input logic		   fifo_write_wr_en
+  input wire		   fifo_read_rd_en,
+  input wire [WIDTH-1:0]  fifo_write_wr_data,
+  input wire		   fifo_write_wr_en
  );
 
    if (WIDTH == 4 && DEPTH == 128) begin : g_fifo_4_128

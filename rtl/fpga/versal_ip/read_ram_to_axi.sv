@@ -1,4 +1,4 @@
-`default_nettype none
+
 
 module read_ram_to_axi
 # (
@@ -6,11 +6,11 @@ module read_ram_to_axi
    parameter int READ_BURST_BITS = 2
    )
 (
-  input logic			     clk,
-  input logic			     rstn,
+  input wire			     clk,
+  input wire			     rstn,
    
-  input logic			     s_req,
-  input logic [31:0]		     s_addr,
+  input wire			     s_req,
+  input wire [31:0]		     s_addr,
   output logic			     s_rvalid,
   output logic [31:0]		     s_rdata,
   output logic			     s_gnt,
@@ -19,19 +19,19 @@ module read_ram_to_axi
   output logic [READ_BURST_BITS-1:0] info_rburst,
 
   output logic			     m_arvalid,
-  input logic			     m_arready,
+  input wire			     m_arready,
   output logic [31:0]		     m_araddr,
   output logic [2:0]		     m_arsize,
   output logic [1:0]		     m_arburst,
   output logic [NUM_ID_BITS-1:0]     m_arid,
   output logic [7:0]		     m_arlen,
 
-  input logic			     m_rvalid,
+  input wire			     m_rvalid,
   output logic			     m_rready,
-  input logic			     m_rlast,
-  input logic [31:0]		     m_rdata,
-  input logic [1:0]		     m_rresp,
-  input logic [NUM_ID_BITS-1:0]	     m_rid
+  input wire			     m_rlast,
+  input wire [31:0]		     m_rdata,
+  input wire [1:0]		     m_rresp,
+  input wire [NUM_ID_BITS-1:0]	     m_rid
 );
 
    localparam int READ_BURST_LEN = 2**READ_BURST_BITS;

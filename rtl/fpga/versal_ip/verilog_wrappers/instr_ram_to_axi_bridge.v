@@ -1,4 +1,3 @@
-`default_nettype none
 
 module instr_ram_to_axi_bridge
 # (

@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`default_nettype none
+
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
@@ -22,8 +22,8 @@
 
 
 module my_ram (
-    input logic clk,
-    input logic [12:0] addr,
+    input wire clk,
+    input wire [12:0] addr,
     output logic [31:0] dout
 );
 

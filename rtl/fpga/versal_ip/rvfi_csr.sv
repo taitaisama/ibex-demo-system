@@ -1,11 +1,11 @@
-`default_nettype none
+
 
 module rvfi_csr #(parameter int NUM_WORDS, parameter int WIDTH)
 (
- input logic                            clk,
- input logic                            rstn,
- input logic [WIDTH-1:0]                data_i [NUM_WORDS],
- input logic                            valid_i,
+ input wire                            clk,
+ input wire                            rstn,
+ input wire [WIDTH-1:0]                data_i [NUM_WORDS],
+ input wire                            valid_i,
  output logic [WIDTH-1:0]               data_o,
  output logic [$clog2(NUM_WORDS+1)-1:0] addr_o,
  output logic                           ready_o,

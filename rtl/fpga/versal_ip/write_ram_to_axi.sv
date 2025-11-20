@@ -1,6 +1,5 @@
 // assuming no writes to same address while prev write is pending
 // handled outside
-`default_nettype none
 
 module write_ram_to_axi
 # (
@@ -8,17 +7,17 @@ module write_ram_to_axi
    parameter int QUEUE_DELAY = 3
    )
 (
-  input logic			 clk,
-  input logic			 rstn,
+  input wire			 clk,
+  input wire			 rstn,
    
-  input logic			 s_req,
-  input logic [3:0]		 s_be,
-  input logic [31:0]		 s_addr,
-  input logic [31:0]		 s_wdata,
+  input wire			 s_req,
+  input wire [3:0]		 s_be,
+  input wire [31:0]		 s_addr,
+  input wire [31:0]		 s_wdata,
   output logic			 s_gnt,
 
   output logic			 m_awvalid,
-  input logic			 m_awready,
+  input wire			 m_awready,
   output logic [31:0]		 m_awaddr,
   output logic [2:0]		 m_awsize,
   output logic [1:0]		 m_awburst,
@@ -26,16 +25,16 @@ module write_ram_to_axi
   output logic [7:0]		 m_awlen,
 
   output logic			 m_wvalid,
-  input logic			 m_wready,
+  input wire			 m_wready,
   output logic			 m_wlast,
   output logic [31:0]		 m_wdata,
   output logic [3:0]		 m_wstrb,
   output logic [NUM_ID_BITS-1:0] m_wid,
 
-  input logic			 m_bvalid,
+  input wire			 m_bvalid,
   output logic			 m_bready,
-  input logic [1:0]		 m_bresp,
-  input logic [NUM_ID_BITS-1:0]	 m_bid
+  input wire [1:0]		 m_bresp,
+  input wire [NUM_ID_BITS-1:0]	 m_bid
 );
 
    logic write_ack_pending [2**NUM_ID_BITS];

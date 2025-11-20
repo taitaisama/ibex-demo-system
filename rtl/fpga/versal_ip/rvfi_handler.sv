@@ -1,4 +1,4 @@
-`default_nettype none
+
 
 module rvfi_handler #(
    parameter		  FULL_OUT_WIDTH = 256,
@@ -8,60 +8,60 @@ module rvfi_handler #(
    parameter logic [31:0] BUFFER_SIZE = 32'h100000,
    parameter int	  NUM_BUFFERS = 4)
 ( 
-  input logic				 clk,
-  input logic				 rstn,
+  input wire				 clk,
+  input wire				 rstn,
 
-  input logic [31:0]			 rvfi_base_addr,
-  input logic [$clog2(NUM_BUFFERS)-1:0]	 rvfi_sw_idx,
+  input wire [31:0]			 rvfi_base_addr,
+  input wire [$clog2(NUM_BUFFERS)-1:0]	 rvfi_sw_idx,
   output logic [$clog2(NUM_BUFFERS)-1:0] rvfi_hw_idx,
 
-  input logic [31:0]			 rvfi_csr_base_addr,
-  input logic [$clog2(NUM_BUFFERS)-1:0]	 rvfi_csr_sw_idx,
+  input wire [31:0]			 rvfi_csr_base_addr,
+  input wire [$clog2(NUM_BUFFERS)-1:0]	 rvfi_csr_sw_idx,
   output logic [$clog2(NUM_BUFFERS)-1:0] rvfi_csr_hw_idx,
 
-  input logic				 rvfi_valid_i,
-  input logic				 rvfi_trap_i,
-  input logic [ 4:0]			 rvfi_rd_addr_i,
-  input logic [31:0]			 rvfi_rd_wdata_i,
-  input logic [31:0]			 rvfi_pc_rdata_i,
-  input logic [31:0]			 rvfi_ext_pre_mip_i,
-  input logic [31:0]			 rvfi_ext_post_mip_i,
-  input logic				 rvfi_ext_nmi_i,
-  input logic				 rvfi_ext_nmi_int_i,
-  input logic				 rvfi_ext_debug_req_i,
-  input logic				 rvfi_ext_rf_wr_suppress_i,
-  input logic [63:0]			 rvfi_ext_mcycle_i,
-  input logic [319:0]			 rvfi_ext_mhpmcounters_i, 
-  input logic [319:0]			 rvfi_ext_mhpmcountersh_i,
-  input logic				 rvfi_ext_ic_scr_key_valid_i,
+  input wire				 rvfi_valid_i,
+  input wire				 rvfi_trap_i,
+  input wire [ 4:0]			 rvfi_rd_addr_i,
+  input wire [31:0]			 rvfi_rd_wdata_i,
+  input wire [31:0]			 rvfi_pc_rdata_i,
+  input wire [31:0]			 rvfi_ext_pre_mip_i,
+  input wire [31:0]			 rvfi_ext_post_mip_i,
+  input wire				 rvfi_ext_nmi_i,
+  input wire				 rvfi_ext_nmi_int_i,
+  input wire				 rvfi_ext_debug_req_i,
+  input wire				 rvfi_ext_rf_wr_suppress_i,
+  input wire [63:0]			 rvfi_ext_mcycle_i,
+  input wire [319:0]			 rvfi_ext_mhpmcounters_i, 
+  input wire [319:0]			 rvfi_ext_mhpmcountersh_i,
+  input wire				 rvfi_ext_ic_scr_key_valid_i,
 
   output logic [FULL_OUT_WIDTH-1:0]	 fifo_data_o,
   output logic				 fifo_valid_o,
-  input logic				 fifo_ready_i,
+  input wire				 fifo_ready_i,
   output logic [FULL_OUT_WIDTH/8-1:0]	 fifo_keep_o,
   
   output logic [71:0]			 cmd_data_o,
   output logic				 cmd_valid_o,
-  input logic				 cmd_ready_i,
+  input wire				 cmd_ready_i,
 
-  input logic [7:0]			 sts_data_o,
-  input logic				 sts_valid_o,
+  input wire [7:0]			 sts_data_o,
+  input wire				 sts_valid_o,
   output logic				 sts_ready_i,
 
   output logic [FULL_CSR_WIDTH-1:0]	 fifo_data_csr_o,
   output logic				 fifo_valid_csr_o,
-  input logic				 fifo_ready_csr_i,
+  input wire				 fifo_ready_csr_i,
   output logic [FULL_CSR_WIDTH/8-1:0]	 fifo_keep_csr_o,
 
   output logic [71:0]			 cmd_csr_data_o,
   output logic				 cmd_csr_valid_o,
-  input logic				 cmd_csr_ready_i,
+  input wire				 cmd_csr_ready_i,
 
-  input logic [7:0]			 sts_csr_data_o,
-  input logic				 sts_csr_valid_o,
+  input wire [7:0]			 sts_csr_data_o,
+  input wire				 sts_csr_valid_o,
   output logic				 sts_csr_ready_i,
 
-  input logic				 flush,
+  input wire				 flush,
 
   output logic				 rvfi_busy_o
 );

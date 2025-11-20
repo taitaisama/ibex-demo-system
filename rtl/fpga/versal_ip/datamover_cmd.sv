@@ -1,4 +1,3 @@
-`default_nettype none
 
 module datamover_cmd #(
     parameter		   DATA_WIDTH = 8,
@@ -7,23 +6,23 @@ module datamover_cmd #(
     parameter logic [31:0] BUFFER_SIZE = 32'h100000,
     parameter int	   NUM_BUFFERS = 4
 )(
-    input logic				   clk,
-    input logic				   rstn,
+    input wire				   clk,
+    input wire				   rstn,
   
-    input logic [31:0]			   base_addr,
-    input logic [$clog2(NUM_BUFFERS)-1:0]  sw_idx,
+    input wire [31:0]			   base_addr,
+    input wire [$clog2(NUM_BUFFERS)-1:0]  sw_idx,
     output logic [$clog2(NUM_BUFFERS)-1:0] hw_idx,
 
-    input logic				   fifo_write,
+    input wire				   fifo_write,
 
-    input logic				   flush,
+    input wire				   flush,
 
     output logic [71:0]			   m_axis_cmd_tdata,
     output logic			   m_axis_cmd_tvalid,
-    input logic				   m_axis_cmd_tready,
+    input wire				   m_axis_cmd_tready,
 
-    input logic [7:0]			   m_axis_sts_tdata,
-    input logic				   m_axis_sts_tvalid,
+    input wire [7:0]			   m_axis_sts_tdata,
+    input wire				   m_axis_sts_tvalid,
     output logic			   m_axis_sts_tready
 );
    

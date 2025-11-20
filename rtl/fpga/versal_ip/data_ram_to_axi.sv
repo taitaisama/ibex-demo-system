@@ -1,4 +1,4 @@
-`default_nettype none
+
 
 module data_ram_to_axi
 # (
@@ -6,35 +6,35 @@ module data_ram_to_axi
    parameter int NUM_ID_BITS = 4
    )
 (
-  input logic			 clk,
-  input logic			 rstn,
+  input wire			 clk,
+  input wire			 rstn,
    
-  input logic			 s_req,
-  input logic			 s_we,
-  input logic [3:0]		 s_be,
-  input logic [31:0]		 s_addr,
-  input logic [31:0]		 s_wdata,
+  input wire			 s_req,
+  input wire			 s_we,
+  input wire [3:0]		 s_be,
+  input wire [31:0]		 s_addr,
+  input wire [31:0]		 s_wdata,
   output logic			 s_rvalid,
   output logic [31:0]		 s_rdata,
   output logic			 s_gnt,
 
   output logic			 m_arvalid,
-  input logic			 m_arready,
+  input wire			 m_arready,
   output logic [31:0]		 m_araddr,
   output logic [2:0]		 m_arsize,
   output logic [1:0]		 m_arburst,
   output logic [NUM_ID_BITS-1:0] m_arid,
   output logic [7:0]		 m_arlen,
 
-  input logic			 m_rvalid,
+  input wire			 m_rvalid,
   output logic			 m_rready,
-  input logic			 m_rlast,
-  input logic [31:0]		 m_rdata,
-  input logic [1:0]		 m_rresp,
-  input logic [NUM_ID_BITS-1:0]	 m_rid,
+  input wire			 m_rlast,
+  input wire [31:0]		 m_rdata,
+  input wire [1:0]		 m_rresp,
+  input wire [NUM_ID_BITS-1:0]	 m_rid,
 
   output logic			 m_awvalid,
-  input logic			 m_awready,
+  input wire			 m_awready,
   output logic [31:0]		 m_awaddr,
   output logic [2:0]		 m_awsize,
   output logic [1:0]		 m_awburst,
@@ -42,16 +42,16 @@ module data_ram_to_axi
   output logic [7:0]		 m_awlen,
 
   output logic			 m_wvalid,
-  input logic			 m_wready,
+  input wire			 m_wready,
   output logic			 m_wlast,
   output logic [31:0]		 m_wdata,
   output logic [3:0]		 m_wstrb,
   output logic [NUM_ID_BITS-1:0] m_wid,
 
-  input logic			 m_bvalid,
+  input wire			 m_bvalid,
   output logic			 m_bready,
-  input logic [1:0]		 m_bresp,
-  input logic [NUM_ID_BITS-1:0]	 m_bid
+  input wire [1:0]		 m_bresp,
+  input wire [NUM_ID_BITS-1:0]	 m_bid
 );
 
    logic			 q_we;

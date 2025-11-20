@@ -1,4 +1,3 @@
-`default_nettype none
 
 module rvfi_to_stream
  #(
