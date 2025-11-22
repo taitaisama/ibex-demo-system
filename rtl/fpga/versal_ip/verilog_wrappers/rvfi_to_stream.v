@@ -66,8 +66,8 @@ module rvfi_to_stream
 
    rvfi_handler
  #(
-   .FULL_OUT_WIDTH (OUT_WIDTH),
-   .FULL_CSR_WIDTH (CSR_WIDTH))
+   .OUT_WIDTH (OUT_WIDTH),
+   .CSR_WIDTH (CSR_WIDTH))
    u_rh
      (
       .clk (clk),

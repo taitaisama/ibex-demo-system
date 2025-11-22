@@ -2,8 +2,8 @@
 
 module rvfi_to_mem #(
      parameter int	    NUM_CSR_WORDS = 20,
-     parameter int	    IN_WIDTH = 208,
-     parameter int	    OUT_WIDTH = 232,
+     parameter int	    IN_WIDTH = 234,
+     parameter int	    OUT_WIDTH = 256,
      parameter int	    CSR_WIDTH = 64,
      parameter logic [31:0] BUFFER_SIZE = 32'h100000,
      parameter int	    NUM_BUFFERS = 4)
@@ -53,6 +53,7 @@ module rvfi_to_mem #(
  );
 
    logic [23:0]   rvfi_counter_store;
+   logic [23:0]   rvfi_counter_store_d;
 
    logic [31:0]   csr_data;
    logic [7:0]    csr_addr;
@@ -64,6 +65,7 @@ module rvfi_to_mem #(
       if (valid_i) begin
          rvfi_counter_store <= rvfi_counter;
       end
+      rvfi_counter_store_d  <= rvfi_counter_store;
    end
 
    rvfi_csr #(.NUM_WORDS (NUM_CSR_WORDS), .WIDTH (32)) 
@@ -81,9 +83,9 @@ module rvfi_to_mem #(
    always_comb begin
       wready_o = csr_ready && fifo_ready_i && fifo_ready_csr_i;
       fifo_valid_o = valid_i;
-      fifo_data_o  = {rvfi_counter, rvfi};
+      fifo_data_o  = {rvfi, {(OUT_WIDTH-IN_WIDTH){1'b0}}};
       fifo_valid_csr_o = csr_valid;
-      fifo_data_csr_o = {rvfi_counter_store, csr_addr, csr_data};   
+      fifo_data_csr_o = {rvfi_counter_store_d, csr_addr, csr_data};   
    end
 
    datamover_cmd

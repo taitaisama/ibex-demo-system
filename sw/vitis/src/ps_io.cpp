@@ -253,13 +253,13 @@ struct ps_io_ctrl {
 	    curr_csr = csr_stream.read();
       }
       if (curr_csr && curr_csr->mcycle < curr_rvfi->mcycle) {
-	  xil_printf("csr:\n  mcycle: %ld\n  addr: %d\n  counter: %d\n", curr_csr->mcycle, curr_csr->addr, curr_csr->counter);
+	  // xil_printf("csr:\n  mcycle: %ld\n  addr: %d\n  counter: %d\n", curr_csr->mcycle, curr_csr->addr, curr_csr->counter);
 	// if (!csr_callback(*curr_csr)) {
 	//   return;
 	// }
 	  curr_csr = nullptr;
       }
-      xil_printf("rvfi:\n  mcycle: %ld\n  rvfi_rd_wdata: %d\n  rvfi_rd_rdata: %d\n  rvfi_rd_addr: %d\n", curr_rvfi->mcycle, curr_rvfi->rvfi_rd_wdata, curr_rvfi->rvfi_pc_rdata, curr_rvfi->rvfi_rd_addr);
+      // xil_printf("rvfi:\n  mcycle: %ld\n  rvfi_rd_wdata: %d\n  rvfi_rd_rdata: %d\n  rvfi_rd_addr: %d\n", curr_rvfi->mcycle, curr_rvfi->rvfi_rd_wdata, curr_rvfi->rvfi_pc_rdata, curr_rvfi->rvfi_rd_addr);
       // if (!rvfi_callback(*curr_rvfi)) {
       // 	return;
       // }

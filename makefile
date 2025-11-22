@@ -35,8 +35,8 @@ hardware: $(STAMP_DIR)/hardware
 $(STAMP_DIR)/hardware: $(STAMP_DIR)/versal_bd
 	@echo "### Exporting Hardware XSA..."
 	mkdir -p $(BUILD_DIR)/hardware
-	vivado $(BUILD_DIR)/ibex_versal_0/synth_versal-vivado/ibex_versal_0.xpr \
-		-mode batch -source $(CUR_PATH)/tcl/export_xsa.tcl -tclargs $(BUILD_DIR)/hardware/top_versal.xsa
+	ulimit -v unlimited && vivado $(BUILD_DIR)/ibex_versal_0/synth_versal-vivado/ibex_versal_0.xpr \
+		-mode batch -source $(CUR_PATH)/tcl/export_xsa.tcl -tclargs $(BUILD_DIR)/hardware/top_versal.xsa -log $(BUILD_DIR)/vivado_crash.log -jou $(BUILD_DIR)/vivado_crash.jou -stack 2000 | tee $(BUILD_DIR)/vivado_stdout_and_stderr.log
 	touch $@
 
 petalinux: $(STAMP_DIR)/petalinux

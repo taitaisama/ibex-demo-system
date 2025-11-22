@@ -1,9 +1,7 @@
 
 
 module rvfi_handler #(
-   parameter		  FULL_OUT_WIDTH = 256,
-   parameter		  FULL_CSR_WIDTH = 64,
-   parameter int	  OUT_WIDTH = 232,
+   parameter		  OUT_WIDTH = 256,
    parameter int	  CSR_WIDTH = 64,
    parameter logic [31:0] BUFFER_SIZE = 32'h100000,
    parameter int	  NUM_BUFFERS = 4)
@@ -35,10 +33,10 @@ module rvfi_handler #(
   input wire [319:0]			 rvfi_ext_mhpmcountersh_i,
   input wire				 rvfi_ext_ic_scr_key_valid_i,
 
-  output logic [FULL_OUT_WIDTH-1:0]	 fifo_data_o,
+  output logic [OUT_WIDTH-1:0]	         fifo_data_o,
   output logic				 fifo_valid_o,
   input wire				 fifo_ready_i,
-  output logic [FULL_OUT_WIDTH/8-1:0]	 fifo_keep_o,
+  output logic [OUT_WIDTH/8-1:0]	 fifo_keep_o,
   
   output logic [71:0]			 cmd_data_o,
   output logic				 cmd_valid_o,
@@ -48,10 +46,10 @@ module rvfi_handler #(
   input wire				 sts_valid_o,
   output logic				 sts_ready_i,
 
-  output logic [FULL_CSR_WIDTH-1:0]	 fifo_data_csr_o,
+  output logic [CSR_WIDTH-1:0]	         fifo_data_csr_o,
   output logic				 fifo_valid_csr_o,
   input wire				 fifo_ready_csr_i,
-  output logic [FULL_CSR_WIDTH/8-1:0]	 fifo_keep_csr_o,
+  output logic [CSR_WIDTH/8-1:0]	 fifo_keep_csr_o,
 
   output logic [71:0]			 cmd_csr_data_o,
   output logic				 cmd_csr_valid_o,
@@ -143,15 +141,13 @@ module rvfi_handler #(
 
    always_comb rvfi_busy_o = rvfi_fifo_almost_full || rvfi_fifo_busy;
 
-   logic [23:0]  rvfi_out_counter;
-   logic [207:0] rvfi_out_data;
-   logic [31:0]  rvfi_out_csr [20];
+   logic [($bits(rvfi_data_t)-640):0] rvfi_out_data;
+   logic [31:0]                       rvfi_out_csr [20];
 
    always_comb begin
 
-      rvfi_out_counter = fifo_output_rvfi.counter;
-
-      rvfi_out_data = {fifo_output_rvfi.rvfi_ext_mcycle,
+      rvfi_out_data = {fifo_output_rvfi.counter,
+                       fifo_output_rvfi.rvfi_ext_mcycle,
                        fifo_output_rvfi.rvfi_rd_wdata,
                        fifo_output_rvfi.rvfi_pc_rdata,
                        fifo_output_rvfi.rvfi_ext_pre_mip,
@@ -162,19 +158,18 @@ module rvfi_handler #(
                        fifo_output_rvfi.rvfi_ext_debug_req,
                        fifo_output_rvfi.rvfi_ext_rf_wr_suppress,
                        fifo_output_rvfi.rvfi_ext_ic_scr_key_valid,
-                       fifo_output_rvfi.rvfi_trap,
-                       5'b0};
+                       fifo_output_rvfi.rvfi_trap};
+
       for (int i = 0; i < 10; i ++) begin
          rvfi_out_csr[i] = fifo_output_rvfi.rvfi_ext_mhpmcounters[i*32 +: 32];
          rvfi_out_csr[10+i] = fifo_output_rvfi.rvfi_ext_mhpmcountersh[i*32 +: 32];
       end
+
    end
    
    always_comb begin
-      fifo_data_o[FULL_OUT_WIDTH-OUT_WIDTH-1:0] = '0;
-      fifo_data_csr_o[FULL_CSR_WIDTH-CSR_WIDTH-1:0] = '0;
-      fifo_keep_o = {(FULL_OUT_WIDTH/8){1'b1}};
-      fifo_keep_csr_o = {(FULL_CSR_WIDTH/8){1'b1}};
+      fifo_keep_o = {(OUT_WIDTH/8){1'b1}};
+      fifo_keep_csr_o = {(CSR_WIDTH/8){1'b1}};
       // fifo_keep_o = {{(OUT_WIDTH/8){1'b1}}, {(FULL_OUT_WIDTH-OUT_WIDTH/8){1'b0}}};
       // fifo_keep_csr_o = {{(CSR_WIDTH/8){1'b1}}, {(FULL_CSR_WIDTH-CSR_WIDTH/8){1'b0}}};
    end
@@ -183,7 +178,7 @@ module rvfi_handler #(
    rvfi_to_mem
      #(
        .NUM_CSR_WORDS (20),
-       .IN_WIDTH (144),
+       .IN_WIDTH ($bits(rvfi_out_data)),
        .OUT_WIDTH (OUT_WIDTH),
        .CSR_WIDTH (CSR_WIDTH)
        ) u_rtm
@@ -200,13 +195,13 @@ module rvfi_handler #(
       .rvfi_csr_hw_idx,
 
       .valid_i (rvfi_to_mem_valid),
-      .rvfi_counter (rvfi_out_counter),
+      .rvfi_counter (fifo_output_rvfi.counter),
       .rvfi (rvfi_out_data),
       .rvfi_csr (rvfi_out_csr),
       .wready_o (rvfi_to_mem_ready),
       .flush (flush),
 
-      .fifo_data_o (fifo_data_o[FULL_OUT_WIDTH-1 -: OUT_WIDTH]),
+      .fifo_data_o (fifo_data_o),
       .fifo_valid_o,
       .fifo_ready_i,
 
@@ -218,7 +213,7 @@ module rvfi_handler #(
       .sts_valid_o,
       .sts_ready_i,
       
-      .fifo_data_csr_o (fifo_data_csr_o[FULL_CSR_WIDTH-1 -: CSR_WIDTH]),
+      .fifo_data_csr_o (fifo_data_csr_o),
       .fifo_valid_csr_o,
       .fifo_ready_csr_i,
 

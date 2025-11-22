@@ -136,25 +136,29 @@ module debug_module
 
    localparam logic [ADDR_WIDTH-1:0] MAX_DEBUG_ADDR = 8192;
 
+   logic [25:0]                      last_mcycle;
+   logic [7:0]                       last_sts;
+   
+   always_ff @(posedge sys_clk) begin
+      if (rvfi_valid) begin
+         last_mcycle <= rvfi_ext_mcycle[25:0];
+      end
+      if (rvfi_sts_tvalid & rvfi_sts_tready) begin
+         last_sts <= rvfi_sts_tdata;
+      end
+   end
+
    always_comb begin
       DEBUG_en = 1;
-      DEBUG_we = {(OUTPUT_WIDTH/8){1'b1}};
+      DEBUG_we = (rvfi_cmd_tvalid & rvfi_cmd_tready) ? {(OUTPUT_WIDTH/8){1'b1}} : '0;
       DEBUG_rst = ~sys_rstn;
       DEBUG_clk = sys_clk;
 
-      DEBUG_wrdata = {rvfi_valid, 
-                      rvfi_rd_addr, 
-                      rvfi_pc_rdata,
-                      rvfi_ext_mcycle,
-                      rvfi_stream_tvalid,
-                      rvfi_stream_tready,
-                      rvfi_sts_tdata,
-                      rvfi_sts_tvalid,
-                      rvfi_sts_tready,
+      DEBUG_wrdata = {rvfi_cmd_tdata,
                       rvfi_cmd_tvalid,
                       rvfi_cmd_tready,
-                      8'b01010101,
-                      4'd0};
+                      last_sts,
+                      last_mcycle};
                       
       // DEBUG_wrdata = {S_RAM_INSTR_req, S_RAM_INSTR_addr, S_RAM_INSTR_rdvalid, S_RAM_INSTR_rddata, S_RAM_INSTR_gnt, 16'b0101010101010101, 45'd0};
    end
@@ -163,7 +167,7 @@ module debug_module
       if (!sys_rstn) begin
 	 DEBUG_addr = 0;
       end else begin
-	 if (DEBUG_addr < MAX_DEBUG_ADDR) begin
+	 if (DEBUG_we != 0) begin
 	    DEBUG_addr += OUTPUT_WIDTH/8;
 	 end
       end
