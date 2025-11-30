@@ -2,7 +2,7 @@ CUR_PATH := $(shell pwd)
 BUILD_DIR := $(CUR_PATH)/build
 STAMP_DIR := $(BUILD_DIR)/.stamps
 
-STAMPS := ibex_wrapper_ip versal_bd hardware petalinux petalinux_sdk petalinux_sw vitis
+STAMPS := ibex_wrapper_ip versal_bd hardware petalinux petalinux_sdk petalinux_sw vitis # ibex_io_ip
 
 .PHONY: all clean $(STAMPS)
 
@@ -21,12 +21,24 @@ $(STAMP_DIR)/ibex_wrapper_ip: | $(STAMP_DIR)
 		-mode batch -source $(CUR_PATH)/tcl/gen_ibex_ip.tcl -tclargs $(CUR_PATH)
 	touch $@
 
+# ibex_io_ip: $(STAMP_DIR)/ibex_io_ip
+# $(STAMP_DIR)/ibex_io_ip: | $(STAMP_DIR)
+# 	@echo "### Building Ibex IO IP..."
+# 	fusesoc --cores-root=$(CUR_PATH) run --target=ibex_io_ip --setup ::ibex_versal
+# 	cd $(BUILD_DIR)/ibex_versal_0/ibex_io_ip-vivado && \
+# 		vivado -mode batch -source ibex_versal_0.tcl
+# 	vivado $(BUILD_DIR)/ibex_versal_0/ibex_io_ip-vivado/ibex_versal_0.xpr \
+# 		-mode batch -source $(CUR_PATH)/tcl/io_stuff.tcl -tclargs $(CUR_PATH)
+# 	touch $@
+
 versal_bd: $(STAMP_DIR)/versal_bd
 $(STAMP_DIR)/versal_bd: $(STAMP_DIR)/ibex_wrapper_ip
 	@echo "### Building Versal Block Design..."
 	fusesoc --cores-root=$(CUR_PATH) run --target=synth_versal --setup ::ibex_versal
 	cd $(BUILD_DIR)/ibex_versal_0/synth_versal-vivado && \
 		vivado -mode batch -source ibex_versal_0.tcl
+	vivado $(BUILD_DIR)/ibex_versal_0/synth_versal-vivado/ibex_versal_0.xpr \
+		-mode batch -source $(CUR_PATH)/tcl/io_stuff.tcl -tclargs $(CUR_PATH)
 	vivado $(BUILD_DIR)/ibex_versal_0/synth_versal-vivado/ibex_versal_0.xpr \
 		-mode batch -source $(CUR_PATH)/tcl/versal_ps.tcl -tclargs $(CUR_PATH)
 	touch $@

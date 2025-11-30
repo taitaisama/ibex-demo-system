@@ -45,107 +45,118 @@ module ibex_top import ibex_pkg::*; #(
   parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonce        = RndCnstIbexNonceDefault
 ) (
   // Clock and Reset
-  input logic			     clk_i,
-  input logic			     rst_ni,
+  input logic                        clk_i,
+  input logic                        rst_ni,
 
-  input logic			     test_en_i,	// enable all clock gates for testing
-  input				     prim_ram_1p_pkg::ram_1p_cfg_t ram_cfg_i,
+  input logic                        test_en_i, // enable all clock gates for testing
+  input                              prim_ram_1p_pkg::ram_1p_cfg_t ram_cfg_i,
 
-  input logic [31:0]		     hart_id_i,
-  input logic [31:0]		     boot_addr_i,
+  input logic [31:0]                 hart_id_i,
+  input logic [31:0]                 boot_addr_i,
 
   // Instruction memory interface
-  output logic			     instr_req_o,
-  input logic			     instr_gnt_i,
-  input logic			     instr_rvalid_i,
-  output logic [31:0]		     instr_addr_o,
-  input logic [31:0]		     instr_rdata_i,
-  input logic [6:0]		     instr_rdata_intg_i,
-  input logic			     instr_err_i,
+  output logic                       instr_req_o,
+  input logic                        instr_gnt_i,
+  input logic                        instr_rvalid_i,
+  output logic [31:0]                instr_addr_o,
+  input logic [31:0]                 instr_rdata_i,
+  input logic [6:0]                  instr_rdata_intg_i,
+  input logic                        instr_err_i,
 
   // Data memory interface
-  output logic			     data_req_o,
-  input logic			     data_gnt_i,
-  input logic			     data_rvalid_i,
-  output logic			     data_we_o,
-  output logic [3:0]		     data_be_o,
-  output logic [31:0]		     data_addr_o,
-  output logic [31:0]		     data_wdata_o,
-  output logic [6:0]		     data_wdata_intg_o,
-  input logic [31:0]		     data_rdata_i,
-  input logic [6:0]		     data_rdata_intg_i,
-  input logic			     data_err_i,
+  output logic                       data_req_o,
+  input logic                        data_gnt_i,
+  input logic                        data_rvalid_i,
+  output logic                       data_we_o,
+  output logic [3:0]                 data_be_o,
+  output logic [31:0]                data_addr_o,
+  output logic [31:0]                data_wdata_o,
+  output logic [6:0]                 data_wdata_intg_o,
+  input logic [31:0]                 data_rdata_i,
+  input logic [6:0]                  data_rdata_intg_i,
+  input logic                        data_err_i,
 
   // Interrupt inputs
-  input logic			     irq_software_i,
-  input logic			     irq_timer_i,
-  input logic			     irq_external_i,
-  input logic [14:0]		     irq_fast_i,
-  input logic			     irq_nm_i,	// non-maskeable interrupt
+  input logic                        irq_software_i,
+  input logic                        irq_timer_i,
+  input logic                        irq_external_i,
+  input logic [14:0]                 irq_fast_i,
+  input logic                        irq_nm_i,  // non-maskeable interrupt
 
   // Scrambling Interface
-  input logic			     scramble_key_valid_i,
+  input logic                        scramble_key_valid_i,
   input logic [SCRAMBLE_KEY_W-1:0]   scramble_key_i,
   input logic [SCRAMBLE_NONCE_W-1:0] scramble_nonce_i,
-  output logic			     scramble_req_o,
+  output logic                       scramble_req_o,
 
   // Debug Interface
-  input logic			     debug_req_i,
-  output			     crash_dump_t crash_dump_o,
-  output logic			     double_fault_seen_o,
+  input logic                        debug_req_i,
+  output                             crash_dump_t crash_dump_o,
+  output logic                       double_fault_seen_o,
 
   // RISC-V Formal Interface
   // Does not comply with the coding standards of _i/_o suffixes, but follows
   // the convention of RISC-V Formal Interface Specification.
 `ifdef RVFI
-  output logic			     rvfi_valid,
-  output logic [63:0]		     rvfi_order,
-  output logic [31:0]		     rvfi_insn,
-  output logic			     rvfi_trap,
-  output logic			     rvfi_halt,
-  output logic			     rvfi_intr,
-  output logic [ 1:0]		     rvfi_mode,
-  output logic [ 1:0]		     rvfi_ixl,
-  output logic [ 4:0]		     rvfi_rs1_addr,
-  output logic [ 4:0]		     rvfi_rs2_addr,
-  output logic [ 4:0]		     rvfi_rs3_addr,
-  output logic [31:0]		     rvfi_rs1_rdata,
-  output logic [31:0]		     rvfi_rs2_rdata,
-  output logic [31:0]		     rvfi_rs3_rdata,
-  output logic [ 4:0]		     rvfi_rd_addr,
-  output logic [31:0]		     rvfi_rd_wdata,
-  output logic [31:0]		     rvfi_pc_rdata,
-  output logic [31:0]		     rvfi_pc_wdata,
-  output logic [31:0]		     rvfi_mem_addr,
-  output logic [ 3:0]		     rvfi_mem_rmask,
-  output logic [ 3:0]		     rvfi_mem_wmask,
-  output logic [31:0]		     rvfi_mem_rdata,
-  output logic [31:0]		     rvfi_mem_wdata,
-  output logic [31:0]		     rvfi_ext_pre_mip,
-  output logic [31:0]		     rvfi_ext_post_mip,
-  output logic			     rvfi_ext_nmi,
-  output logic			     rvfi_ext_nmi_int,
-  output logic			     rvfi_ext_debug_req,
-  output logic			     rvfi_ext_debug_mode,
-  output logic			     rvfi_ext_rf_wr_suppress,
-  output logic [63:0]		     rvfi_ext_mcycle,
-  output logic [31:0]		     rvfi_ext_mhpmcounters [10],
-  output logic [31:0]		     rvfi_ext_mhpmcountersh [10],
-  output logic			     rvfi_ext_ic_scr_key_valid,
-  output logic			     rvfi_ext_irq_valid,
+  output logic                       rvfi_valid,
+  output logic [63:0]                rvfi_order,
+  output logic [31:0]                rvfi_insn,
+  output logic                       rvfi_trap,
+  output logic                       rvfi_halt,
+  output logic                       rvfi_intr,
+  output logic [ 1:0]                rvfi_mode,
+  output logic [ 1:0]                rvfi_ixl,
+  output logic [ 4:0]                rvfi_rs1_addr,
+  output logic [ 4:0]                rvfi_rs2_addr,
+  output logic [ 4:0]                rvfi_rs3_addr,
+  output logic [31:0]                rvfi_rs1_rdata,
+  output logic [31:0]                rvfi_rs2_rdata,
+  output logic [31:0]                rvfi_rs3_rdata,
+  output logic [ 4:0]                rvfi_rd_addr,
+  output logic [31:0]                rvfi_rd_wdata,
+  output logic [31:0]                rvfi_pc_rdata,
+  output logic [31:0]                rvfi_pc_wdata,
+  output logic [31:0]                rvfi_mem_addr,
+  output logic [ 3:0]                rvfi_mem_rmask,
+  output logic [ 3:0]                rvfi_mem_wmask,
+  output logic [31:0]                rvfi_mem_rdata,
+  output logic [31:0]                rvfi_mem_wdata,
+  output logic [31:0]                rvfi_ext_pre_mip,
+  output logic [31:0]                rvfi_ext_post_mip,
+  output logic                       rvfi_ext_nmi,
+  output logic                       rvfi_ext_nmi_int,
+  output logic                       rvfi_ext_debug_req,
+  output logic                       rvfi_ext_debug_mode,
+  output logic                       rvfi_ext_rf_wr_suppress,
+  output logic [63:0]                rvfi_ext_mcycle,
+  output logic [31:0]                rvfi_ext_mhpmcounters [10],
+  output logic [31:0]                rvfi_ext_mhpmcountersh [10],
+  output logic                       rvfi_ext_ic_scr_key_valid,
+  output logic                       rvfi_ext_irq_valid,
+
+
+  output logic                       outstanding_store,
+  output logic [31:0]                outstanding_addr,
+  output logic [3:0]                 outstanding_be,
+  output logic [31:0]                outstanding_store_data,
+  output logic                       outstanding_misaligned_first,
+  output logic                       outstanding_misaligned_second,
+  output logic                       outstanding_misaligned_first_saw_error,
+  output logic                       outstanding_m_mode_access,
+
 `endif
 
   // CPU Control Signals
-  input				     ibex_mubi_t fetch_enable_i,
-  output logic			     alert_minor_o,
-  output logic			     alert_major_internal_o,
-  output logic			     alert_major_bus_o,
-  output logic			     core_sleep_o,
+  input                              ibex_mubi_t fetch_enable_i,
+  output logic                       alert_minor_o,
+  output logic                       alert_major_internal_o,
+  output logic                       alert_major_bus_o,
+  output logic                       core_sleep_o,
 
-  input logic			     force_stop,
+  input logic                        force_stop,
 
   // DFT bypass controls
-  input logic			     scan_rst_ni
+  input logic                        scan_rst_ni
 );
 
   localparam bit          Lockstep              = SecureIbex;
@@ -207,7 +218,30 @@ module ibex_top import ibex_pkg::*; #(
   logic                        scramble_key_valid_d, scramble_key_valid_q;
   logic                        scramble_req_d, scramble_req_q;
 
+  logic                        debug_misaligned_first;
+  logic                        debug_misaligned_second;
+  logic                        debug_misaligned_first_saw_error;
+  logic                        debug_m_mode_access;
+
   ibex_mubi_t                  fetch_enable_buf;
+
+
+   always @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      outstanding_store <= 1'b0;
+    end else begin
+      if (data_req_o && data_gnt_i) begin
+        outstanding_store      <= data_we_o;
+        outstanding_addr       <= data_addr_o;
+        outstanding_be         <= data_be_o;
+        outstanding_store_data <= data_wdata_o;
+        outstanding_misaligned_first <= debug_misaligned_first;
+        outstanding_misaligned_second <= debug_misaligned_second;
+        outstanding_misaligned_first_saw_error <= debug_misaligned_first_saw_error;
+        outstanding_m_mode_access <= debug_m_mode_access;
+      end
+    end
+  end
 
   /////////////////////
   // Main clock gate //
@@ -414,6 +448,11 @@ module ibex_top import ibex_pkg::*; #(
     .rvfi_ext_mhpmcountersh,
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
+
+    .debug_misaligned_first,
+    .debug_misaligned_second,
+    .debug_misaligned_first_saw_error,
+    .debug_m_mode_access,
 `endif
 
     .fetch_enable_i        (fetch_enable_buf),

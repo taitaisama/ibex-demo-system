@@ -2,7 +2,7 @@
 <spirit:abstractionDefinition xmlns:xilinx="http://www.xilinx.com" xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <spirit:vendor>ibex</spirit:vendor>
   <spirit:library>user</spirit:library>
-  <spirit:name>ibex_rvfi_rtl</spirit:name>
+  <spirit:name>ibex_dside_access_rtl</spirit:name>
   <spirit:version>1.0</spirit:version>
   <spirit:busType spirit:vendor="ibex" spirit:library="user" spirit:name="ibex_rvfi" spirit:version="1.0"/>
   <spirit:ports>
@@ -22,7 +22,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>trap</spirit:logicalName>
+      <spirit:logicalName>dwe</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -37,22 +37,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>rd_addr</spirit:logicalName>
-      <spirit:wire>
-        <spirit:onMaster>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>5</spirit:width>
-        </spirit:onMaster>
-        <spirit:onSlave>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>5</spirit:width>
-          <spirit:direction>in</spirit:direction>
-        </spirit:onSlave>
-        <spirit:defaultValue>0</spirit:defaultValue>
-      </spirit:wire>
-    </spirit:port>
-    <spirit:port>
-      <spirit:logicalName>rd_wdata</spirit:logicalName>
+      <spirit:logicalName>daddr</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -67,7 +52,22 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>pc_rdata</spirit:logicalName>
+      <spirit:logicalName>dbe</spirit:logicalName>
+      <spirit:wire>
+        <spirit:onMaster>
+          <spirit:presence>required</spirit:presence>
+          <spirit:width>4</spirit:width>
+        </spirit:onMaster>
+        <spirit:onSlave>
+          <spirit:presence>required</spirit:presence>
+          <spirit:width>4</spirit:width>
+          <spirit:direction>in</spirit:direction>
+        </spirit:onSlave>
+        <spirit:defaultValue>0</spirit:defaultValue>
+      </spirit:wire>
+    </spirit:port>
+    <spirit:port>
+      <spirit:logicalName>dwdata</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -82,37 +82,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>ext_pre_mip</spirit:logicalName>
-      <spirit:wire>
-        <spirit:onMaster>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>32</spirit:width>
-        </spirit:onMaster>
-        <spirit:onSlave>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>32</spirit:width>
-          <spirit:direction>in</spirit:direction>
-        </spirit:onSlave>
-        <spirit:defaultValue>0</spirit:defaultValue>
-      </spirit:wire>
-    </spirit:port>
-    <spirit:port>
-      <spirit:logicalName>ext_post_mip</spirit:logicalName>
-      <spirit:wire>
-        <spirit:onMaster>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>32</spirit:width>
-        </spirit:onMaster>
-        <spirit:onSlave>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>32</spirit:width>
-          <spirit:direction>in</spirit:direction>
-        </spirit:onSlave>
-        <spirit:defaultValue>0</spirit:defaultValue>
-      </spirit:wire>
-    </spirit:port>
-    <spirit:port>
-      <spirit:logicalName>ext_nmi</spirit:logicalName>
+      <spirit:logicalName>err</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -127,7 +97,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>ext_nmi_int</spirit:logicalName>
+      <spirit:logicalName>misaligned_first</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -142,7 +112,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>ext_debug_req</spirit:logicalName>
+      <spirit:logicalName>misaligned_second</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -157,7 +127,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>ext_rf_wr_suppress</spirit:logicalName>
+      <spirit:logicalName>misaligned_first_saw_error</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -172,52 +142,7 @@
       </spirit:wire>
     </spirit:port>
     <spirit:port>
-      <spirit:logicalName>ext_mcycle</spirit:logicalName>
-      <spirit:wire>
-        <spirit:onMaster>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>64</spirit:width>
-        </spirit:onMaster>
-        <spirit:onSlave>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>64</spirit:width>
-          <spirit:direction>in</spirit:direction>
-        </spirit:onSlave>
-        <spirit:defaultValue>0</spirit:defaultValue>
-      </spirit:wire>
-    </spirit:port>
-    <spirit:port>
-      <spirit:logicalName>ext_mhpmcounters</spirit:logicalName>
-      <spirit:wire>
-        <spirit:onMaster>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>320</spirit:width>
-        </spirit:onMaster>
-        <spirit:onSlave>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>320</spirit:width>
-          <spirit:direction>in</spirit:direction>
-        </spirit:onSlave>
-        <spirit:defaultValue>0</spirit:defaultValue>
-      </spirit:wire>
-    </spirit:port>
-    <spirit:port>
-      <spirit:logicalName>ext_mhpmcountersh</spirit:logicalName>
-      <spirit:wire>
-        <spirit:onMaster>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>320</spirit:width>
-        </spirit:onMaster>
-        <spirit:onSlave>
-          <spirit:presence>required</spirit:presence>
-          <spirit:width>320</spirit:width>
-          <spirit:direction>in</spirit:direction>
-        </spirit:onSlave>
-        <spirit:defaultValue>0</spirit:defaultValue>
-      </spirit:wire>
-    </spirit:port>
-    <spirit:port>
-      <spirit:logicalName>ext_ic_scr_key_valid</spirit:logicalName>
+      <spirit:logicalName>m_mode_access</spirit:logicalName>
       <spirit:wire>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
@@ -230,6 +155,6 @@
         </spirit:onSlave>
         <spirit:defaultValue>0</spirit:defaultValue>
       </spirit:wire>
-    </spirit:port>
+    </spirit:port>    
   </spirit:ports>
 </spirit:abstractionDefinition>

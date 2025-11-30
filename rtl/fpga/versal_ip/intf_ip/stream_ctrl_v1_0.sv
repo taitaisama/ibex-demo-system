@@ -1,4 +1,3 @@
-
 // (c) Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // (c) Copyright 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 // 
@@ -48,38 +47,28 @@
 // DO NOT MODIFY THIS FILE.
 
 
-`ifndef ibex_rvfi_v1_0
-`define ibex_rvfi_v1_0
+`ifndef stream_ctrl_v1_0
+`define stream_ctrl_v1_0
 
-interface ibex_rvfi_v1_0();
-  logic valid = 0;                                      // 
-  logic trap = 0;                                       // 
-  logic [4:0] rd_addr = 0;                              // 
-  logic [31:0] rd_wdata = 0;                            // 
-  logic [31:0] pc_rdata = 0;                            // 
-  logic [31:0] ext_pre_mip = 0;                         // 
-  logic [31:0] ext_post_mip = 0;                        // 
-  logic ext_nmi = 0;                                    // 
-  logic ext_nmi_int = 0;                                // 
-  logic ext_debug_req = 0;                              // 
-  logic ext_rf_wr_suppress = 0;                         // 
-  logic [63:0] ext_mcycle = 0;                          // 
-  logic [319:0] ext_mhpmcounters = 0;                   // 
-  logic [319:0] ext_mhpmcountersh = 0;                  // 
-  logic ext_ic_scr_key_valid = 0;                       //
+interface stream_ctrl_v1_0();
+  logic [31:0] baseaddr;                                  // 
+  logic [19:0] swidx = 0;                                // 
+  logic [19:0] hwidx = 0;                               // 
 
   modport MASTER (
-    output valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input hwidx, 
+    output baseaddr, swidx
     );
 
   modport SLAVE (
-    input valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input baseaddr, swidx, 
+    output hwidx
     );
 
   modport MONITOR (
-    input valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input baseaddr, swidx, hwidx
     );
 
-endinterface // ibex_rvfi_v1_0
+endinterface // stream_ctrl_v1_0
 
 `endif

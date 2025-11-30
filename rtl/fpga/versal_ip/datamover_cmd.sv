@@ -3,29 +3,27 @@ module datamover_cmd #(
     parameter		   DATA_WIDTH = 8,
     parameter		   ADDR_WIDTH = 32,
     parameter		   THRESHOLD = 32,
-    parameter logic [31:0] BUFFER_SIZE = 32'h100000,
-    parameter int	   NUM_BUFFERS = 4
+    parameter int          LOG2_BUFFER_SIZE = 20
 )(
-    input wire				   clk,
-    input wire				   rstn,
+    input wire                        clk,
+    input wire                        rstn,
   
-    input wire [31:0]			   base_addr,
-    input wire [$clog2(NUM_BUFFERS)-1:0]  sw_idx,
-    output logic [$clog2(NUM_BUFFERS)-1:0] hw_idx,
+    input wire [31:0]                 base_addr,
+    input wire [LOG2_BUFFER_SIZE-1:0] sw_idx,
+    output logic [LOG2_BUFFER_SIZE:0] hw_idx,
 
-    input wire				   fifo_write,
+    input wire                        fifo_write,
 
-    input wire				   flush,
+    input wire                        flush,
 
-    output logic [71:0]			   m_axis_cmd_tdata,
-    output logic			   m_axis_cmd_tvalid,
-    input wire				   m_axis_cmd_tready,
+    output logic [71:0]               m_axis_cmd_tdata,
+    output logic                      m_axis_cmd_tvalid,
+    input wire                        m_axis_cmd_tready,
 
-    input wire [7:0]			   m_axis_sts_tdata,
-    input wire				   m_axis_sts_tvalid,
-    output logic			   m_axis_sts_tready
+    input wire [7:0]                  m_axis_sts_tdata,
+    input wire                        m_axis_sts_tvalid,
+    output logic                      m_axis_sts_tready
 );
-   
    logic trigger;
    logic [31:0] fill_level;
    logic [31:0]	write_amount;
@@ -40,13 +38,28 @@ module datamover_cmd #(
    logic [22:0]                 BTT;
    logic [ADDR_WIDTH-1:0]       ADDR;
    logic			write_space_left;
-
    logic [31:0]			buffer_end_addr;
    logic			buffer_full;
-
    logic [31:0]			pending_cmds_count;
 
-   logic [$clog2(NUM_BUFFERS)-1:0] next_hw_idx;
+   logic [LOG2_BUFFER_SIZE:0]   next_cmd_send_idx;
+   logic [LOG2_BUFFER_SIZE:0]   cmd_send_idx;
+
+   logic [LOG2_BUFFER_SIZE:0]   next_hw_idx;
+
+   always_comb begin
+      write_space_left = next_cmd_send_idx != sw_idx;
+      
+      write_amount = (flush ? fill_level : THRESHOLD);
+      BTT = write_amount * (DATA_WIDTH/8);
+
+      next_hw_idx = hw_idx + THRESHOLD * DATA_WIDTH/8;
+      next_cmd_send_idx = cmd_send_idx + THRESHOLD * DATA_WIDTH/8;
+
+      ADDR = cmd_send_idx + base_addr;
+      
+      m_axis_sts_tready = '1;
+   end
 
    always @(posedge clk or negedge rstn) begin
       if (!rstn) begin
@@ -60,28 +73,16 @@ module datamover_cmd #(
       end
    end
 
-   always_comb begin
-      buffer_end_addr = base_addr + (hw_idx)*BUFFER_SIZE + BUFFER_SIZE;
-      write_amount = (flush ? fill_level : THRESHOLD);
-      BTT = write_amount * (DATA_WIDTH/8);
-      write_space_left = (ADDR + BTT) < buffer_end_addr;
-      buffer_full = !write_space_left && (pending_cmds_count == 0);
-      next_hw_idx = hw_idx == NUM_BUFFERS-1 ? 0 : hw_idx + 1;
-   end
-
-   always_comb begin
-      m_axis_sts_tready = '1;
-   end
-   
    always @(posedge clk or negedge rstn) begin
       if (!rstn) begin
-	 pending_cmds_count    = '0;
+         cmd_send_idx    <= 0;
+         hw_idx          <= 0;
       end else begin
 	 if (m_axis_cmd_tvalid && m_axis_cmd_tready) begin
-	    pending_cmds_count = pending_cmds_count + 1;
+            cmd_send_idx <= next_cmd_send_idx;
 	 end
 	 if (m_axis_sts_tvalid && m_axis_sts_tready) begin
-	    pending_cmds_count = pending_cmds_count - 1;
+            hw_idx       <= next_hw_idx;
 	 end
       end
    end
@@ -91,8 +92,6 @@ module datamover_cmd #(
          m_axis_cmd_tvalid <= 0;
          m_axis_cmd_tdata  <= 0;
          fill_level        <= 0;
-	 hw_idx            <= 0;
-         ADDR              <= base_addr;
       end else begin
          if (trigger && !m_axis_cmd_tvalid) begin
             // format: {RSVD:4, TAG:4, ADDR:32, DRR:1, EOF:1, DSA:6, TYPE:1, BTT:22}
@@ -100,12 +99,8 @@ module datamover_cmd #(
             m_axis_cmd_tvalid <= 1;
          end else if (m_axis_cmd_tvalid && m_axis_cmd_tready) begin
             m_axis_cmd_tvalid <= 0;
-            ADDR <= ADDR + BTT;
             fill_level = fill_level - write_amount;
-         end else if (buffer_full && next_hw_idx != sw_idx) begin
-            ADDR <= base_addr + (next_hw_idx)*BUFFER_SIZE;
-	    hw_idx <= next_hw_idx;
-	 end
+         end
          if (fifo_write) begin
             fill_level = fill_level + 1;
          end

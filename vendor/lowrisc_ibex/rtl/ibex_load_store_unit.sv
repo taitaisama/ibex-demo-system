@@ -58,6 +58,10 @@ module ibex_load_store_unit #(
 
   output logic         lsu_resp_valid_o,     // LSU has response from transaction -> to ID/EX
 
+  output logic         debug_misaligned_first,
+  output logic         debug_misaligned_second,
+  output logic         debug_misaligned_first_saw_error,
+
   // exception signals
   output logic         load_err_o,
   output logic         load_resp_intg_err_o,
@@ -107,6 +111,12 @@ module ibex_load_store_unit #(
   } ls_fsm_e;
 
   ls_fsm_e ls_fsm_cs, ls_fsm_ns;
+
+  always_comb begin
+     debug_misaligned_first = handle_misaligned_d | ((lsu_type_i == 2'b01) & (data_offset == 2'b01));
+     debug_misaligned_second = addr_incr_req_o;
+     debug_misaligned_first_saw_error = addr_incr_req_o & lsu_err_d;   
+  end
 
   assign data_addr   = adder_result_ex_i;
   assign data_offset = data_addr[1:0];

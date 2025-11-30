@@ -23,9 +23,9 @@ struct __attribute__((packed)) rvfi {
 static_assert(sizeof(rvfi) == 26, "rvfi struct must be 26 bytes");
 
 struct __attribute__((packed)) csr {
-  uint64_t mcycle;
   uint8_t addr;
   uint32_t counter;
+  uint32_t mcycle : 24;
 };
 
 #define PROG_LEN      613
@@ -41,7 +41,6 @@ static_assert(sizeof(csr) == 13, "csr struct must be 13 bytes");
 #define PROG_OFFSET                 0x000000
 
 #define BUFFER_SIZE                 0x100000
-#define BUFFER_NUM                  0x4
 
 #define PROG_ADDR_OFFSET            0x10008
 #define PS_FLUSH_RST_OFFSET         0x10000
@@ -132,9 +131,9 @@ template<typename T, uint32_t L>
 struct stream_ctrl {
 
   mem_ptr_t base_addr;
-  mem_ptr_t next_read_addr;
 
-  bits_t    sw_idx;
+  uint32_t  last_hw_idx; 
+  uint32_t  sw_idx;
 
   gpio_ptr_t sw_idx_ptr;
   gpio_ptr_t hw_idx_ptr;
@@ -145,7 +144,8 @@ struct stream_ctrl {
 
   stream_ctrl (uint32_t sip, uint32_t hip, uint32_t bap, uint32_t sa) :
     base_addr(sa),
-    next_read_addr(sa),
+    last_hw_idx(0),
+    sw_idx(0),
     sw_idx_ptr(sip),
     hw_idx_ptr(hip),
     base_addr_ptr(bap),
@@ -154,30 +154,20 @@ struct stream_ctrl {
 
   void set_addrs() {
     base_addr_ptr.out(base_addr.get_abs());
-  }
-
-  mem_ptr_t curr_buff_end_addr() {
-    return base_addr + (sw_idx+1) * BUFFER_SIZE;
-  }
-
-  mem_ptr_t curr_buff_start_addr() {
-    return base_addr + sw_idx * BUFFER_SIZE;
+    sw_idx_ptr.out(sw_idx);
   }
 
   bool in32(uint32_t &res) {
-    if (next_read_addr >= curr_buff_end_addr()) {
-      // increase sw_idx, if cant return false
-      uint32_t next_sw_idx = sw_idx == BUFFER_NUM-1 ? 0 : sw_idx + 1;
-      if (hw_idx_ptr.in() == next_sw_idx) {
-        return false;
-      } else {
-        sw_idx = next_sw_idx;
-        sw_idx_ptr.out(sw_idx);
-        next_read_addr = curr_buff_start_addr();
+    auto next_sw_idx = (sw_idx + 4 == BUFFER_SIZE) ? 0 : sw_idx + 4;
+    if (next_sw_idx == last_hw_idx) {
+      last_hw_idx = hw_idx_ptr.in();
+      if (next_sw_idx == last_hw_idx) {
+	return false;
       }
     }
-    res = next_read_addr.in();
-    next_read_addr.inc();
+    res = (base_addr + sw_idx).in();
+    sw_idx = next_sw_idx;
+    sw_idx_ptr.out(sw_idx);
     return true;
   }
 
@@ -205,9 +195,11 @@ struct ps_io_ctrl {
   gpio_ptr_t prog_base_addr_ptr;
 
   stream_ctrl<rvfi, 8> rvfi_stream;
-  stream_ctrl<csr, 4> csr_stream;
+  stream_ctrl<csr, 2> csr_stream;
+  stream_ctrl<void, 4> dside_stream;
   rvfi* curr_rvfi;
   csr* curr_csr;
+  void* curr_dside;
 
   ps_io_ctrl() :
     rst_flush_ptr(PS_FLUSH_RST_OFFSET),

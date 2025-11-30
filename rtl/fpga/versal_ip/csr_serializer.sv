@@ -1,6 +1,6 @@
 
 
-module rvfi_csr #(parameter int NUM_WORDS, parameter int WIDTH)
+module csr_serializer #(parameter int NUM_WORDS, parameter int WIDTH)
 (
  input wire                            clk,
  input wire                            rstn,
