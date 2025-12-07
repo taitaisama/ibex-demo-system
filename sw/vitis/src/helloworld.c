@@ -38,16 +38,20 @@ int main()
     // xil_printf("waiting %d\n\r", 100);
     // print("ok");
     sleep(1);
-    for (int i = 0; i < 2048; i ++) {
-        xil_printf("%x, ", Xil_In32(0x20100000000 + i*4));
-    }
+    /* for (int i = 0; i < 2048; i ++) { */
+    /*     xil_printf("%x, ", Xil_In32(0x20100000000 + i*4)); */
+    /* } */
     print("\n");
     for (int i = 0; i < 1024; i ++) {
         xil_printf("%x, ", Xil_In32(0x30000000 + 0x100000 + i*4));
     }
     print("\n");
     for (int i = 0; i < 1024; i ++) {
-        xil_printf("%x, ", Xil_In32(0x30000000 + 0x400000 + i*4));
+        xil_printf("%x, ", Xil_In32(0x30000000 + 0x200000 + i*4));
+    }
+    print("\n");
+    for (int i = 0; i < 1024; i ++) {
+        xil_printf("%x, ", Xil_In32(0x30000000 + 0x300000 + i*4));
     }
     
     // xil_printf("\"%x\"", Xil_In32(0x60000080));

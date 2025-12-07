@@ -74,7 +74,6 @@ module read_ram_to_axi
    logic					  next_read_counter_is_busy;
 
    logic					  read_fifo_valid;
-   logic					  fifo_busy;   
 
    always_comb begin
       read_fits_in_last_burst = last_read_valid && (!read_buffer[s_addr_burst_idx][last_read_counter].send_pending) && read_buffer[s_addr_burst_idx][last_read_counter].recv_pending && (last_read_addr_burst_masked == s_addr_burst_masked);
@@ -86,7 +85,7 @@ module read_ram_to_axi
 	 end
       end
 
-      s_gnt = (!next_read_counter_is_busy) && m_arready && (!fifo_busy);
+      s_gnt = (!next_read_counter_is_busy) && m_arready;
 
    end
 
@@ -116,7 +115,6 @@ module read_ram_to_axi
       .clk (clk),
       .rst (~rstn),
       .data_valid (read_fifo_valid),
-      .fifo_wr_busy (fifo_busy),
       .fifo_read_rd_data (read_send_trans),
       .fifo_read_rd_en (pop_read),
       .fifo_write_wr_data (read_queue_trans),

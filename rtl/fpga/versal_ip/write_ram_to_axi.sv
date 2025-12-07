@@ -81,12 +81,11 @@ module write_ram_to_axi
    end
 
    logic			  write_fifo_valid;
-   logic			  fifo_busy;
    logic			  next_ack_is_pending;
 
    always_comb begin
       next_ack_is_pending = write_ack_pending[write_counter];
-      s_gnt = (!next_ack_is_pending) && m_awready && (!fifo_busy);
+      s_gnt = (!next_ack_is_pending) && m_awready;
    end
 
    always_comb begin
@@ -139,13 +138,12 @@ module write_ram_to_axi
 
    // size > 2**NUM_ID_BITS
    // fallthrough mode
-    fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(128)) 
+    fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(16)) 
        u_pending_writes 
      (
       .clk (clk),
       .rst (~rstn),
       .data_valid (write_fifo_valid),
-      .fifo_wr_busy (fifo_busy),
       .fifo_read_rd_data (write_send_fifo_trans),
       .fifo_read_rd_en (pop_write),
       .fifo_write_wr_data (write_queue_fifo_trans),

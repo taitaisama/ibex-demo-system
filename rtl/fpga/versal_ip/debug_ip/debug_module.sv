@@ -127,7 +127,7 @@ module debug_module
    output logic [ADDR_WIDTH-1:0]     DEBUG_addr,
    output logic			     DEBUG_clk,
    output logic [OUTPUT_WIDTH-1:0]   DEBUG_wrdata,
-   input wire [OUTPUT_WIDTH-1:0]    DEBUG_rddata,
+   input wire [OUTPUT_WIDTH-1:0]     DEBUG_rddata,
    output logic			     DEBUG_en,
    output logic			     DEBUG_rst,
    output logic [OUTPUT_WIDTH/8-1:0] DEBUG_we
@@ -150,15 +150,18 @@ module debug_module
 
    always_comb begin
       DEBUG_en = 1;
-      DEBUG_we = (rvfi_cmd_tvalid & rvfi_cmd_tready) ? {(OUTPUT_WIDTH/8){1'b1}} : '0;
+      DEBUG_we = {{OUTPUT_WIDTH/8}{1'b1}}; // (rvfi_cmd_tvalid & rvfi_cmd_tready) ? {(OUTPUT_WIDTH/8){1'b1}} : '0;
       DEBUG_rst = ~sys_rstn;
       DEBUG_clk = sys_clk;
 
-      DEBUG_wrdata = {rvfi_cmd_tdata,
+      DEBUG_wrdata = {rvfi_valid,
+                      rvfi_rd_addr,
+                      rvfi_sts_tdata,
+                      rvfi_sts_tvalid,
+                      rvfi_sts_tready,
+                      rvfi_cmd_tdata,
                       rvfi_cmd_tvalid,
-                      rvfi_cmd_tready,
-                      last_sts,
-                      last_mcycle};
+                      rvfi_cmd_tready};
                       
       // DEBUG_wrdata = {S_RAM_INSTR_req, S_RAM_INSTR_addr, S_RAM_INSTR_rdvalid, S_RAM_INSTR_rddata, S_RAM_INSTR_gnt, 16'b0101010101010101, 45'd0};
    end

@@ -125,7 +125,6 @@ module rvfi_handler #(
    rvfi_data_t  rvfi_fifo_rd_data;
    logic        rvfi_fifo_data_valid;
    logic        rvfi_fifo_almost_full;
-   logic	rvfi_fifo_busy;
    logic        rvfi_fifo_rd_en;
    logic        rvfi_fifo_wr_en;
 
@@ -134,7 +133,6 @@ module rvfi_handler #(
       .clk (clk),
       .rst (~rstn),
       .data_valid (rvfi_fifo_data_valid),
-      .fifo_wr_busy (rvfi_fifo_busy),
       .fifo_read_rd_data (rvfi_fifo_rd_data),
       .fifo_read_rd_en (rvfi_to_mem_valid),
       .fifo_almost_full (rvfi_fifo_almost_full),
@@ -198,7 +196,6 @@ module rvfi_handler #(
    csr_data_t   csr_fifo_rd_data;
    logic        csr_fifo_data_valid;
    logic        csr_fifo_almost_full;
-   logic	csr_fifo_busy;
    logic        csr_fifo_rd_en;
    logic        csr_fifo_wr_en;
    
@@ -217,7 +214,6 @@ module rvfi_handler #(
       .clk (clk),
       .rst (~rstn),
       .data_valid (csr_fifo_data_valid),
-      .fifo_wr_busy (csr_fifo_busy),
       .fifo_read_rd_data (csr_fifo_rd_data),
       .fifo_read_rd_en (csr_to_mem_valid),
       .fifo_almost_full (csr_fifo_almost_full),
@@ -306,7 +302,6 @@ module rvfi_handler #(
    dside_data_t  dside_fifo_rd_data;
    logic         dside_fifo_data_valid;
    logic         dside_fifo_almost_full;
-   logic	 dside_fifo_busy;
    logic         dside_fifo_rd_en;
    logic         dside_fifo_wr_en;
 
@@ -316,7 +311,6 @@ module rvfi_handler #(
       .clk (clk),
       .rst (~rstn),
       .data_valid (dside_fifo_data_valid),
-      .fifo_wr_busy (dside_fifo_busy),
       .fifo_read_rd_data (dside_fifo_rd_data),
       .fifo_read_rd_en (dside_to_mem_valid),
       .fifo_almost_full (dside_fifo_almost_full),

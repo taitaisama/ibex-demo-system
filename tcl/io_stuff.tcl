@@ -168,9 +168,19 @@ proc create_ps_io_design { } {
 
   set dside_ctrl [ create_bd_intf_port -mode Master -vlnv ibex:user:stream_ctrl_rtl:1.0 dside_ctrl ]
 
+  set debug_ram [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:bram_rtl:1.0 debug_ram ]
+  set_property -dict [ list \
+   CONFIG.DATA_WIDTH {128} \
+   CONFIG.MASTER_TYPE {BRAM_CTRL} \
+   CONFIG.READ_WRITE_MODE {READ_WRITE} \
+   ] $debug_ram
+
 
   # Create ports
   set clk [ create_bd_port -dir I -type clk -freq_hz 100000000 clk ]
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {S_AXI} \
+ ] $clk
   set rstn [ create_bd_port -dir I -type rst rstn ]
   set flush [ create_bd_port -dir O -from 0 -to 0 flush ]
   set ps_rstn [ create_bd_port -dir O -from 0 -to 0 ps_rstn ]
@@ -179,7 +189,7 @@ proc create_ps_io_design { } {
   # Create instance: smartconnect_0, and set properties
   set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
   set_property -dict [list \
-    CONFIG.NUM_MI {6} \
+    CONFIG.NUM_MI {7} \
     CONFIG.NUM_SI {1} \
   ] $smartconnect_0
 
@@ -282,8 +292,17 @@ proc create_ps_io_design { } {
      return 1
    }
   
+  # Create instance: axi_bram_ctrl_0, and set properties
+  set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_0 ]
+  set_property  -dict [ list \
+   CONFIG.DATA_WIDTH {128} \
+   CONFIG.SINGLE_PORT_BRAM {1} \
+   ] $axi_bram_ctrl_0
+
+
   # Create interface connections
   connect_bd_intf_net -intf_net S_AXI_1 [get_bd_intf_ports S_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
+  connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_ports debug_ram] [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA]
   connect_bd_intf_net -intf_net dside_ctrl_bridge_ctrl_out [get_bd_intf_ports dside_ctrl] [get_bd_intf_pins dside_ctrl_bridge/ctrl_out]
   connect_bd_intf_net -intf_net rvfi_ctrl_bridge_ctrl_out [get_bd_intf_ports rvfi_ctrl] [get_bd_intf_pins rvfi_ctrl_bridge/ctrl_out]
   connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins ctrl/S_AXI]
@@ -292,6 +311,7 @@ proc create_ps_io_design { } {
   connect_bd_intf_net -intf_net smartconnect_0_M03_AXI [get_bd_intf_pins smartconnect_0/M03_AXI] [get_bd_intf_pins rvfi_idx/S_AXI]
   connect_bd_intf_net -intf_net smartconnect_0_M04_AXI [get_bd_intf_pins smartconnect_0/M04_AXI] [get_bd_intf_pins addr1/S_AXI]
   connect_bd_intf_net -intf_net smartconnect_0_M05_AXI [get_bd_intf_pins smartconnect_0/M05_AXI] [get_bd_intf_pins dside_idx/S_AXI]
+  connect_bd_intf_net -intf_net smartconnect_0_M06_AXI [get_bd_intf_pins smartconnect_0/M06_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
   connect_bd_intf_net -intf_net stream_ctrl_bridge_0_ctrl_out [get_bd_intf_ports csr_ctrl] [get_bd_intf_pins csr_ctrl_bridge/ctrl_out]
 
   # Create port connections
@@ -308,7 +328,8 @@ proc create_ps_io_design { } {
   [get_bd_pins rvfi_idx/s_axi_aclk] \
   [get_bd_pins addr2/s_axi_aclk] \
   [get_bd_pins addr1/s_axi_aclk] \
-  [get_bd_pins dside_idx/s_axi_aclk]
+  [get_bd_pins dside_idx/s_axi_aclk] \
+  [get_bd_pins axi_bram_ctrl_0/s_axi_aclk]
   connect_bd_net -net csr_ctrl_bridge_0_ctrl_in_hwidx  [get_bd_pins csr_ctrl_bridge/ctrl_in_hwidx] \
   [get_bd_pins csr_idx/gpio_io_i]
   connect_bd_net -net csr_idx_gpio2_io_o  [get_bd_pins csr_idx/gpio2_io_o] \
@@ -330,19 +351,22 @@ proc create_ps_io_design { } {
   [get_bd_pins ctrl/s_axi_aresetn] \
   [get_bd_pins addr2/s_axi_aresetn] \
   [get_bd_pins addr1/s_axi_aresetn] \
-  [get_bd_pins dside_idx/s_axi_aresetn]
+  [get_bd_pins dside_idx/s_axi_aresetn] \
+  [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn]
   connect_bd_net -net rvfi_ctrl_bridge_ctrl_in_hwidx  [get_bd_pins rvfi_ctrl_bridge/ctrl_in_hwidx] \
   [get_bd_pins rvfi_idx/gpio_io_i]
   connect_bd_net -net rvfi_idx_gpio2_io_o  [get_bd_pins rvfi_idx/gpio2_io_o] \
   [get_bd_pins rvfi_ctrl_bridge/ctrl_in_swidx]
 
   # Create address segments
-  assign_bd_address -offset 0x40000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs addr1/S_AXI/Reg] -force
-  assign_bd_address -offset 0x40010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs dside_idx/S_AXI/Reg] -force
+  assign_bd_address -offset 0x80050000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs addr1/S_AXI/Reg] -force
+  assign_bd_address -offset 0xC0000000 -range 0x00002000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x80060000 -range 0x00010000 -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs dside_idx/S_AXI/Reg] -force
   assign_bd_address -offset 0x80010000 -range 0x00010000 -with_name SEG_ps_ctrl_Reg -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs ctrl/S_AXI/Reg] -force
   assign_bd_address -offset 0x80020000 -range 0x00010000 -with_name SEG_rvfi_curr_addrs_Reg -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs csr_idx/S_AXI/Reg] -force
   assign_bd_address -offset 0x80030000 -range 0x00010000 -with_name SEG_rvfi_end_addrs_Reg -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs addr2/S_AXI/Reg] -force
   assign_bd_address -offset 0x80040000 -range 0x00010000 -with_name SEG_rvfi_start_addrs_Reg -target_address_space [get_bd_addr_spaces S_AXI] [get_bd_addr_segs rvfi_idx/S_AXI/Reg] -force
+
 
   # Restore current instance
   current_bd_instance $oldCurInst
@@ -361,11 +385,10 @@ set dir_path [lindex $argv 0]
 set_property  ip_repo_paths  [list "$dir_path/rtl/fpga/versal_ip/intf_ip" "$dir_path/build/ip_repo"] [current_project]
 
 create_ps_io_design
-create_fifo_design "" 128 4 "fifo_4_128"
 create_fifo_design "" 128 6 "fifo_6_128"
-create_fifo_design "" 128 32 "fifo_32_128"
-create_fifo_design "" 128 40 "fifo_40_128"
-create_fifo_design "" 128 69 "fifo_69_128"
+create_fifo_design "" 16 32 "fifo_32_16"
+create_fifo_design "" 16 40 "fifo_40_16"
+create_fifo_design "" 16 69 "fifo_69_16"
 create_fifo_design "" 16 98 "fifo_98_16"
 create_fifo_design "" 16 664 "fifo_664_16"
 create_fifo_design "" 16 227 "fifo_227_16"

@@ -9,37 +9,45 @@ module fifo_wrapper
   input wire		   clk,
   input wire		   rst,
   output logic		   data_valid,
-  output logic		   fifo_wr_busy,
   output logic		   fifo_almost_full,
   output logic [WIDTH-1:0] fifo_read_rd_data,
   input wire		   fifo_read_rd_en,
-  input wire [WIDTH-1:0]  fifo_write_wr_data,
+  input wire [WIDTH-1:0]   fifo_write_wr_data,
   input wire		   fifo_write_wr_en
  );
-
-   if (WIDTH == 4 && DEPTH == 128) begin : g_fifo_4_128
-
-      fifo_4_128_wrapper u_fifo 
-	(
-	 .clk(clk),
-	 .rst (rst),
-	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
-	 .fifo_almost_full (fifo_almost_full),
-	 .fifo_read_rd_data (fifo_read_rd_data),
-	 .fifo_read_rd_en (fifo_read_rd_en),
-	 .fifo_write_wr_data (fifo_write_wr_data),
-	 .fifo_write_wr_en (fifo_write_wr_en)
-	 );      
-
-   end else if (WIDTH == 6 && DEPTH == 128) begin : g_fifo_6_128
+  if (WIDTH == 6 && DEPTH == 128) begin : g_fifo_6_128
 
       fifo_6_128_wrapper u_fifo 
 	(
 	 .clk(clk),
 	 .rst (rst),
 	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
+	 .fifo_almost_full (fifo_almost_full),
+	 .fifo_read_rd_data (fifo_read_rd_data),
+	 .fifo_read_rd_en (fifo_read_rd_en),
+	 .fifo_write_wr_data (fifo_write_wr_data),
+	 .fifo_write_wr_en (fifo_write_wr_en)
+	 );      
+   end else if (WIDTH == 32 && DEPTH == 16) begin : g_fifo_32_16
+
+      fifo_32_16_wrapper u_fifo 
+	(
+	 .clk(clk),
+	 .rst (rst),
+	 .data_valid (data_valid),
+	 .fifo_almost_full (fifo_almost_full),
+	 .fifo_read_rd_data (fifo_read_rd_data),
+	 .fifo_read_rd_en (fifo_read_rd_en),
+	 .fifo_write_wr_data (fifo_write_wr_data),
+	 .fifo_write_wr_en (fifo_write_wr_en)
+	 );      
+   end else if (WIDTH == 40 && DEPTH == 16) begin : g_fifo_40_16
+
+      fifo_40_16_wrapper u_fifo 
+	(
+	 .clk(clk),
+	 .rst (rst),
+	 .data_valid (data_valid),
 	 .fifo_almost_full (fifo_almost_full),
 	 .fifo_read_rd_data (fifo_read_rd_data),
 	 .fifo_read_rd_en (fifo_read_rd_en),
@@ -47,43 +55,13 @@ module fifo_wrapper
 	 .fifo_write_wr_en (fifo_write_wr_en)
 	 );      
 
-   end else if (WIDTH == 32 && DEPTH == 128) begin : g_fifo_32_128
+   end else if (WIDTH == 69 && DEPTH == 16) begin : g_fifo_69_16
 
-      fifo_32_128_wrapper u_fifo 
+      fifo_69_16_wrapper u_fifo 
 	(
 	 .clk(clk),
 	 .rst (rst),
 	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
-	 .fifo_almost_full (fifo_almost_full),
-	 .fifo_read_rd_data (fifo_read_rd_data),
-	 .fifo_read_rd_en (fifo_read_rd_en),
-	 .fifo_write_wr_data (fifo_write_wr_data),
-	 .fifo_write_wr_en (fifo_write_wr_en)
-	 );      
-   end else if (WIDTH == 40 && DEPTH == 128) begin : g_fifo_40_128
-
-      fifo_40_128_wrapper u_fifo 
-	(
-	 .clk(clk),
-	 .rst (rst),
-	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
-	 .fifo_almost_full (fifo_almost_full),
-	 .fifo_read_rd_data (fifo_read_rd_data),
-	 .fifo_read_rd_en (fifo_read_rd_en),
-	 .fifo_write_wr_data (fifo_write_wr_data),
-	 .fifo_write_wr_en (fifo_write_wr_en)
-	 );      
-
-   end else if (WIDTH == 69 && DEPTH == 128) begin : g_fifo_69_128
-
-      fifo_69_128_wrapper u_fifo 
-	(
-	 .clk(clk),
-	 .rst (rst),
-	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
 	 .fifo_almost_full (fifo_almost_full),
 	 .fifo_read_rd_data (fifo_read_rd_data),
 	 .fifo_read_rd_en (fifo_read_rd_en),
@@ -98,7 +76,6 @@ module fifo_wrapper
 	 .clk(clk),
 	 .rst (rst),
 	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
 	 .fifo_almost_full (fifo_almost_full),
 	 .fifo_read_rd_data (fifo_read_rd_data),
 	 .fifo_read_rd_en (fifo_read_rd_en),
@@ -113,7 +90,6 @@ module fifo_wrapper
 	 .clk(clk),
 	 .rst (rst),
 	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
 	 .fifo_almost_full (fifo_almost_full),
 	 .fifo_read_rd_data (fifo_read_rd_data),
 	 .fifo_read_rd_en (fifo_read_rd_en),
@@ -128,7 +104,6 @@ module fifo_wrapper
 	 .clk(clk),
 	 .rst (rst),
 	 .data_valid (data_valid),
-	 .fifo_wr_busy (fifo_wr_busy),
 	 .fifo_almost_full (fifo_almost_full),
 	 .fifo_read_rd_data (fifo_read_rd_data),
 	 .fifo_read_rd_en (fifo_read_rd_en),

@@ -54,6 +54,26 @@ module data_ram_to_axi
   input wire [NUM_ID_BITS-1:0]	 m_bid
 );
 
+   logic			 r_req;
+   logic                         r_we;
+   logic [3:0]                   r_be;
+   logic [31:0]                  r_addr;
+   logic [31:0]                  r_wdata;
+   logic                         r_rvalid;
+   logic [31:0]                  r_rdata;
+   logic                         r_gnt;
+
+   always_ff @(posedge clk) begin
+      s_gnt <= r_gnt;
+      s_rdata <= r_rdata;
+      s_rvalid <= r_rvalid;
+      r_we <= s_we;
+      r_be <= s_be;
+      r_req <= s_req;
+      r_addr <= s_addr;
+      r_wdata <= s_wdata;
+   end
+
    logic			 q_we;
    logic [3:0]			 q_be;
    logic [31:0]			 q_addr;
@@ -63,21 +83,20 @@ module data_ram_to_axi
    logic			 fifo_valid, fifo_busy, fifo_almost_full;
 
    always_comb begin
-      s_gnt = !fifo_almost_full && !fifo_busy;
+      r_gnt = !fifo_almost_full;
       q_req = fifo_valid;
    end
 
-      fifo_wrapper #(.WIDTH(69), .DEPTH(128)) u_drf
+      fifo_wrapper #(.WIDTH(69), .DEPTH(16)) u_drf
      (
       .clk(clk),
       .rst (~rstn),
       .data_valid (fifo_valid),
-      .fifo_wr_busy (fifo_busy),
       .fifo_almost_full (fifo_almost_full),
       .fifo_read_rd_data ({q_we, q_be, q_addr, q_wdata}),
       .fifo_read_rd_en (q_req && q_gnt),
-      .fifo_write_wr_data ({s_we, s_be, s_addr, s_wdata}),
-      .fifo_write_wr_en (s_gnt && s_req)
+      .fifo_write_wr_data ({r_we, r_be, r_addr, r_wdata}),
+      .fifo_write_wr_en (r_gnt && r_req)
       );   
 
    logic req_to_outstanding;
@@ -149,8 +168,8 @@ module data_ram_to_axi
        
 	.s_req (q_rreq),
 	.s_addr (q_addr),
-	.s_rvalid (s_rvalid),
-	.s_rdata (s_rdata),
+	.s_rvalid (r_rvalid),
+	.s_rdata (r_rdata),
 	.s_gnt (q_rgnt),
 
 	.info_rid (),
