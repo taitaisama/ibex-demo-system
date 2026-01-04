@@ -21,60 +21,71 @@ module ibex_demo_system #(
   parameter ibex_pkg::regfile_e RegFile        = ibex_pkg::RegFileFPGA,
   parameter                     SRAMInitFile   = "/home/ritu/dev/work/ibex-demo-system/sw/c/build/demo/hello_world/demo.hex"
 ) (
-  input logic		      clk_sys_i,
-  input logic		      rst_sys_ni,
+  input logic                 clk_sys_i,
+  input logic                 rst_sys_ni,
 
   input logic [GpiWidth-1:0]  gp_i,
   output logic [GpoWidth-1:0] gp_o,
   output logic [PwmWidth-1:0] pwm_o,
-  input logic		      uart_rx_i,
-  output logic		      uart_tx_o,
-  input logic		      spi_rx_i,
-  output logic		      spi_tx_o,
-  output logic		      spi_sck_o,
+  input logic                 uart_rx_i,
+  output logic                uart_tx_o,
+  input logic                 spi_rx_i,
+  output logic                spi_tx_o,
+  output logic                spi_sck_o,
 
-  output logic		      ibex_ram_a_req_o,
-  output logic [3:0]	      ibex_ram_a_we_o,
-  output logic [3:0]	      ibex_ram_a_be_o,
-  output logic [31:0]	      ibex_ram_a_addr_o,
-  output logic [31:0]	      ibex_ram_a_wdata_o,
-  input logic		      ibex_ram_a_rvalid_i,
-  input logic [31:0]	      ibex_ram_a_rdata_i,
-  input logic		      ibex_ram_a_gnt_i,
+  output logic                ibex_ram_a_req_o,
+  output logic [3:0]          ibex_ram_a_we_o,
+  output logic [3:0]          ibex_ram_a_be_o,
+  output logic [31:0]         ibex_ram_a_addr_o,
+  output logic [31:0]         ibex_ram_a_wdata_o,
+  input logic                 ibex_ram_a_rvalid_i,
+  input logic [31:0]          ibex_ram_a_rdata_i,
+  input logic                 ibex_ram_a_gnt_i,
 			      
-  output logic		      ibex_ram_b_req_o,
-  output logic [3:0]	      ibex_ram_b_we_o,
-  output logic [3:0]	      ibex_ram_b_be_o,
-  output logic [31:0]	      ibex_ram_b_addr_o,
-  output logic [31:0]	      ibex_ram_b_wdata_o,
-  input logic		      ibex_ram_b_rvalid_i,
-  input logic [31:0]	      ibex_ram_b_rdata_i,
-  input logic		      ibex_ram_b_gnt_i,
+  output logic                ibex_ram_b_req_o,
+  output logic [3:0]          ibex_ram_b_we_o,
+  output logic [3:0]          ibex_ram_b_be_o,
+  output logic [31:0]         ibex_ram_b_addr_o,
+  output logic [31:0]         ibex_ram_b_wdata_o,
+  input logic                 ibex_ram_b_rvalid_i,
+  input logic [31:0]          ibex_ram_b_rdata_i,
+  input logic                 ibex_ram_b_gnt_i,
 
-  output logic		      rvfi_valid,
-  output logic		      rvfi_trap,
-  output logic [ 4:0]	      rvfi_rd_addr,
-  output logic [31:0]	      rvfi_rd_wdata,
-  output logic [31:0]	      rvfi_pc_rdata,
-  output logic [31:0]	      rvfi_ext_pre_mip,
-  output logic [31:0]	      rvfi_ext_post_mip,
-  output logic		      rvfi_ext_nmi,
-  output logic		      rvfi_ext_nmi_int,
-  output logic		      rvfi_ext_debug_req,
-  output logic		      rvfi_ext_rf_wr_suppress,
-  output logic [63:0]	      rvfi_ext_mcycle,
-  output logic [319:0]	      rvfi_ext_mhpmcounters,
-  output logic [319:0]	      rvfi_ext_mhpmcountersh,
-  output logic		      rvfi_ext_ic_scr_key_valid,
+  output logic                rvfi_valid,
+  output logic                rvfi_trap,
+  output logic [ 4:0]         rvfi_rd_addr,
+  output logic [31:0]         rvfi_rd_wdata,
+  output logic [31:0]         rvfi_pc_rdata,
+  output logic [31:0]         rvfi_ext_pre_mip,
+  output logic [31:0]         rvfi_ext_post_mip,
+  output logic                rvfi_ext_nmi,
+  output logic                rvfi_ext_nmi_int,
+  output logic                rvfi_ext_debug_req,
+  output logic                rvfi_ext_rf_wr_suppress,
+  output logic [63:0]         rvfi_ext_mcycle,
+  output logic [319:0]        rvfi_ext_mhpmcounters,
+  output logic [319:0]        rvfi_ext_mhpmcountersh,
+  output logic                rvfi_ext_ic_scr_key_valid,
 
-  input logic		      force_stop,
+  output logic                dside_access_valid,
+  output logic                dside_access_store,
+  output logic [31:0]         dside_access_addr,
+  output logic [3:0]          dside_access_be,
+  output logic [31:0]         dside_access_store_data,
+  output logic                dside_access_err,
+  output logic                dside_access_misaligned_first,
+  output logic                dside_access_misaligned_second,
+  output logic                dside_access_misaligned_first_saw_error,
+  output logic                dside_access_m_mode_access,
+
+  input logic                 force_stop,
 
 // verilator lint_off UNUSED
-  input logic		      tck_i,   // JTAG test clock pad
-  input logic		      tms_i,   // JTAG test mode select pad
-  input logic		      trst_ni, // JTAG test reset pad
-  input logic		      td_i,    // JTAG test data input pad
-  output logic		      td_o     // JTAG test data output pad
+  input logic                 tck_i,   // JTAG test clock pad
+  input logic                 tms_i,   // JTAG test mode select pad
+  input logic                 trst_ni, // JTAG test reset pad
+  input logic                 td_i,    // JTAG test data input pad
+  output logic                td_o     // JTAG test data output pad
 // verilator lint_on UNUSED
 );
   localparam logic [31:0] MEM_SIZE      = 128 * 1024; // 128 KiB
@@ -192,6 +203,14 @@ module ibex_demo_system #(
   // Device address mapping.
   logic [31:0] cfg_device_addr_base [NrDevices];
   logic [31:0] cfg_device_addr_mask [NrDevices];
+
+  logic [31:0]         core_dside_access_store_data;
+
+  always_comb begin
+     dside_access_valid = host_rvalid[CoreD];
+     dside_access_store_data = dside_access_store ? core_dside_access_store_data : host_rdata[CoreD];
+     dside_access_err = host_err[CoreD];
+  end
 
   assign cfg_device_addr_base[Ram]     = MEM_START;
   assign cfg_device_addr_mask[Ram]     = MEM_MASK;
@@ -419,6 +438,15 @@ module ibex_demo_system #(
     .rvfi_ext_mhpmcountersh (rvfi_ext_mhpmcountersh_arr),
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
+
+    .outstanding_store (dside_access_store),
+    .outstanding_addr (dside_access_addr),
+    .outstanding_be (dside_access_be),
+    .outstanding_store_data (core_dside_access_store_data),
+    .outstanding_misaligned_first (dside_access_misaligned_first),
+    .outstanding_misaligned_second (dside_access_misaligned_second),
+    .outstanding_misaligned_first_saw_error (dside_access_misaligned_first_saw_error),
+    .outstanding_m_mode_access (dside_access_m_mode_access),
 
     .force_stop,
 

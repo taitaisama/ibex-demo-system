@@ -35,7 +35,7 @@ unsigned PROG [PROG_LEN] = {0x0c70006f, 0x0c30006f, 0x0bf0006f, 0x0bb0006f, 0x0b
 static_assert(sizeof(csr) == 13, "csr struct must be 13 bytes");
 
 
-#define GPIO_BASE_PHYS_ADDR         0x80000000
+#define GPIO_BASE_PHYS_ADDR         0x20180000000
 #define MEM_BASE_PHYS_ADDR          0x30000000
 
 #define PROG_OFFSET                 0x000000
@@ -43,19 +43,20 @@ static_assert(sizeof(csr) == 13, "csr struct must be 13 bytes");
 #define BUFFER_SIZE                 0x100000
 #define BUFFER_NUM                  0x4
 
-#define PROG_ADDR_OFFSET            0x10008
-#define PS_FLUSH_RST_OFFSET         0x10000
+#define PROG_ADDR_OFFSET            0x0
+#define RST_OFFSET                  0x4
+#define FLUSH_OFFSET                0x8
 
 #define RVFI_START_ADDR             0x100000
 #define RVFI_CSR_START_ADDR         0x400000
 
-#define RVFI_HW_IDX_OFFSET          0x20000
-#define RVFI_BASE_ADDR_OFFSET       0x30000
-#define RVFI_SW_IDX_OFFSET          0x40000
+#define RVFI_HW_IDX_OFFSET          0x10
+#define RVFI_BASE_ADDR_OFFSET       0x14
+#define RVFI_SW_IDX_OFFSET          0xC
 
-#define RVFI_CSR_HW_IDX_OFFSET      0x20008
-#define RVFI_CSR_BASE_ADDR_OFFSET   0x30008
-#define RVFI_CSR_SW_IDX_OFFSET      0x40008
+#define RVFI_CSR_HW_IDX_OFFSET      0x1C
+#define RVFI_CSR_BASE_ADDR_OFFSET   0x20
+#define RVFI_CSR_SW_IDX_OFFSET      0x18
 
 // when write pointer reaches end of a buffer, hw_idx is incremented
 // when  read pointer reaches end of a buffer, sw_idx is incremented
@@ -199,7 +200,7 @@ struct ps_io_ctrl {
   static constexpr int rst_bit = 1;
   static constexpr int flush_bit = 0;
 
-  gpio_ptr_t rst_flush_ptr;
+  gpio_ptr_t rst_ptr;
 
   mem_ptr_t prog_base_addr;
   gpio_ptr_t prog_base_addr_ptr;
@@ -210,7 +211,7 @@ struct ps_io_ctrl {
   csr* curr_csr;
 
   ps_io_ctrl() :
-    rst_flush_ptr(PS_FLUSH_RST_OFFSET),
+    rst_ptr(RST_OFFSET),
     prog_base_addr(PROG_OFFSET),
     prog_base_addr_ptr(PROG_ADDR_OFFSET),
     rvfi_stream(RVFI_SW_IDX_OFFSET,
@@ -224,7 +225,7 @@ struct ps_io_ctrl {
     { }
   
   void start(uint32_t * prog_data, uint32_t size) {
-    rst_flush_ptr.out(0);
+    rst_ptr.out(0);
     mem_ptr_t curr_prog_addr = prog_base_addr;
     for (uint32_t i = 0; i < size; i ++) {
         // Xil_Out32(i*4, prog_data[i]);
@@ -242,27 +243,27 @@ struct ps_io_ctrl {
     Xil_DCacheFlushRange(RVFI_CSR_START_ADDR, 131072);
     rvfi_stream.set_addrs();
     csr_stream.set_addrs();
-    rst_flush_ptr.out(1 << rst_bit);
+    rst_ptr.out(1);
   }
   
   void run() {
     for (int i = 0; i < 100; i ++) {
-      curr_rvfi = rvfi_stream.read();
-      if (!curr_rvfi) continue;
-      if (!curr_csr) {
-	    curr_csr = csr_stream.read();
-      }
-      if (curr_csr && curr_csr->mcycle < curr_rvfi->mcycle) {
-	  xil_printf("csr:\n  mcycle: %ld\n  addr: %d\n  counter: %d\n", curr_csr->mcycle, curr_csr->addr, curr_csr->counter);
-	// if (!csr_callback(*curr_csr)) {
-	//   return;
-	// }
-	  curr_csr = nullptr;
-      }
-      xil_printf("rvfi:\n  mcycle: %ld\n  rvfi_rd_wdata: %d\n  rvfi_rd_rdata: %d\n  rvfi_rd_addr: %d\n", curr_rvfi->mcycle, curr_rvfi->rvfi_rd_wdata, curr_rvfi->rvfi_pc_rdata, curr_rvfi->rvfi_rd_addr);
-      // if (!rvfi_callback(*curr_rvfi)) {
-      // 	return;
-      // }
+    //   curr_rvfi = rvfi_stream.read();
+    //   if (!curr_rvfi) continue;
+    //   if (!curr_csr) {
+	//     curr_csr = csr_stream.read();
+    //   }
+    //   if (curr_csr && curr_csr->mcycle < curr_rvfi->mcycle) {
+	//   xil_printf("csr:\n  mcycle: %ld\n  addr: %d\n  counter: %d\n", curr_csr->mcycle, curr_csr->addr, curr_csr->counter);
+	// // if (!csr_callback(*curr_csr)) {
+	// //   return;
+	// // }
+	//   curr_csr = nullptr;
+    //   }
+    //   xil_printf("rvfi:\n  mcycle: %ld\n  rvfi_rd_wdata: %d\n  rvfi_rd_rdata: %d\n  rvfi_rd_addr: %d\n", curr_rvfi->mcycle, curr_rvfi->rvfi_rd_wdata, curr_rvfi->rvfi_pc_rdata, curr_rvfi->rvfi_rd_addr);
+    //   // if (!rvfi_callback(*curr_rvfi)) {
+    //   // 	return;
+    //   // }
     }
   }
 };

@@ -14,6 +14,8 @@ filesets:
       - rtl/fpga/versal_ip/instr_ram_to_axi.sv
       - rtl/fpga/versal_ip/fifo_wrapper.sv
       - rtl/fpga/versal_ip/datamover_cmd.sv
+      - rtl/fpga/versal_ip/ps_io2.sv
+      - rtl/fpga/versal_ip/verilog_wrappers/ps_io2_wrapper.v: {file_type: verilogSource}
       - rtl/fpga/versal_ip/verilog_wrappers/data_ram_to_axi_bridge.v: {file_type: verilogSource}
       - rtl/fpga/versal_ip/verilog_wrappers/instr_ram_to_axi_bridge.v: {file_type: verilogSource}
       - rtl/fpga/versal_ip/verilog_wrappers/rvfi_to_stream.v: {file_type: verilogSource}

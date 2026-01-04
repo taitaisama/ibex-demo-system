@@ -1,3 +1,4 @@
+
 // Copyright lowRISC contributors.
 // Copyright 2018 ETH Zurich and University of Bologna, see also CREDITS.md.
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
@@ -156,6 +157,12 @@ module ibex_core import ibex_pkg::*; #(
   output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
   output logic                         rvfi_ext_ic_scr_key_valid,
   output logic                         rvfi_ext_irq_valid,
+
+  output logic                         debug_misaligned_first,
+  output logic                         debug_misaligned_second,
+  output logic                         debug_misaligned_first_saw_error,
+  output logic                         debug_m_mode_access,
+
   `endif
 
   // CPU Control Signals
@@ -379,6 +386,8 @@ module ibex_core import ibex_pkg::*; #(
 
   // for RVFI
   logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
+
+   always_comb debug_m_mode_access = priv_mode_lsu == ibex_pkg::PRIV_LVL_M;
 
   //////////////////////
   // Clock management //
@@ -795,6 +804,11 @@ module ibex_core import ibex_pkg::*; #(
     .addr_incr_req_o(lsu_addr_incr_req),
     .addr_last_o    (lsu_addr_last),
 
+`ifdef RVFI
+    .debug_misaligned_first,
+    .debug_misaligned_second,
+    .debug_misaligned_first_saw_error,
+`endif
 
     .lsu_resp_valid_o(lsu_resp_valid),
 

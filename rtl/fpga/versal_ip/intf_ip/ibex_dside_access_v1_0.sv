@@ -48,38 +48,33 @@
 // DO NOT MODIFY THIS FILE.
 
 
-`ifndef ibex_rvfi_v1_0
-`define ibex_rvfi_v1_0
+`ifndef ibex_dside_access_v1_0
+`define ibex_dside_access_v1_0
 
-interface ibex_rvfi_v1_0();
-  logic valid = 0;                                      // 
-  logic trap = 0;                                       // 
-  logic [4:0] rd_addr = 0;                              // 
-  logic [31:0] rd_wdata = 0;                            // 
-  logic [31:0] pc_rdata = 0;                            // 
-  logic [31:0] ext_pre_mip = 0;                         // 
-  logic [31:0] ext_post_mip = 0;                        // 
-  logic ext_nmi = 0;                                    // 
-  logic ext_nmi_int = 0;                                // 
-  logic ext_debug_req = 0;                              // 
-  logic ext_rf_wr_suppress = 0;                         // 
-  logic [63:0] ext_mcycle = 0;                          // 
-  logic [319:0] ext_mhpmcounters = 0;                   // 
-  logic [319:0] ext_mhpmcountersh = 0;                  // 
-  logic ext_ic_scr_key_valid = 0;                       //
+interface ibex_dside_access_v1_0();
+   logic         valid = 0;
+   logic         dwe = 0;
+   logic [31:0]  daddr = 0;
+   logic [3:0]   dbe = 0;
+   logic [31:0]  dwdata = 0;
+   logic         err = 0;
+   logic         misaligned_first = 0;
+   logic         misaligned_second = 0;
+   logic         misaligned_first_saw_error = 0;
+   logic         m_mode_access = 0;
 
   modport MASTER (
-    output valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    output valid, dwe, daddr, dbe, dwdata, err, misaligned_first, misaligned_second, misaligned_first_saw_error, m_mode_access
     );
 
   modport SLAVE (
-    input valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input valid, dwe, daddr, dbe, dwdata, err, misaligned_first, misaligned_second, misaligned_first_saw_error, m_mode_access
     );
 
   modport MONITOR (
-    input valid, trap, rd_addr, rd_wdata, pc_rdata, ext_pre_mip, ext_post_mip, ext_nmi, ext_nmi_int, ext_debug_req, ext_rf_wr_suppress, ext_mcycle, ext_mhpmcounters, ext_mhpmcountersh, ext_ic_scr_key_valid
+    input valid, dwe, daddr, dbe, dwdata, err, misaligned_first, misaligned_second, misaligned_first_saw_error, m_mode_access
     );
 
-endinterface // ibex_rvfi_v1_0
+endinterface // ibex_dside_access_v1_0
 
 `endif

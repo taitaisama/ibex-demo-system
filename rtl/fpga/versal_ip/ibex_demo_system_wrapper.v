@@ -1,47 +1,60 @@
+
+
 module ibex_demo_system_wrapper
   (
-   input	  sys_clk,
-   input	  sys_rstn,
+   input          sys_clk,
+   input          sys_rstn,
 
-   output	  led,
+   output         led,
 
-   input [31:0]	  ibex_ram_base_addr,
+   input [31:0]   ibex_ram_base_addr,
 
-   output	  ibex_ram_a_req,
-   output [3:0]	  ibex_ram_a_we,
-   output [3:0]	  ibex_ram_a_be,
+   output         ibex_ram_a_req,
+   output [3:0]   ibex_ram_a_we,
+   output [3:0]   ibex_ram_a_be,
    output [31:0]  ibex_ram_a_addr,
    output [31:0]  ibex_ram_a_wr_data,
-   input	  ibex_ram_a_rd_valid,
-   input [31:0]	  ibex_ram_a_rd_data,
-   input	  ibex_ram_a_gnt,
+   input          ibex_ram_a_rd_valid,
+   input [31:0]   ibex_ram_a_rd_data,
+   input          ibex_ram_a_gnt,
 
-   output	  ibex_ram_b_req,
-   output [3:0]	  ibex_ram_b_we,
-   output [3:0]	  ibex_ram_b_be,
+   output         ibex_ram_b_req,
+   output [3:0]   ibex_ram_b_we,
+   output [3:0]   ibex_ram_b_be,
    output [31:0]  ibex_ram_b_addr,
    output [31:0]  ibex_ram_b_wr_data,
-   input	  ibex_ram_b_rd_valid,
-   input [31:0]	  ibex_ram_b_rd_data,
-   input	  ibex_ram_b_gnt,
+   input          ibex_ram_b_rd_valid,
+   input [31:0]   ibex_ram_b_rd_data,
+   input          ibex_ram_b_gnt,
 
-   output	  rvfi_valid,
-   output	  rvfi_trap,
+   output         rvfi_valid,
+   output         rvfi_trap,
    output [ 4:0]  rvfi_rd_addr,
    output [31:0]  rvfi_rd_wdata,
    output [31:0]  rvfi_pc_rdata,
    output [31:0]  rvfi_ext_pre_mip,
    output [31:0]  rvfi_ext_post_mip,
-   output	  rvfi_ext_nmi,
-   output	  rvfi_ext_nmi_int,
-   output	  rvfi_ext_debug_req,
-   output	  rvfi_ext_rf_wr_suppress,
+   output         rvfi_ext_nmi,
+   output         rvfi_ext_nmi_int,
+   output         rvfi_ext_debug_req,
+   output         rvfi_ext_rf_wr_suppress,
    output [63:0]  rvfi_ext_mcycle,
    output [319:0] rvfi_ext_mhpmcounters,
    output [319:0] rvfi_ext_mhpmcountersh,
-   output	  rvfi_ext_ic_scr_key_valid,
+   output         rvfi_ext_ic_scr_key_valid,
 
-   input	  rvfi_force_stop
+   output         dside_access_valid,
+   output         dside_access_dwe,
+   output [31:0]  dside_access_daddr,
+   output [3:0]   dside_access_dbe,
+   output [31:0]  dside_access_dwdata,
+   output         dside_access_err,
+   output         dside_access_misaligned_first,
+   output         dside_access_misaligned_second,
+   output         dside_access_misaligned_first_saw_error,
+   output         dside_access_m_mode_access,
+
+   input          force_stop
 );
 
    wire [31:0] ibex_ram_a_addr_abs, ibex_ram_b_addr_abs;
@@ -102,6 +115,17 @@ module ibex_demo_system_wrapper
     .rvfi_ext_mhpmcounters (rvfi_ext_mhpmcounters),
     .rvfi_ext_mhpmcountersh (rvfi_ext_mhpmcountersh),
     .rvfi_ext_ic_scr_key_valid (rvfi_ext_ic_scr_key_valid),
+
+    .dside_access_valid (dside_access_valid),
+    .dside_access_store (dside_access_dwe),
+    .dside_access_addr (dside_access_daddr),
+    .dside_access_be (dside_access_dbe),
+    .dside_access_store_data (dside_access_dwdata),
+    .dside_access_err (dside_access_err),
+    .dside_access_misaligned_first (dside_access_misaligned_first),
+    .dside_access_misaligned_second (dside_access_misaligned_second),
+    .dside_access_misaligned_first_saw_error (dside_access_misaligned_first_saw_error),
+    .dside_access_m_mode_access (dside_access_m_mode_access),
 
     .force_stop (rvfi_force_stop),
 

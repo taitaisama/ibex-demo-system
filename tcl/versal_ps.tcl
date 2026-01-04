@@ -233,7 +233,6 @@ proc create_root_design { parentCell } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
      return
   }
-
   # Make sure parentObj is hier blk
   set parentType [get_property TYPE $parentObj]
   if { $parentType ne "hier" } {
@@ -362,7 +361,7 @@ proc create_root_design { parentCell } {
     CONFIG.NUM_CLKS {7} \
     CONFIG.NUM_MC {1} \
     CONFIG.NUM_MCP {4} \
-    CONFIG.NUM_MI {1} \
+    CONFIG.NUM_MI {2} \
     CONFIG.NUM_SI {10} \
     CONFIG.SI_SIDEBAND_PINS { ,0,0,0,0,0,0,0,0} \
   ] $axi_noc_0
@@ -374,9 +373,14 @@ proc create_root_design { parentCell } {
  ] [get_bd_intf_pins /axi_noc_0/M00_AXI]
 
   set_property -dict [ list \
+   CONFIG.APERTURES {{0x201_8000_0000 1G}} \
+   CONFIG.CATEGORY {pl} \
+ ] [get_bd_intf_pins /axi_noc_0/M01_AXI]
+
+  set_property -dict [ list \
    CONFIG.REGION {0} \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {true}}} \
-   CONFIG.DEST_IDS {M00_AXI:0x100} \
+   CONFIG.CONNECTIONS {M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {true}}} \
+   CONFIG.DEST_IDS {M01_AXI:0xc0:M00_AXI:0x140} \
    CONFIG.NOC_PARAMS {} \
    CONFIG.CATEGORY {ps_cci} \
  ] [get_bd_intf_pins /axi_noc_0/S00_AXI]
@@ -404,8 +408,8 @@ proc create_root_design { parentCell } {
 
   set_property -dict [ list \
    CONFIG.REGION {0} \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
-   CONFIG.DEST_IDS {M00_AXI:0x100} \
+   CONFIG.CONNECTIONS {M01_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}} MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4} initial_boot {false}}} \
+   CONFIG.DEST_IDS {M01_AXI:0xc0:M00_AXI:0x140} \
    CONFIG.NOC_PARAMS {} \
    CONFIG.CATEGORY {ps_rpu} \
  ] [get_bd_intf_pins /axi_noc_0/S04_AXI]
@@ -467,7 +471,7 @@ proc create_root_design { parentCell } {
  ] [get_bd_pins /axi_noc_0/aclk5]
 
   set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {M00_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI} \
+   CONFIG.ASSOCIATED_BUSIF {M00_AXI:M01_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI} \
  ] [get_bd_pins /axi_noc_0/aclk6]
 
   # Create instance: rst_sys_clk_100M, and set properties
@@ -565,7 +569,7 @@ proc create_root_design { parentCell } {
   # Create instance: axi_bram_ctrl_0, and set properties
   set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_0 ]
   set_property -dict [list \
-    CONFIG.DATA_WIDTH $DEBUG_WIDTH \
+    CONFIG.DATA_WIDTH {128} \
     CONFIG.SINGLE_PORT_BRAM {1} \
   ] $axi_bram_ctrl_0
 
@@ -578,17 +582,22 @@ proc create_root_design { parentCell } {
   # Create instance: ilconstant_0, and set properties
   set ilconstant_0 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant:1.0 ilconstant_0 ]
 
-  # Create instance: ps_io_wrapper_0, and set properties
-  set block_name ps_io_wrapper
-  set block_cell_name ps_io_wrapper_0
-  if { [catch {set ps_io_wrapper_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  # Create instance: ps_io2_wrapper_0, and set properties
+  set block_name ps_io2_wrapper
+  set block_cell_name ps_io2_wrapper_0
+  if { [catch {set ps_io2_wrapper_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $ps_io_wrapper_0 eq "" } {
+   } elseif { $ps_io2_wrapper_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
+  # Create instance: smartconnect_0, and set properties
+  set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
+  set_property CONFIG.NUM_SI {1} $smartconnect_0
+
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA] [get_bd_intf_pins emb_mem_gen_0/BRAM_PORTA]
   connect_bd_intf_net -intf_net axi_datamover_0_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/rvfi_sts]
@@ -599,6 +608,7 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_1_M_AXIS_S2MM_STS]
   connect_bd_intf_net -intf_net axi_datamover_1_M_AXI_S2MM [get_bd_intf_pins axi_datamover_1/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S09_AXI]
   connect_bd_intf_net -intf_net axi_noc_0_CH0_DDR4_0 [get_bd_intf_ports DDR4] [get_bd_intf_pins axi_noc_0/CH0_DDR4_0]
   connect_bd_intf_net -intf_net axi_noc_0_M00_AXI [get_bd_intf_pins axi_noc_0/M00_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
+  connect_bd_intf_net -intf_net axi_noc_0_M01_AXI [get_bd_intf_pins axi_noc_0/M01_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net axis_data_fifo_0_M_AXIS [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net axis_data_fifo_1_M_AXIS [get_bd_intf_pins axis_data_fifo_1/M_AXIS] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins axi_noc_0/S07_AXI]
@@ -620,13 +630,13 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_csr_cmd] [
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_csr_stream] [get_bd_intf_pins rvfi_to_stream_0/rvfi_csr_stream] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_stream]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_stream [get_bd_intf_pins rvfi_to_stream_0/rvfi_stream] [get_bd_intf_pins axis_data_fifo_1/S_AXIS]
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [get_bd_intf_pins rvfi_to_stream_0/rvfi_stream] [get_bd_intf_pins debug_module_wrapper_0/rvfi_stream]
+  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins ps_io2_wrapper_0/s00_axi]
   connect_bd_intf_net -intf_net sys_1 [get_bd_intf_ports sys] [get_bd_intf_pins util_ds_buf_0/CLK_IN_D]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_0 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_0] [get_bd_intf_pins axi_noc_0/S00_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_1 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_1] [get_bd_intf_pins axi_noc_0/S01_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_2 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_2] [get_bd_intf_pins axi_noc_0/S02_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_FPD_CCI_NOC_3 [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_3] [get_bd_intf_pins axi_noc_0/S03_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_LPD_AXI_NOC_0 [get_bd_intf_pins versal_cips_0/LPD_AXI_NOC_0] [get_bd_intf_pins axi_noc_0/S04_AXI]
-  connect_bd_intf_net -intf_net versal_cips_0_M_AXI_LPD [get_bd_intf_pins versal_cips_0/M_AXI_LPD] [get_bd_intf_pins ps_io_wrapper_0/S_AXI]
   connect_bd_intf_net -intf_net versal_cips_0_PMC_NOC_AXI_0 [get_bd_intf_pins versal_cips_0/PMC_NOC_AXI_0] [get_bd_intf_pins axi_noc_0/S05_AXI]
 
   # Create port connections
@@ -646,7 +656,8 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   [get_bd_pins ibex_demo_system_wra_0/sys_clk] \
   [get_bd_pins debug_module_wrapper_0/sys_clk] \
   [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] \
-  [get_bd_pins ps_io_wrapper_0/clk]
+  [get_bd_pins ps_io2_wrapper_0/s00_axi_aclk] \
+  [get_bd_pins smartconnect_0/aclk]
   connect_bd_net -net ibex_demo_system_wra_0_led  [get_bd_pins ibex_demo_system_wra_0/led] \
   [get_bd_ports led]
   connect_bd_net -net ilconstant_0_dout  [get_bd_pins ilconstant_0/dout] \
@@ -658,20 +669,20 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   [get_bd_pins rvfi_to_stream_0/rstn] \
   [get_bd_pins ibex_demo_system_wra_0/sys_rstn] \
   [get_bd_pins debug_module_wrapper_0/sys_rstn]
-  connect_bd_net -net ps_io_wrapper_0_flush_rvfi  [get_bd_pins ps_io_wrapper_0/flush_rvfi] \
-  [get_bd_pins rvfi_to_stream_0/flush]
-  connect_bd_net -net ps_io_wrapper_0_prog_addr  [get_bd_pins ps_io_wrapper_0/prog_addr] \
-  [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
-  connect_bd_net -net ps_io_wrapper_0_ps_rstn  [get_bd_pins ps_io_wrapper_0/ps_rstn] \
-  [get_bd_pins ilvector_logic_0/Op1]
-  connect_bd_net -net ps_io_wrapper_0_rvfi_base_addr  [get_bd_pins ps_io_wrapper_0/rvfi_base_addr] \
-  [get_bd_pins rvfi_to_stream_0/rvfi_base_addr]
-  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_base_addr  [get_bd_pins ps_io_wrapper_0/rvfi_csr_base_addr] \
+  connect_bd_net -net ps_io2_wrapper_0_csr_baseaddr  [get_bd_pins ps_io2_wrapper_0/csr_baseaddr] \
   [get_bd_pins rvfi_to_stream_0/rvfi_csr_base_addr]
-  connect_bd_net -net ps_io_wrapper_0_rvfi_csr_sw_idx  [get_bd_pins ps_io_wrapper_0/rvfi_csr_sw_idx] \
+  connect_bd_net -net ps_io2_wrapper_0_csr_swidx  [get_bd_pins ps_io2_wrapper_0/csr_swidx] \
   [get_bd_pins rvfi_to_stream_0/rvfi_csr_sw_idx]
-  connect_bd_net -net ps_io_wrapper_0_rvfi_sw_idx  [get_bd_pins ps_io_wrapper_0/rvfi_sw_idx] \
+  connect_bd_net -net ps_io2_wrapper_0_prog_addr  [get_bd_pins ps_io2_wrapper_0/prog_addr] \
+  [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
+  connect_bd_net -net ps_io2_wrapper_0_rvfi_baseaddr  [get_bd_pins ps_io2_wrapper_0/rvfi_baseaddr] \
+  [get_bd_pins rvfi_to_stream_0/rvfi_base_addr]
+  connect_bd_net -net ps_io2_wrapper_0_rvfi_swidx  [get_bd_pins ps_io2_wrapper_0/rvfi_swidx] \
   [get_bd_pins rvfi_to_stream_0/rvfi_sw_idx]
+  connect_bd_net -net ps_io2_wrapper_0_sys_flush  [get_bd_pins ps_io2_wrapper_0/sys_flush] \
+  [get_bd_pins rvfi_to_stream_0/flush]
+  connect_bd_net -net ps_io2_wrapper_0_sys_rstn  [get_bd_pins ps_io2_wrapper_0/sys_rstn] \
+  [get_bd_pins ilvector_logic_0/Op1]
   connect_bd_net -net rst_sys_clk_100M_peripheral_aresetn  [get_bd_pins rst_sys_clk_100M/peripheral_aresetn] \
   [get_bd_pins axi_datamover_0/m_axi_s2mm_aresetn] \
   [get_bd_pins axi_datamover_0/m_axis_s2mm_cmdsts_aresetn] \
@@ -681,11 +692,14 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   [get_bd_pins axis_data_fifo_1/s_axis_aresetn] \
   [get_bd_pins ilvector_logic_0/Op2] \
   [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] \
-  [get_bd_pins ps_io_wrapper_0/rstn]
+  [get_bd_pins ps_io2_wrapper_0/s00_axi_aresetn] \
+  [get_bd_pins smartconnect_0/aresetn]
   connect_bd_net -net rvfi_to_stream_0_rvfi_csr_hw_idx  [get_bd_pins rvfi_to_stream_0/rvfi_csr_hw_idx] \
-  [get_bd_pins ps_io_wrapper_0/rvfi_csr_hw_idx]
+  [get_bd_pins ps_io2_wrapper_0/csr_hwidx]
   connect_bd_net -net rvfi_to_stream_0_rvfi_hw_idx  [get_bd_pins rvfi_to_stream_0/rvfi_hw_idx] \
-  [get_bd_pins ps_io_wrapper_0/rvfi_hw_idx]
+  [get_bd_pins ps_io2_wrapper_0/rvfi_hwidx]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_in_force_stop  [get_bd_pins rvfi_to_stream_0/rvfi_in_force_stop] \
+  [get_bd_pins ibex_demo_system_wra_0/force_stop]
   connect_bd_net -net util_ds_buf_0_IBUF_OUT  [get_bd_pins util_ds_buf_0/IBUF_OUT] \
   [get_bd_pins clk_wizard_0/clk_in1] \
   [get_bd_pins axi_noc_0/sys_clk0]
@@ -707,12 +721,13 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   # Create address segments
   assign_bd_address -offset 0x020100000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_noc_0/S00_AXI/C3_DDR_LOW0] -force
+  assign_bd_address -offset 0x020180000000 -range 0x00001000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs ps_io2_wrapper_0/s00_axi/reg0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_1] [get_bd_addr_segs axi_noc_0/S01_AXI/C2_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_2] [get_bd_addr_segs axi_noc_0/S02_AXI/C0_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_3] [get_bd_addr_segs axi_noc_0/S03_AXI/C1_DDR_LOW0] -force
   assign_bd_address -offset 0x020100000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW0] -force
-  assign_bd_address -offset 0x80000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_LPD] [get_bd_addr_segs ps_io_wrapper_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x020180000000 -range 0x00001000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs ps_io2_wrapper_0/s00_axi/reg0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_datamover_0/Data_S2MM] [get_bd_addr_segs axi_noc_0/S08_AXI/C2_DDR_LOW0] -force
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_datamover_1/Data_S2MM] [get_bd_addr_segs axi_noc_0/S09_AXI/C3_DDR_LOW0] -force
@@ -723,6 +738,7 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_stream] [g
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 
   set wrapper_file [make_wrapper -files [get_files $design_name.bd] -top]
