@@ -132,10 +132,11 @@ struct gpio_ptr_t {
 template<typename T, uint32_t L>
 struct stream_ctrl {
 
-  mem_ptr_t base_addr;
-  mem_ptr_t next_read_addr;
 
-  bits_t    sw_idx;
+  mem_ptr_t base_addr;
+
+  uint32_t  last_hw_idx; 
+  uint32_t  sw_idx;
 
   gpio_ptr_t sw_idx_ptr;
   gpio_ptr_t hw_idx_ptr;
@@ -146,7 +147,8 @@ struct stream_ctrl {
 
   stream_ctrl (uint32_t sip, uint32_t hip, uint32_t bap, uint32_t sa) :
     base_addr(sa),
-    next_read_addr(sa),
+    last_hw_idx(0),
+    sw_idx(0),
     sw_idx_ptr(sip),
     hw_idx_ptr(hip),
     base_addr_ptr(bap),
@@ -155,30 +157,20 @@ struct stream_ctrl {
 
   void set_addrs() {
     base_addr_ptr.out(base_addr.get_abs());
-  }
-
-  mem_ptr_t curr_buff_end_addr() {
-    return base_addr + (sw_idx+1) * BUFFER_SIZE;
-  }
-
-  mem_ptr_t curr_buff_start_addr() {
-    return base_addr + sw_idx * BUFFER_SIZE;
+    sw_idx_ptr.out(sw_idx);
   }
 
   bool in32(uint32_t &res) {
-    if (next_read_addr >= curr_buff_end_addr()) {
-      // increase sw_idx, if cant return false
-      uint32_t next_sw_idx = sw_idx == BUFFER_NUM-1 ? 0 : sw_idx + 1;
-      if (hw_idx_ptr.in() == next_sw_idx) {
-        return false;
-      } else {
-        sw_idx = next_sw_idx;
-        sw_idx_ptr.out(sw_idx);
-        next_read_addr = curr_buff_start_addr();
+    auto next_sw_idx = (sw_idx + 4 == BUFFER_SIZE) ? 0 : sw_idx + 4;
+    if (next_sw_idx == last_hw_idx) {
+      last_hw_idx = hw_idx_ptr.in();
+      if (next_sw_idx == last_hw_idx) {
+	return false;
       }
     }
-    res = next_read_addr.in();
-    next_read_addr.inc();
+    res = (base_addr + sw_idx).in();
+    sw_idx = next_sw_idx;
+    sw_idx_ptr.out(sw_idx);
     return true;
   }
 

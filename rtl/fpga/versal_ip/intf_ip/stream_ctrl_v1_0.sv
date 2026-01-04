@@ -1,4 +1,3 @@
-
 // (c) Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // (c) Copyright 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 // 
@@ -48,33 +47,28 @@
 // DO NOT MODIFY THIS FILE.
 
 
-`ifndef ibex_ram_v1_0
-`define ibex_ram_v1_0
+`ifndef stream_ctrl_v1_0
+`define stream_ctrl_v1_0
 
-interface ibex_ram_v1_0();
-  logic req = 0;                                        // 
-  logic we = 0;                                         // 
-  logic [3:0] be = 0;                                   // 
-  logic [31:0] addr = 0;                                // 
-  logic [31:0] wr_data = 0;                             // 
-  logic rd_valid = 0;                                   // 
-  logic [31:0] rd_data = 0;                             // 
-  logic gnt = 0;                                        // 
+interface stream_ctrl_v1_0();
+  logic [31:0] baseaddr;                                  // 
+  logic [19:0] swidx = 0;                                // 
+  logic [19:0] hwidx = 0;                               // 
 
   modport MASTER (
-    input rd_valid, rd_data, gnt, 
-    output req, we, be, addr, wr_data
+    input hwidx, 
+    output baseaddr, swidx
     );
 
   modport SLAVE (
-    input req, we, be, addr, wr_data, 
-    output rd_valid, rd_data, gnt
+    input baseaddr, swidx, 
+    output hwidx
     );
 
   modport MONITOR (
-    input req, we, be, addr, wr_data, rd_valid, rd_data, gnt
+    input baseaddr, swidx, hwidx
     );
 
-endinterface // ibex_ram_v1_0
+endinterface // stream_ctrl_v1_0
 
 `endif

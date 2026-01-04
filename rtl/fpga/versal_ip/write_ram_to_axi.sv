@@ -1,22 +1,23 @@
 // assuming no writes to same address while prev write is pending
 // handled outside
+
 module write_ram_to_axi
 # (
    parameter int NUM_ID_BITS = 4,
    parameter int QUEUE_DELAY = 3
    )
 (
-  input logic			 clk,
-  input logic			 rstn,
+  input wire			 clk,
+  input wire			 rstn,
    
-  input logic			 s_req,
-  input logic [3:0]		 s_be,
-  input logic [31:0]		 s_addr,
-  input logic [31:0]		 s_wdata,
+  input wire			 s_req,
+  input wire [3:0]		 s_be,
+  input wire [31:0]		 s_addr,
+  input wire [31:0]		 s_wdata,
   output logic			 s_gnt,
 
   output logic			 m_awvalid,
-  input logic			 m_awready,
+  input wire			 m_awready,
   output logic [31:0]		 m_awaddr,
   output logic [2:0]		 m_awsize,
   output logic [1:0]		 m_awburst,
@@ -24,16 +25,16 @@ module write_ram_to_axi
   output logic [7:0]		 m_awlen,
 
   output logic			 m_wvalid,
-  input logic			 m_wready,
+  input wire			 m_wready,
   output logic			 m_wlast,
   output logic [31:0]		 m_wdata,
   output logic [3:0]		 m_wstrb,
   output logic [NUM_ID_BITS-1:0] m_wid,
 
-  input logic			 m_bvalid,
+  input wire			 m_bvalid,
   output logic			 m_bready,
-  input logic [1:0]		 m_bresp,
-  input logic [NUM_ID_BITS-1:0]	 m_bid
+  input wire [1:0]		 m_bresp,
+  input wire [NUM_ID_BITS-1:0]	 m_bid
 );
 
    logic write_ack_pending [2**NUM_ID_BITS];
@@ -80,12 +81,11 @@ module write_ram_to_axi
    end
 
    logic			  write_fifo_valid;
-   logic			  fifo_busy;
    logic			  next_ack_is_pending;
 
    always_comb begin
       next_ack_is_pending = write_ack_pending[write_counter];
-      s_gnt = (!next_ack_is_pending) && m_awready && (!fifo_busy);
+      s_gnt = (!next_ack_is_pending) && m_awready;
    end
 
    always_comb begin
@@ -138,13 +138,12 @@ module write_ram_to_axi
 
    // size > 2**NUM_ID_BITS
    // fallthrough mode
-    fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(128)) 
+    fifo_wrapper #(.WIDTH(NUM_ID_BITS+36), .DEPTH(16)) 
        u_pending_writes 
      (
       .clk (clk),
       .rst (~rstn),
       .data_valid (write_fifo_valid),
-      .fifo_wr_busy (fifo_busy),
       .fifo_read_rd_data (write_send_fifo_trans),
       .fifo_read_rd_en (pop_write),
       .fifo_write_wr_data (write_queue_fifo_trans),

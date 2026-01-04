@@ -104,6 +104,66 @@ module fifo_wrapper
 	 .fifo_write_wr_en (fifo_write_wr_en)
 	 ); 
 
+   end else if (WIDTH == 40 && DEPTH == 16) begin : g_fifo_40_16
+
+      fifo_40_16_wrapper u_fifo 
+	(
+	 .clk(clk),
+	 .rst (rst),
+	 .data_valid (data_valid),
+	 .fifo_wr_busy (fifo_wr_busy),
+	 .fifo_almost_full (fifo_almost_full),
+	 .fifo_read_rd_data (fifo_read_rd_data),
+	 .fifo_read_rd_en (fifo_read_rd_en),
+	 .fifo_write_wr_data (fifo_write_wr_data),
+	 .fifo_write_wr_en (fifo_write_wr_en)
+	 );      
+
+   end  else if (WIDTH == 227 && DEPTH == 16) begin : g_fifo_227_16
+
+      fifo_227_16_wrapper u_fifo 
+	(
+	 .clk(clk),
+	 .rst (rst),
+	 .data_valid (data_valid),
+	 .fifo_wr_busy (fifo_wr_busy),
+	 .fifo_almost_full (fifo_almost_full),
+	 .fifo_read_rd_data (fifo_read_rd_data),
+	 .fifo_read_rd_en (fifo_read_rd_en),
+	 .fifo_write_wr_data (fifo_write_wr_data),
+	 .fifo_write_wr_en (fifo_write_wr_en)
+	 );      
+
+   end else if (WIDTH == 664 && DEPTH == 16) begin : g_fifo_664_16
+
+      fifo_664_16_wrapper u_fifo 
+	(
+	 .clk(clk),
+	 .rst (rst),
+	 .data_valid (data_valid),
+	 .fifo_wr_busy (fifo_wr_busy),
+	 .fifo_almost_full (fifo_almost_full),
+	 .fifo_read_rd_data (fifo_read_rd_data),
+	 .fifo_read_rd_en (fifo_read_rd_en),
+	 .fifo_write_wr_data (fifo_write_wr_data),
+	 .fifo_write_wr_en (fifo_write_wr_en)
+	 );      
+
+   end else if (WIDTH == 98 && DEPTH == 16) begin : g_fifo_98_16
+
+      fifo_98_16_wrapper u_fifo 
+	(
+	 .clk(clk),
+	 .rst (rst),
+	 .data_valid (data_valid),
+	 .fifo_wr_busy (fifo_wr_busy),
+	 .fifo_almost_full (fifo_almost_full),
+	 .fifo_read_rd_data (fifo_read_rd_data),
+	 .fifo_read_rd_en (fifo_read_rd_en),
+	 .fifo_write_wr_data (fifo_write_wr_data),
+	 .fifo_write_wr_en (fifo_write_wr_en)
+	 );      
+
    end else begin : g_fifo_error
 
       $error($sformatf("Illegal values for parameters WIDTH (%0d) and DEPTH (%0d)", WIDTH, DEPTH));
