@@ -6,8 +6,6 @@ filesets:
   files_xilinx_versal:
     files:
       - rtl/fpga/versal_ip/rvfi_handler.sv
-      - rtl/fpga/versal_ip/rvfi_csr.sv
-      - rtl/fpga/versal_ip/rvfi_to_mem.sv
       - rtl/fpga/versal_ip/read_ram_to_axi.sv
       - rtl/fpga/versal_ip/write_ram_to_axi.sv
       - rtl/fpga/versal_ip/data_ram_to_axi.sv

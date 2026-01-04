@@ -1,55 +1,70 @@
+
+
 module instr_ram_to_axi
 # (
    parameter int NUM_ID_BITS = 4,
    parameter int READ_BURST_BITS = 2
    )
 (
-  input logic			 clk,
-  input logic			 rstn,
+  input wire			 clk,
+  input wire			 rstn,
    
-  input logic			 s_req,
-  input logic [31:0]		 s_addr,
+  input wire			 s_req,
+  input wire [31:0]		 s_addr,
   output logic			 s_rvalid,
   output logic [31:0]		 s_rdata,
   output logic			 s_gnt,
 
   output logic			 m_arvalid,
-  input logic			 m_arready,
+  input wire			 m_arready,
   output logic [31:0]		 m_araddr,
   output logic [2:0]		 m_arsize,
   output logic [1:0]		 m_arburst,
   output logic [NUM_ID_BITS-1:0] m_arid,
   output logic [7:0]		 m_arlen,
 
-  input logic			 m_rvalid,
+  input wire			 m_rvalid,
   output logic			 m_rready,
-  input logic			 m_rlast,
-  input logic [31:0]		 m_rdata,
-  input logic [1:0]		 m_rresp,
-  input logic [NUM_ID_BITS-1:0]	 m_rid
+  input wire			 m_rlast,
+  input wire [31:0]		 m_rdata,
+  input wire [1:0]		 m_rresp,
+  input wire [NUM_ID_BITS-1:0]	 m_rid
 );
 
    logic [31:0]			 q_addr;
    logic			 q_req, q_gnt;
 
-   logic			 fifo_valid, fifo_busy, fifo_almost_full;
+   logic                         r_req;
+   logic [31:0]                  r_addr;
+   logic                         r_rvalid;
+   logic [31:0]                  r_rdata;
+   logic                         r_gnt;
+
+   always_ff @(posedge clk) begin
+      s_gnt <= r_gnt;
+      s_rdata <= r_rdata;
+      s_rvalid <= r_rvalid;
+      r_req <= s_req;
+      r_addr <= s_addr;
+   end
+
+   logic			 fifo_valid, fifo_almost_full;
 
    always_comb begin
-      s_gnt = !fifo_almost_full && !fifo_busy;
+      r_gnt = !fifo_almost_full;
       q_req = fifo_valid;
    end
 
-   fifo_wrapper #(.WIDTH(32), .DEPTH(128)) u_drf
+   fifo_wrapper #(.WIDTH(32), .DEPTH(16)) u_drf
      (
       .clk(clk),
       .rst (~rstn),
       .data_valid (fifo_valid),
-      .fifo_wr_busy (fifo_busy),
       .fifo_almost_full (fifo_almost_full),
       .fifo_read_rd_data (q_addr),
       .fifo_read_rd_en (q_req && q_gnt),
-      .fifo_write_wr_data (s_addr),
-      .fifo_write_wr_en (s_gnt && s_req)
+      .fifo_write_wr_data (r_addr),
+      .fifo_write_wr_en (r_gnt && r_req)
       );   
 
 
@@ -63,8 +78,8 @@ module instr_ram_to_axi
        
 	.s_req (q_req),
 	.s_addr (q_addr),
-	.s_rvalid (s_rvalid),
-	.s_rdata (s_rdata),
+	.s_rvalid (r_rvalid),
+	.s_rdata (r_rdata),
 	.s_gnt (q_gnt),
 
 	.info_rid (),
