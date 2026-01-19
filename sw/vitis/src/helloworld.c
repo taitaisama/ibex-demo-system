@@ -31,6 +31,9 @@ int main()
     init_platform();
 
     xil_printf("Hello World %d\n\r", 100);
+    for (int i = 0; i < 1024; i ++) {
+        Xil_Out32(0x30000000 + 0x100000 + i*4, 0x0);
+    }
     print("Successfully ran Hello World application\n\r");
     run();
     // xil_printf("waiting %d\n\r", 100);
@@ -46,6 +49,11 @@ int main()
     xil_printf("\n\n");
     for (int i = 0; i < 1024; i ++) {
         xil_printf("\"%x\", ", Xil_In32(0x30000000 + 0x100000 + i*4));
+    }
+    
+    xil_printf("\n\n");
+    for (int i = 12; i < 16; i ++) {
+        xil_printf("\"%x\", ", Xil_In32(0x20180000000 + i*4));
     }
     // xil_printf("\"%x\"", Xil_In32(0x60000080));
     cleanup_platform();

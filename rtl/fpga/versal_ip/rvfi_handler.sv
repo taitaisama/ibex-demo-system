@@ -134,10 +134,10 @@ module rvfi_handler #(
       .rst (~rstn),
       .data_valid (rvfi_fifo_data_valid),
       .fifo_read_rd_data (rvfi_fifo_rd_data),
-      .fifo_read_rd_en (rvfi_to_mem_valid),
+      .fifo_read_rd_en (rvfi_fifo_rd_en),
       .fifo_almost_full (rvfi_fifo_almost_full),
       .fifo_write_wr_data (rvfi_fifo_wr_data),
-      .fifo_write_wr_en (rvfi_valid_i)
+      .fifo_write_wr_en (rvfi_fifo_wr_en)
       );
 
    always_comb begin
@@ -166,7 +166,8 @@ module rvfi_handler #(
 
    datamover_cmd
      #(.DATA_WIDTH (RVFI_WIDTH),
-       .LOG2_BUFFER_SIZE (LOG2_BUFFER_SIZE)
+       .LOG2_BUFFER_SIZE (LOG2_BUFFER_SIZE),
+       .dummy_base_addr (32'h30100000)
        ) u_rvfi_dmc
      (
       .clk (clk),
@@ -215,10 +216,10 @@ module rvfi_handler #(
       .rst (~rstn),
       .data_valid (csr_fifo_data_valid),
       .fifo_read_rd_data (csr_fifo_rd_data),
-      .fifo_read_rd_en (csr_to_mem_valid),
+      .fifo_read_rd_en (csr_fifo_rd_en),
       .fifo_almost_full (csr_fifo_almost_full),
       .fifo_write_wr_data (csr_fifo_wr_data),
-      .fifo_write_wr_en (csr_valid_i)
+      .fifo_write_wr_en (csr_fifo_wr_en)
       );
 
    always_comb begin
@@ -265,7 +266,8 @@ module rvfi_handler #(
 
    datamover_cmd
      #(.DATA_WIDTH (CSR_WIDTH),
-       .LOG2_BUFFER_SIZE (LOG2_BUFFER_SIZE)
+       .LOG2_BUFFER_SIZE (LOG2_BUFFER_SIZE),
+       .dummy_base_addr (32'h30400000)
        ) u_CSR_dmc
      (
       .clk (clk),
@@ -312,10 +314,10 @@ module rvfi_handler #(
       .rst (~rstn),
       .data_valid (dside_fifo_data_valid),
       .fifo_read_rd_data (dside_fifo_rd_data),
-      .fifo_read_rd_en (dside_to_mem_valid),
+      .fifo_read_rd_en (dside_fifo_rd_en),
       .fifo_almost_full (dside_fifo_almost_full),
       .fifo_write_wr_data (dside_fifo_wr_data),
-      .fifo_write_wr_en (dside_valid_i)
+      .fifo_write_wr_en (dside_fifo_wr_en)
       );
 
    always_comb begin
@@ -341,7 +343,8 @@ module rvfi_handler #(
 
    datamover_cmd
      #(.DATA_WIDTH (DSIDE_WIDTH),
-       .LOG2_BUFFER_SIZE (LOG2_BUFFER_SIZE)
+       .LOG2_BUFFER_SIZE (LOG2_BUFFER_SIZE),
+       .dummy_base_addr (32'h30700000)
        ) u_dside_dmc
      (
       .clk (clk),
@@ -359,7 +362,7 @@ module rvfi_handler #(
       .m_axis_sts_tready (dside_sts_ready_i)
     );
 
-   // always_comb busy_o = rvfi_fifo_almost_full | csr_fifo_almost_full | dside_fifo_almost_full;
-   always_comb busy_o = 0;
+   always_comb busy_o = rvfi_fifo_almost_full | csr_fifo_almost_full | dside_fifo_almost_full;
+   // always_comb busy_o = 0;
    
 endmodule

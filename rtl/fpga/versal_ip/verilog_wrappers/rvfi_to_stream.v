@@ -101,17 +101,17 @@ module rvfi_to_stream
       .clk (clk),
       .rstn (rstn),
 
-      .rvfi_base_addr (rvfi_baseaddr),
-      .rvfi_sw_idx (rvfi_swidx),
-      .rvfi_hw_idx (rvfi_hwidx),
+      .rvfi_base_addr (rvfi_ctrl_baseaddr),
+      .rvfi_sw_idx (rvfi_ctrl_swidx),
+      .rvfi_hw_idx (rvfi_ctrl_hwidx),
 
-      .csr_base_addr (csr_baseaddr),
-      .csr_sw_idx (csr_swidx),
-      .csr_hw_idx (csr_hwidx),
+      .csr_base_addr (csr_ctrl_baseaddr),
+      .csr_sw_idx (csr_ctrl_swidx),
+      .csr_hw_idx (csr_ctrl_hwidx),
 
-      .dside_base_addr (dside_baseaddr),
-      .dside_sw_idx (dside_swidx),
-      .dside_hw_idx (dside_hwidx),
+      .dside_base_addr (dside_ctrl_baseaddr),
+      .dside_sw_idx (dside_ctrl_swidx),
+      .dside_hw_idx (dside_ctrl_hwidx),
       
       .rvfi_valid_i (rvfi_in_valid),
       .rvfi_trap_i (rvfi_in_trap),

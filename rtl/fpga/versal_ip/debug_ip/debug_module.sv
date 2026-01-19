@@ -108,10 +108,10 @@ module debug_module
    input logic			     rvfi_sts_tvalid,
    input logic			     rvfi_sts_tready,
 
-   input logic [127:0]		     rvfi_csr_stream_tdata,
-   input logic			     rvfi_csr_stream_tvalid,
-   input logic			     rvfi_csr_stream_tready,
-   input logic [15:0]		     rvfi_csr_stream_tkeep,
+   input logic [255:0]		     rvfi2_stream_tdata,
+   input logic			     rvfi2_stream_tvalid,
+   input logic			     rvfi2_stream_tready,
+   input logic [15:0]		     rvfi2_stream_tkeep,
 
    input logic [71:0]		     rvfi_csr_cmd_tdata,
    input logic			     rvfi_csr_cmd_tvalid,
@@ -140,10 +140,7 @@ module debug_module
       DEBUG_rst = ~sys_rstn;
       DEBUG_clk = sys_clk;
 
-      DEBUG_wrdata = {rvfi_valid, 
-                      rvfi_rd_addr, 
-                      rvfi_pc_rdata,
-                      rvfi_ext_mcycle,
+      DEBUG_wrdata = {rvfi_valid,
                       rvfi_stream_tvalid,
                       rvfi_stream_tready,
                       rvfi_sts_tdata,
@@ -151,8 +148,10 @@ module debug_module
                       rvfi_sts_tready,
                       rvfi_cmd_tvalid,
                       rvfi_cmd_tready,
-                      8'b01010101,
-                      4'd0};
+                      rvfi2_stream_tvalid,
+                      rvfi2_stream_tready,
+                      rvfi_cmd_tdata,
+                      39'd0};
                       
       // DEBUG_wrdata = {S_RAM_INSTR_req, S_RAM_INSTR_addr, S_RAM_INSTR_rdvalid, S_RAM_INSTR_rddata, S_RAM_INSTR_gnt, 16'b0101010101010101, 45'd0};
    end

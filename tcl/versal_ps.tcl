@@ -233,6 +233,7 @@ proc create_root_design { parentCell } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
      return
   }
+
   # Make sure parentObj is hier blk
   set parentType [get_property TYPE $parentObj]
   if { $parentType ne "hier" } {
@@ -601,15 +602,16 @@ proc create_root_design { parentCell } {
   # Create interface connections
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA] [get_bd_intf_pins emb_mem_gen_0/BRAM_PORTA]
   connect_bd_intf_net -intf_net axi_datamover_0_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/csr_sts]
-connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_0_M_AXIS_S2MM_STS] [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_sts]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_0_M_AXIS_S2MM_STS] [get_bd_intf_pins axi_datamover_0/M_AXIS_S2MM_STS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_sts]
   connect_bd_intf_net -intf_net axi_datamover_0_M_AXI_S2MM [get_bd_intf_pins axi_datamover_0/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S08_AXI]
   connect_bd_intf_net -intf_net axi_datamover_1_M_AXIS_S2MM_STS [get_bd_intf_pins axi_datamover_1/M_AXIS_S2MM_STS] [get_bd_intf_pins rvfi_to_stream_0/rvfi_sts]
-connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_1_M_AXIS_S2MM_STS] [get_bd_intf_pins axi_datamover_1/M_AXIS_S2MM_STS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_sts]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_datamover_1_M_AXIS_S2MM_STS] [get_bd_intf_pins axi_datamover_1/M_AXIS_S2MM_STS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_sts]
   connect_bd_intf_net -intf_net axi_datamover_1_M_AXI_S2MM [get_bd_intf_pins axi_datamover_1/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S09_AXI]
   connect_bd_intf_net -intf_net axi_noc_0_CH0_DDR4_0 [get_bd_intf_ports DDR4] [get_bd_intf_pins axi_noc_0/CH0_DDR4_0]
   connect_bd_intf_net -intf_net axi_noc_0_M00_AXI [get_bd_intf_pins axi_noc_0/M00_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
   connect_bd_intf_net -intf_net axi_noc_0_M01_AXI [get_bd_intf_pins axi_noc_0/M01_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net axis_data_fifo_0_M_AXIS [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins axi_datamover_1/S_AXIS_S2MM]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axis_data_fifo_0_M_AXIS] [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_stream]
   connect_bd_intf_net -intf_net axis_data_fifo_1_M_AXIS [get_bd_intf_pins axis_data_fifo_1/M_AXIS] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins axi_noc_0/S07_AXI]
 connect_bd_intf_net -intf_net [get_bd_intf_nets data_ram_to_axi_brid_0_M_AXI] [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins debug_module_wrapper_0/M_AXI_DATA]
@@ -627,7 +629,6 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets instr_ram_to_axi_bri_0_M_AXI] [g
   connect_bd_intf_net -intf_net ps_io2_wrapper_0_dside [get_bd_intf_pins ps_io2_wrapper_0/dside] [get_bd_intf_pins rvfi_to_stream_0/dside_ctrl]
   connect_bd_intf_net -intf_net ps_io2_wrapper_0_rvfi [get_bd_intf_pins ps_io2_wrapper_0/rvfi] [get_bd_intf_pins rvfi_to_stream_0/rvfi_ctrl]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_csr_axis_fifo [get_bd_intf_pins rvfi_to_stream_0/csr_axis_fifo] [get_bd_intf_pins axis_data_fifo_1/S_AXIS]
-connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_csr_axis_fifo] [get_bd_intf_pins rvfi_to_stream_0/csr_axis_fifo] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_stream]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_csr_cmd [get_bd_intf_pins rvfi_to_stream_0/csr_cmd] [get_bd_intf_pins axi_datamover_0/S_AXIS_S2MM_CMD]
 connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_csr_cmd] [get_bd_intf_pins rvfi_to_stream_0/csr_cmd] [get_bd_intf_pins debug_module_wrapper_0/rvfi_csr_cmd]
   connect_bd_intf_net -intf_net rvfi_to_stream_0_rvfi_axis_fifo [get_bd_intf_pins rvfi_to_stream_0/rvfi_axis_fifo] [get_bd_intf_pins axis_data_fifo_0/S_AXIS]
@@ -673,8 +674,14 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_cmd] [get_
   [get_bd_pins rvfi_to_stream_0/rstn] \
   [get_bd_pins ibex_demo_system_wra_0/sys_rstn] \
   [get_bd_pins debug_module_wrapper_0/sys_rstn]
+  connect_bd_net -net ps_io2_wrapper_0_csr_baseaddr  [get_bd_pins ps_io2_wrapper_0/csr_baseaddr] \
+  [get_bd_pins ps_io2_wrapper_0/debug2]
   connect_bd_net -net ps_io2_wrapper_0_prog_addr  [get_bd_pins ps_io2_wrapper_0/prog_addr] \
   [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
+  connect_bd_net -net ps_io2_wrapper_0_rvfi_baseaddr  [get_bd_pins ps_io2_wrapper_0/rvfi_baseaddr] \
+  [get_bd_pins ps_io2_wrapper_0/debug1]
+  connect_bd_net -net ps_io2_wrapper_0_rvfi_swidx  [get_bd_pins ps_io2_wrapper_0/rvfi_swidx] \
+  [get_bd_pins ps_io2_wrapper_0/debug3]
   connect_bd_net -net ps_io2_wrapper_0_sys_flush  [get_bd_pins ps_io2_wrapper_0/sys_flush] \
   [get_bd_pins rvfi_to_stream_0/flush]
   connect_bd_net -net ps_io2_wrapper_0_sys_rstn  [get_bd_pins ps_io2_wrapper_0/sys_rstn] \
@@ -692,6 +699,8 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets rvfi_to_stream_0_rvfi_cmd] [get_
   [get_bd_pins smartconnect_0/aresetn]
   connect_bd_net -net rvfi_to_stream_0_force_stop  [get_bd_pins rvfi_to_stream_0/force_stop] \
   [get_bd_pins ibex_demo_system_wra_0/force_stop]
+  connect_bd_net -net rvfi_to_stream_0_rvfi_ctrl_hwidx  [get_bd_pins rvfi_to_stream_0/rvfi_ctrl_hwidx] \
+  [get_bd_pins ps_io2_wrapper_0/debug4]
   connect_bd_net -net util_ds_buf_0_IBUF_OUT  [get_bd_pins util_ds_buf_0/IBUF_OUT] \
   [get_bd_pins clk_wizard_0/clk_in1] \
   [get_bd_pins axi_noc_0/sys_clk0]
