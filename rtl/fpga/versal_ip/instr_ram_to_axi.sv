@@ -44,14 +44,14 @@ module instr_ram_to_axi
       s_gnt <= r_gnt;
       s_rdata <= r_rdata;
       s_rvalid <= r_rvalid;
-      r_req <= s_req;
+      r_req <= s_req && s_gnt;
       r_addr <= s_addr;
    end
 
-   logic			 fifo_valid, fifo_almost_full;
+   logic			 fifo_valid, fifo_almost_full, fifo_busy;
 
    always_comb begin
-      r_gnt = !fifo_almost_full;
+      r_gnt = !fifo_almost_full && !fifo_busy;
       q_req = fifo_valid;
    end
 
@@ -60,11 +60,12 @@ module instr_ram_to_axi
       .clk(clk),
       .rst (~rstn),
       .data_valid (fifo_valid),
+      .fifo_wr_busy (fifo_busy),
       .fifo_almost_full (fifo_almost_full),
       .fifo_read_rd_data (q_addr),
       .fifo_read_rd_en (q_req && q_gnt),
       .fifo_write_wr_data (r_addr),
-      .fifo_write_wr_en (r_gnt && r_req)
+      .fifo_write_wr_en (r_req)
       );   
 
 

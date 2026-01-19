@@ -69,7 +69,7 @@ module data_ram_to_axi
       s_rvalid <= r_rvalid;
       r_we <= s_we;
       r_be <= s_be;
-      r_req <= s_req;
+      r_req <= s_req && s_gnt;
       r_addr <= s_addr;
       r_wdata <= s_wdata;
    end
@@ -83,7 +83,7 @@ module data_ram_to_axi
    logic			 fifo_valid, fifo_busy, fifo_almost_full;
 
    always_comb begin
-      r_gnt = !fifo_almost_full;
+      r_gnt = !fifo_almost_full && !fifo_busy;
       q_req = fifo_valid;
    end
 
@@ -92,11 +92,12 @@ module data_ram_to_axi
       .clk(clk),
       .rst (~rstn),
       .data_valid (fifo_valid),
+      .fifo_wr_busy (fifo_busy),
       .fifo_almost_full (fifo_almost_full),
       .fifo_read_rd_data ({q_we, q_be, q_addr, q_wdata}),
       .fifo_read_rd_en (q_req && q_gnt),
       .fifo_write_wr_data ({r_we, r_be, r_addr, r_wdata}),
-      .fifo_write_wr_en (r_gnt && r_req)
+      .fifo_write_wr_en (r_req)
       );   
 
    logic req_to_outstanding;

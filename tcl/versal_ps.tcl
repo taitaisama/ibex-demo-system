@@ -853,25 +853,13 @@ update_ip_catalog
 
 create_ps_io_design ""
 create_root_design ""
-# create_fifo_design "" 128 4 "fifo_4_128"
-# create_fifo_design "" 128 6 "fifo_6_128"
-# create_fifo_design "" 128 32 "fifo_32_128"
-# create_fifo_design "" 128 40 "fifo_40_128"
-# create_fifo_design "" 128 69 "fifo_69_128"
-# create_fifo_design "" 16 832 "fifo_832_16"
 
-create_fifo_design "" 128 4 "fifo_4_128"
 create_fifo_design "" 128 6 "fifo_6_128"
 create_fifo_design "" 16 32 "fifo_32_16"
 create_fifo_design "" 16 40 "fifo_40_16"
 create_fifo_design "" 16 69 "fifo_69_16"
 create_fifo_design "" 16 98 "fifo_98_16"
-create_fifo_design "" 16 664 "fifo_664_16"
 create_fifo_design "" 16 227 "fifo_227_16"
-create_fifo_design "" 128 32 "fifo_32_128"
-create_fifo_design "" 128 40 "fifo_40_128"
-create_fifo_design "" 128 69 "fifo_69_128"
-create_fifo_design "" 16 832 "fifo_832_16"
-
+create_fifo_design "" 16 664 "fifo_664_16"
 
 set_property top ps_subsystem_wrapper [current_fileset]

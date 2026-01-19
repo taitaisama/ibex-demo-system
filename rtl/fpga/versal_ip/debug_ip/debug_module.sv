@@ -140,18 +140,21 @@ module debug_module
       DEBUG_rst = ~sys_rstn;
       DEBUG_clk = sys_clk;
 
-      DEBUG_wrdata = {rvfi_valid,
-                      rvfi_stream_tvalid,
-                      rvfi_stream_tready,
-                      rvfi_sts_tdata,
-                      rvfi_sts_tvalid,
-                      rvfi_sts_tready,
-                      rvfi_cmd_tvalid,
-                      rvfi_cmd_tready,
-                      rvfi2_stream_tvalid,
-                      rvfi2_stream_tready,
-                      rvfi_cmd_tdata,
-                      39'd0};
+      DEBUG_wrdata = {S_RAM_INSTR_gnt,
+                      S_RAM_INSTR_req,
+                      S_RAM_INSTR_addr,
+                      S_RAM_INSTR_rdvalid,
+                      S_RAM_INSTR_rddata,
+                      M_AXI_INSTR_arvalid,
+                      M_AXI_INSTR_arready,
+                      M_AXI_INSTR_araddr,
+                      M_AXI_INSTR_arid,
+                      M_AXI_INSTR_rvalid,
+                      M_AXI_INSTR_rready,
+                      M_AXI_INSTR_rid,
+                      M_AXI_INSTR_rresp,
+                      M_AXI_INSTR_rdata[14:0]
+                      };
                       
       // DEBUG_wrdata = {S_RAM_INSTR_req, S_RAM_INSTR_addr, S_RAM_INSTR_rdvalid, S_RAM_INSTR_rddata, S_RAM_INSTR_gnt, 16'b0101010101010101, 45'd0};
    end
