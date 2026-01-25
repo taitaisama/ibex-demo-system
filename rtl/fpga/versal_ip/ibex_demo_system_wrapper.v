@@ -27,6 +27,15 @@ module ibex_demo_system_wrapper
    input [31:0]   ibex_ram_b_rd_data,
    input          ibex_ram_b_gnt,
 
+   output         debug_core_req,
+   output         debug_core_we,
+   output [ 3:0]  debug_core_be,
+   output [31:0]  debug_core_addr,
+   output [31:0]  debug_core_wdata,
+   output         debug_core_rvalid,
+   output [31:0]  debug_core_rdata,
+   output         debug_core_gnt,
+
    output         rvfi_valid,
    output         rvfi_trap,
    output [ 4:0]  rvfi_rd_addr,
@@ -81,6 +90,15 @@ module ibex_demo_system_wrapper
     .spi_rx_i (1'b0),
     .spi_tx_o (),
     .spi_sck_o(),
+
+    .debug_core_req (debug_core_req),
+    .debug_core_we (debug_core_we),
+    .debug_core_be (debug_core_be),
+    .debug_core_addr (debug_core_addr),
+    .debug_core_wdata (debug_core_wdata),
+    .debug_core_rvalid (debug_core_rvalid),
+    .debug_core_rdata (debug_core_rdata),
+    .debug_core_gnt (debug_core_gnt),
 
     .ibex_ram_a_req_o (ibex_ram_a_req),
     .ibex_ram_a_we_o (ibex_ram_a_we),

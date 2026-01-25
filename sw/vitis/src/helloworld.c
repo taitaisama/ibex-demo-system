@@ -35,31 +35,37 @@ int main()
     for (int i = 0; i < 1024; i ++) {
         Xil_Out32(0x30000000 + 0x100000 + i*4, 0x0);
     }
+    for (int i = 0; i < 1024; i ++) {
+        Xil_Out32(0x30000000 + 0x400000 + i*4, 0x0);
+    }
+    for (int i = 0; i < 1024; i ++) {
+        Xil_Out32(0x30000000 + 0x700000 + i*4, 0x0);
+    }
     
     Xil_DCacheFlushRange(0x30000000 + 0x100000, 131072);
+    Xil_DCacheFlushRange(0x30000000 + 0x400000, 131072);
+    Xil_DCacheFlushRange(0x30000000 + 0x700000, 131072);
     print("Successfully ran Hello World application\n\r");
     run();
-    // xil_printf("waiting %d\n\r", 100);
-    // xil_printf("waiting %d\n\r", 100);
-    // xil_printf("waiting %d\n\r", 100);
-    // print("ok");
-    sleep(1);
-    Xil_DCacheFlushRange(0x30000000 + 0x100000, 131072);
-    xil_printf("waiting %d\n\r", 100);
-    xil_printf("waiting %d\n\r", 100);
+    
     for (int i = 0; i < 1024; i ++) {
         xil_printf("\"%x\", ", Xil_In32(0x20100000000 + i*4));
     }
+
     xil_printf("\n\n");
     for (int i = 0; i < 1024; i ++) {
         xil_printf("\"%x\", ", Xil_In32(0x30000000 + 0x100000 + i*4));
     }
-    
+
     xil_printf("\n\n");
-    for (int i = 12; i < 16; i ++) {
-        xil_printf("\"%x\", ", Xil_In32(0x20180000000 + i*4));
+    for (int i = 0; i < 1024; i ++) {
+        xil_printf("\"%x\", ", Xil_In32(0x30000000 + 0x400000 + i*4));
     }
-    // xil_printf("\"%x\"", Xil_In32(0x60000080));
+
+    xil_printf("\n\n");
+    for (int i = 0; i < 1024; i ++) {
+        xil_printf("\"%x\", ", Xil_In32(0x30000000 + 0x700000 + i*4));
+    }
     cleanup_platform();
     return 0;
 }

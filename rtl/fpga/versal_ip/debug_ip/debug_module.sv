@@ -140,21 +140,29 @@ module debug_module
       DEBUG_rst = ~sys_rstn;
       DEBUG_clk = sys_clk;
 
-      DEBUG_wrdata = {S_RAM_INSTR_gnt,
-                      S_RAM_INSTR_req,
-                      S_RAM_INSTR_addr,
-                      S_RAM_INSTR_rdvalid,
-                      S_RAM_INSTR_rddata,
-                      M_AXI_INSTR_arvalid,
-                      M_AXI_INSTR_arready,
-                      M_AXI_INSTR_araddr,
-                      M_AXI_INSTR_arid,
-                      M_AXI_INSTR_rvalid,
-                      M_AXI_INSTR_rready,
-                      M_AXI_INSTR_rid,
-                      M_AXI_INSTR_rresp,
-                      M_AXI_INSTR_rdata[14:0]
-                      };
+      DEBUG_wrdata = {S_RAM_DATA_req,
+                      S_RAM_DATA_we,
+                      S_RAM_DATA_be,
+                      S_RAM_DATA_addr,
+                      S_RAM_DATA_wrdata,
+                      S_RAM_DATA_rdvalid,
+                      S_RAM_DATA_rddata,
+                      S_RAM_DATA_gnt,
+                      M_AXI_DATA_arvalid,
+                      M_AXI_DATA_arready,
+                      M_AXI_DATA_arid,
+                      M_AXI_DATA_rvalid,
+                      M_AXI_DATA_rready,
+                      M_AXI_DATA_rlast,
+                      M_AXI_DATA_rid,
+                      M_AXI_DATA_awvalid,
+                      M_AXI_DATA_awready,
+                      M_AXI_DATA_wvalid,
+                      M_AXI_DATA_wready,
+                      M_AXI_DATA_wlast,
+                      M_AXI_DATA_wstrb,
+		      M_AXI_DATA_bvalid,
+		      M_AXI_DATA_bready};
                       
       // DEBUG_wrdata = {S_RAM_INSTR_req, S_RAM_INSTR_addr, S_RAM_INSTR_rdvalid, S_RAM_INSTR_rddata, S_RAM_INSTR_gnt, 16'b0101010101010101, 45'd0};
    end

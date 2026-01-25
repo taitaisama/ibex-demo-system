@@ -363,6 +363,5 @@ module rvfi_handler #(
     );
 
    always_comb busy_o = rvfi_fifo_almost_full | csr_fifo_almost_full | dside_fifo_almost_full;
-   // always_comb busy_o = 0;
    
 endmodule

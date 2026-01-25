@@ -33,6 +33,15 @@ module ibex_demo_system #(
   output logic                spi_tx_o,
   output logic                spi_sck_o,
 
+  output logic                debug_core_req,
+  output logic                debug_core_we,
+  output logic [ 3:0]         debug_core_be,
+  output logic [31:0]         debug_core_addr,
+  output logic [31:0]         debug_core_wdata,
+  output logic                debug_core_rvalid,
+  output logic [31:0]         debug_core_rdata,
+  output logic                debug_core_gnt,
+
   output logic                ibex_ram_a_req_o,
   output logic [3:0]          ibex_ram_a_we_o,
   output logic [3:0]          ibex_ram_a_be_o,
@@ -240,6 +249,17 @@ module ibex_demo_system #(
   assign device_err[Uart]    = 1'b0;
   assign device_err[Spi]     = 1'b0;
   assign device_err[SimCtrl] = 1'b0;
+
+   always_comb begin
+      debug_core_req = host_req[CoreD];
+      debug_core_gnt = host_gnt[CoreD];
+      debug_core_addr = host_addr[CoreD];
+      debug_core_we = host_we[CoreD];
+      debug_core_be = host_be[CoreD];
+      debug_core_wdata = host_wdata[CoreD];
+      debug_core_rvalid = host_rvalid[CoreD];
+      debug_core_rdata = host_rdata[CoreD];
+   end
 
   bus #(
     .NrDevices    ( NrDevices ),
