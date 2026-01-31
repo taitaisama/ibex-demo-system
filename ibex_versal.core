@@ -4,6 +4,8 @@ name: "::ibex_versal"
 description: "hello"
 filesets:
   files_xilinx_versal:
+    depent:
+      - lowrisc:prim:assert:0.1
     files:
       - rtl/fpga/versal_ip/rvfi_handler.sv
       - rtl/fpga/versal_ip/read_ram_to_axi.sv
@@ -18,6 +20,8 @@ filesets:
       - rtl/fpga/versal_ip/verilog_wrappers/data_ram_to_axi_bridge.v: {file_type: verilogSource}
       - rtl/fpga/versal_ip/verilog_wrappers/instr_ram_to_axi_bridge.v: {file_type: verilogSource}
       - rtl/fpga/versal_ip/verilog_wrappers/rvfi_to_stream.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/tb_versal.v: {file_type: verilogSource}
+      - rtl/fpga/versal_ip/versal_sim.v: {file_type: verilogSource}
     file_type: systemVerilogSource
 
   files_constraints_versal:
