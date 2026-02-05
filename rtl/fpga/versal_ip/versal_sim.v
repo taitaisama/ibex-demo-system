@@ -537,7 +537,7 @@ module versal_sim #
             
             initial begin
                 // $sformat writes the formatted string into the file_name register
-                $sformat(file_name, "mem_init_%0d.txt", mem_byte_index);
+                $sformat(file_name, "/home/ramanuj/dev/ibex-demo-system/mem_init_%0d.txt", mem_byte_index);
                 $readmemh(file_name, byte_ram);
             end
                 

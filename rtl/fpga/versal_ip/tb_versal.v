@@ -42,10 +42,11 @@ module tb_versal;
   );
 
   initial begin
-    #100;
-    sw_rstn = 1;
+    #400;
     hw_rstn = 1;
-    #1000;
+    #200;
+    sw_rstn = 1;
+    #10000;
     $finish;
   end
 
