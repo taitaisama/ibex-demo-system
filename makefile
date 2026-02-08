@@ -74,7 +74,7 @@ vitis: $(STAMP_DIR)/vitis
 $(STAMP_DIR)/vitis: $(STAMP_DIR)/hardware
 	@echo "### Building vitis project..."
 	mkdir -p $(BUILD_DIR)/vitis
-	vitis -s $(CUR_PATH)/sw/vitis/builder.py $(BUILD_DIR)/vitis $(BUILD_DIR)/hardware/top_versal.xsa $(CUR_PATH)/sw/vitis/test.c
+	vitis -s $(CUR_PATH)/sw/vitis/builder.py $(BUILD_DIR)/vitis $(BUILD_DIR)/hardware/top_versal.xsa $(CUR_PATH)/sw/vitis
 
 clean:
 	@echo "### Cleaning build and stamp files..."

@@ -44,7 +44,7 @@
 
   to make the XSA image yourself you can open the vivado project (by vivado build/ibex_versal_0/synth_versal-vivado/ibex_versal_0.xpr), run generate Device image on the leftmost taskbar and then file -> export -> export Hardware
 
-4. make vitis -> this constructs the vitis workspace with dummy hello world project
+4. make vitis -> this constructs the vitis workspace with the .xsa and some files which run and print the rvfi/csr/dside data that's generated.
 
    Connections with versal: UART and JTAG
 
@@ -60,7 +60,7 @@
      5. in the top bar select Vitis -> Serial Monitor
      6. select /dev/ttyUSB0 or /dev/ttyUSB1, whichever says (Silicon Labs)
      7. select the hello_world app under Vitis components
-     8. under flow, press build and then press debug
+     8. under flow, press build and then press debug / run
      9. in the left hand bar press the debug icon (play symbol with a bug at the bottom left)
      10. press the play button in the newly opened debug section
      11. under the /dev/ttyUSB0 (Silicon labs) tab you'll see the output
@@ -74,9 +74,9 @@
      5. when tha platform is created, select examples in the left hand bar
      6. find "Hello World" under Emedded Software Examples
      7. select "Create application Component from Template"
-     8. click next, choose the platform and then finish 
+     8. click next, choose the platform and then finish
 
-   You can make changes to hello_world.c (under hello_world -> Sources), which can also interact with the hardware
+   this stuff is automated in the sw/vitis/builder.py file, which also changes the hello_world.c file and adds a ps_io.cpp file to run some stuff. We're basically writing the riscv instructions into memory and reading the output from the memory, while correctly interacting with the hw.
 
 
 5. ibex cosim
@@ -87,4 +87,6 @@
    after this you just have to follow https://ibex-core.readthedocs.io/en/latest/03_reference/cosim.html
 
    note UVM DV regression requires VCS or something, can be skipped
+
+
 
