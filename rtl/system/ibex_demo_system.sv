@@ -97,7 +97,7 @@ module ibex_demo_system #(
   output logic                td_o     // JTAG test data output pad
 // verilator lint_on UNUSED
 );
-  localparam logic [31:0] MEM_SIZE      = 128 * 1024; // 128 KiB
+  localparam logic [31:0] MEM_SIZE      = 1024 * 1024; // 1 MB
   localparam logic [31:0] MEM_START     = 32'h00100000;
   localparam logic [31:0] MEM_MASK      = ~(MEM_SIZE-1);
 
@@ -558,22 +558,30 @@ module ibex_demo_system #(
     .byte_data_o() // Unused.
   );
 
-  `ifdef VERILATOR
-    simulator_ctrl #(
-      .LogName ( "ibex_demo_system.log" )
-    ) u_simulator_ctrl (
-      .clk_i (clk_sys_i),
-      .rst_ni(rst_sys_ni),
+   always_comb begin
+      device_rdata[SimCtrl] = '0;
+   end
 
-      .req_i   (device_req[SimCtrl]),
-      .we_i    (device_we[SimCtrl]),
-      .be_i    (device_be[SimCtrl]),
-      .addr_i  (device_addr[SimCtrl]),
-      .wdata_i (device_wdata[SimCtrl]),
-      .rvalid_o(device_rvalid[SimCtrl]),
-      .rdata_o (device_rdata[SimCtrl])
-    );
-  `endif
+   always_ff @(posedge clk_sys_i) begin
+      device_rvalid[SimCtrl] <= device_req[SimCtrl];
+   end
+
+  // `ifdef VERILATOR
+  //   simulator_ctrl #(
+  //     .LogName ( "ibex_demo_system.log" )
+  //   ) u_simulator_ctrl (
+  //     .clk_i (clk_sys_i),
+  //     .rst_ni(rst_sys_ni),
+
+  //     .req_i   (device_req[SimCtrl]),
+  //     .we_i    (device_we[SimCtrl]),
+  //     .be_i    (device_be[SimCtrl]),
+  //     .addr_i  (device_addr[SimCtrl]),
+  //     .wdata_i (device_wdata[SimCtrl]),
+  //     .rvalid_o(device_rvalid[SimCtrl]),
+  //     .rdata_o (device_rdata[SimCtrl])
+  //   );
+  // `endif
 
   timer #(
     .DataWidth    ( 32 ),

@@ -647,69 +647,18 @@ proc create_ps_sim_design { parentCell } {
    }
     set_property CONFIG.C_S_AXI_ID_WIDTH {2} $versal_sim_0
 
-
-  # Create instance: axi_noc_0, and set properties
-  set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_0 ]
-  set_property CONFIG.NUM_SI {5} $axi_noc_0
-
-  set_property -dict [ list \
-   CONFIG.APERTURES {{0x800_0000_0000 4G}} \
-   CONFIG.CATEGORY {pl} \
- ] [get_bd_intf_pins /axi_noc_0/M00_AXI]
-
-  set_property -dict [ list \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {1720} write_bw {1720} read_avg_burst {4} write_avg_burst {4}}} \
-   CONFIG.DEST_IDS {M00_AXI:0xc0} \
-   CONFIG.REMAPS {M00_AXI {{0x0 0x800_0000_0000 0x200000}}} \
-   CONFIG.NOC_PARAMS {} \
-   CONFIG.CATEGORY {pl} \
- ] [get_bd_intf_pins /axi_noc_0/S00_AXI]
-
-  set_property -dict [ list \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
-   CONFIG.DEST_IDS {M00_AXI:0xc0} \
-   CONFIG.REMAPS {M00_AXI {{0x0 0x800_0000_0000 0x200000}}} \
-   CONFIG.NOC_PARAMS {} \
-   CONFIG.CATEGORY {pl} \
- ] [get_bd_intf_pins /axi_noc_0/S01_AXI]
-
-  set_property -dict [ list \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
-   CONFIG.DEST_IDS {M00_AXI:0xc0} \
-   CONFIG.REMAPS {M00_AXI {{0x0 0x800_0000_0000 0x200000}}} \
-   CONFIG.NOC_PARAMS {} \
-   CONFIG.CATEGORY {pl} \
- ] [get_bd_intf_pins /axi_noc_0/S02_AXI]
-
-  set_property -dict [ list \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
-   CONFIG.DEST_IDS {M00_AXI:0xc0} \
-   CONFIG.REMAPS {M00_AXI {{0x0 0x800_0000_0000 0x200000}}} \
-   CONFIG.NOC_PARAMS {} \
-   CONFIG.CATEGORY {pl} \
- ] [get_bd_intf_pins /axi_noc_0/S03_AXI]
-
-  set_property -dict [ list \
-   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
-   CONFIG.DEST_IDS {M00_AXI:0xc0} \
-   CONFIG.REMAPS {M00_AXI {{0x0 0x800_0000_0000 0x200000}}} \
-   CONFIG.NOC_PARAMS {} \
-   CONFIG.CATEGORY {pl} \
- ] [get_bd_intf_pins /axi_noc_0/S04_AXI]
-
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {M00_AXI:S00_AXI:S01_AXI:S02_AXI:S03_AXI:S04_AXI} \
- ] [get_bd_pins /axi_noc_0/aclk0]
-
+  # Create instance: smartconnect_0, and set properties
+  set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
+  set_property CONFIG.NUM_SI {5} $smartconnect_0
 
   # Create interface connections
-  connect_bd_intf_net -intf_net axi_noc_0_M00_AXI [get_bd_intf_pins axi_noc_0/M00_AXI] [get_bd_intf_pins versal_sim_0/S_AXI]
-  connect_bd_intf_net -intf_net csr_datamover_M_AXI_S2MM [get_bd_intf_pins csr_datamover/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S04_AXI]
-  connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins axi_noc_0/S02_AXI]
-  connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins axi_noc_0/S02_AXI]
-  connect_bd_intf_net -intf_net dside_datamover_M_AXI_S2MM [get_bd_intf_pins dside_datamover/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S01_AXI]
-  connect_bd_intf_net -intf_net instr_ram_to_axi_bri_0_M_AXI [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins axi_noc_0/S03_AXI]
-  connect_bd_intf_net -intf_net rvfi_datamover_M_AXI_S2MM [get_bd_intf_pins rvfi_datamover/M_AXI_S2MM] [get_bd_intf_pins axi_noc_0/S00_AXI]
+  connect_bd_intf_net -intf_net csr_datamover_M_AXI_S2MM [get_bd_intf_pins csr_datamover/M_AXI_S2MM] [get_bd_intf_pins smartconnect_0/S01_AXI]
+  connect_bd_intf_net -intf_net data_ram_to_axi_brid_0_M_AXI [get_bd_intf_pins data_ram_to_axi_brid_0/M_AXI] [get_bd_intf_pins smartconnect_0/S02_AXI]
+  connect_bd_intf_net -intf_net dside_datamover_M_AXI_S2MM [get_bd_intf_pins dside_datamover/M_AXI_S2MM] [get_bd_intf_pins smartconnect_0/S04_AXI]
+  connect_bd_intf_net -intf_net instr_ram_to_axi_bri_0_M_AXI [get_bd_intf_pins instr_ram_to_axi_bri_0/M_AXI] [get_bd_intf_pins smartconnect_0/S03_AXI]
+  connect_bd_intf_net -intf_net rvfi_datamover_M_AXI_S2MM [get_bd_intf_pins rvfi_datamover/M_AXI_S2MM] [get_bd_intf_pins smartconnect_0/S00_AXI]
+  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins versal_sim_0/S_AXI]
+
   connect_bd_intf_net -intf_net sys_1 [get_bd_intf_ports sys] [get_bd_intf_pins util_ds_buf_0/CLK_IN_D]
   connect_bd_intf_net -intf_net versal_sim_0_csr_ctrl [get_bd_intf_pins versal_sim_0/csr_ctrl] [get_bd_intf_pins rvfi_to_stream_0/csr_ctrl]
   connect_bd_intf_net -intf_net versal_sim_0_dside_ctrl [get_bd_intf_pins versal_sim_0/dside_ctrl] [get_bd_intf_pins rvfi_to_stream_0/dside_ctrl]
@@ -718,13 +667,14 @@ proc create_ps_sim_design { parentCell } {
   # Create port connections
   connect_bd_net -net clk_wizard_0_clk_out1  [get_bd_pins clk_wizard_0/clk_out1] \
   [get_bd_pins versal_sim_0/S_AXI_ACLK] \
-  [get_bd_pins axi_noc_0/aclk0]
+  [get_bd_pins smartconnect_0/aclk]
   connect_bd_net -net hw_rstn_1  [get_bd_ports hw_rstn] \
   [get_bd_pins rst_sys_clk_100M/ext_reset_in]
   connect_bd_net -net ibex_demo_system_wra_0_led  [get_bd_pins ibex_demo_system_wra_0/led] \
   [get_bd_pins versal_sim_0/led]
   connect_bd_net -net rst_sys_clk_100M_peripheral_aresetn  [get_bd_pins rst_sys_clk_100M/peripheral_aresetn] \
-  [get_bd_pins versal_sim_0/S_AXI_ARESETN]
+  [get_bd_pins versal_sim_0/S_AXI_ARESETN] \
+  [get_bd_pins smartconnect_0/aresetn]    
   connect_bd_net -net sw_rstn_1  [get_bd_ports sw_rstn] \
   [get_bd_pins ilvector_logic_0/Op1]
   connect_bd_net -net versal_sim_0_flush  [get_bd_pins versal_sim_0/flush] \
@@ -733,12 +683,11 @@ proc create_ps_sim_design { parentCell } {
   [get_bd_pins ibex_demo_system_wra_0/ibex_ram_base_addr]
 
   # Create address segments
-    assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces csr_datamover/Data_S2MM] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
-  assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces rvfi_datamover/Data_S2MM] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
-  assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces data_ram_to_axi_brid_0/M_AXI] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
-  assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces instr_ram_to_axi_bri_0/M_AXI] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
-  assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces dside_datamover/Data_S2MM] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
-
+  assign_bd_address -offset 0x00000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces csr_datamover/Data_S2MM] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x00000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces rvfi_datamover/Data_S2MM] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x00000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces data_ram_to_axi_brid_0/M_AXI] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x00000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces instr_ram_to_axi_bri_0/M_AXI] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x00000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces dside_datamover/Data_S2MM] [get_bd_addr_segs versal_sim_0/S_AXI/reg0] -force
 
   # Restore current instance
   current_bd_instance $oldCurInst

@@ -11,7 +11,7 @@ module versal_sim #
    // Width of S_AXI data bus
     parameter integer C_S_AXI_DATA_WIDTH = 32,
    // Width of S_AXI address bus
-    parameter integer C_S_AXI_ADDR_WIDTH = 17,
+    parameter integer C_S_AXI_ADDR_WIDTH = 20,
    // Width of optional user defined signal in write address channel
     parameter integer C_S_AXI_AWUSER_WIDTH = 0,
    // Width of optional user defined signal in read address channel
@@ -221,7 +221,7 @@ module versal_sim #
    //ADDR_LSB = 4 for 128 bits (n downto 4)
 
    localparam integer                   ADDR_LSB = (C_S_AXI_DATA_WIDTH/32)+ 1;
-   localparam integer                   OPT_MEM_ADDR_BITS = 3;
+   localparam integer                   OPT_MEM_ADDR_BITS = 16;
    localparam integer                   USER_NUM_MEM = 1;
 
    //----------------------------------------------
@@ -531,13 +531,14 @@ module versal_sim #
 	     begin:BYTE_BRAM_GEN
 	        wire [8-1:0] data_in ;
 	        wire [8-1:0] data_out;
-	        reg [8-1:0]  byte_ram [0 : 15];
+	        reg [8-1:0]  byte_ram [0 : 16383];
 
-            reg [8*16-1:0] file_name; // Holds up to 16 characters
+            reg [8*128-1:0] file_name; // Holds up to 128 characters
             
             initial begin
                 // $sformat writes the formatted string into the file_name register
-                $sformat(file_name, "/home/ramanuj/dev/ibex-demo-system/mem_init_%0d.txt", mem_byte_index);
+                $sformat(file_name, "/home/ramanuj/dev/ibex-demo-system/mem_init_%0d.mem", mem_byte_index);
+                $display("opening %s", file_name);
                 $readmemh(file_name, byte_ram);
             end
                 

@@ -1,6 +1,6 @@
 import sys
 
-def generate_axi_mem_init(hex_data, data_width=32, depth=16, prefix="mem_init"):
+def generate_axi_mem_init(hex_data, data_width=32, depth=14530, prefix="mem_init"):
     """
     Splits a list of N-bit hex values into byte-lane files.
     
@@ -14,7 +14,7 @@ def generate_axi_mem_init(hex_data, data_width=32, depth=16, prefix="mem_init"):
     
     # Create the files for each byte lane
     for byte_lane in range(num_bytes):
-        filename = f"{prefix}_{byte_lane}.txt"
+        filename = f"{prefix}_{byte_lane}.mem"
         
         with open(filename, "w") as f:
             for i in range(depth):
@@ -40,4 +40,4 @@ file_name = sys.argv[1]
 
 my_data = [int(x, 16) for x in open(file_name).readlines()]
 
-generate_axi_mem_init(my_data, data_width=32, depth=16)
+generate_axi_mem_init(my_data, data_width=32, depth=14530)
